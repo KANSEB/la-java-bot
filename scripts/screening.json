@@ -1,0 +1,19 @@
+{
+  "enabled": true,
+  "description": "Bienvenue à La Java ! Avant d'entrer, accepte notre charte 🌈",
+  "form_fields": [
+    {
+      "field_type": "TERMS",
+      "label": "Lis et accepte la charte de La Java",
+      "required": true,
+      "values": [
+        "Bienveillance d'abord : zéro tolérance pour le harcèlement et les discriminations",
+        "Le consentement, tout le temps — un non est un non",
+        "Prends soin de toi et des autres : on ne juge pas, on aide",
+        "Respect du lieu et de la planète : aucune trace derrière nous",
+        "Pas de spam, de pub sauvage ni de revente de billets hors canaux officiels",
+        "Ce qui se passe backstage reste backstage"
+      ]
+    }
+  ]
+}
