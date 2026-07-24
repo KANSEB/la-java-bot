@@ -69,6 +69,10 @@ const MIGRATIONS: string[] = [
     valeur TEXT NOT NULL
   );
   `,
+  // v2 : XP sur les réactions (cooldown dédié)
+  `
+  ALTER TABLE xp ADD COLUMN dernierReaction INTEGER NOT NULL DEFAULT 0;
+  `,
 ];
 
 function migrer(): void {
@@ -101,6 +105,7 @@ export interface XpRow {
   userId: string;
   points: number;
   dernierMessage: number;
+  dernierReaction: number;
 }
 
 export interface AnniversaireRow {

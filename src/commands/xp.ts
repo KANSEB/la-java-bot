@@ -1,7 +1,7 @@
 // Commandes XP : /xp-add (Staff), /classement, /mon-profil.
 
 import { EmbedBuilder, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
-import { COULEURS, XP } from "../config/config.js";
+import { COULEURS, PALIERS_XP, XP } from "../config/config.js";
 import { ajouterXp, getClassement, getRang, getXp, palierPour } from "../services/xp.js";
 import { horodatage } from "../services/util.js";
 import { log } from "../services/logs.js";
@@ -55,6 +55,7 @@ export const commandes: Commande[] = [
       const points = getXp(membre.id);
       const rang = getRang(membre.id);
       const palier = palierPour(points);
+      const suivant = PALIERS_XP.find((p) => p.seuil > points);
       const badges = membre.roles.cache.filter((r) => /^Java \d{4}$/.test(r.name)).map((r) => r.name);
       const embed = new EmbedBuilder()
         .setTitle(`🎪 Profil de ${membre.displayName}`)
@@ -63,7 +64,7 @@ export const commandes: Commande[] = [
         .addFields(
           { name: "XP", value: `**${points}** points`, inline: true },
           { name: "Rang", value: `#${rang}`, inline: true },
-          { name: "Palier", value: palier.nom, inline: true },
+          { name: "Palier", value: suivant ? `${palier.nom} (${suivant.seuil - points} XP avant **${suivant.nom}**)` : palier.nom, inline: true },
           { name: "Badges d'édition", value: badges.length ? badges.join(" • ") : "Aucun (pas encore !)", inline: false },
           { name: "Sur le serveur depuis", value: membre.joinedTimestamp ? horodatage(membre.joinedTimestamp) : "?", inline: true }
         );

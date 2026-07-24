@@ -13,7 +13,7 @@ import {
   ouvrirQuestionnaire, selectionRoles, soumettreQuestionnaire,
 } from "../services/onboarding.js";
 import { ouvrirTicket } from "../services/tickets.js";
-import { xpMessage } from "../services/xp.js";
+import { xpMessage, xpReaction } from "../services/xp.js";
 import { dmSur, estStaff, role, salonTexte } from "../services/util.js";
 import type { Commande } from "../commands/types.js";
 
@@ -96,6 +96,19 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       await xpMessage(message.member);
     } catch (err) {
       await logErreur(message.inGuild() ? message.guild : null, "messageCreate", err);
+    }
+  });
+
+  // ---------- XP sur les réactions ----------
+  client.on(Events.MessageReactionAdd, async (reaction, user) => {
+    try {
+      if (user.bot) return;
+      const guild = reaction.message.guild;
+      if (!guild) return;
+      const membre = await guild.members.fetch(user.id).catch(() => null);
+      if (membre) await xpReaction(membre);
+    } catch (err) {
+      await logErreur(reaction.message.guild ?? null, "messageReactionAdd", err);
     }
   });
 

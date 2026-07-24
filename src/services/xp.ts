@@ -1,6 +1,7 @@
 // ============================================================
-// Système XP : messages (+5, cooldown 60s), vocal (+10 / 10 min),
-// shifts bénévoles (+50 via /xp-add). Paliers → rôles cosmétiques.
+// Système XP : messages (+15 à 40, cooldown 60s), réactions (+25,
+// cooldown 5 min), vocal (+10 / 10 min), shifts bénévoles (+50 via
+// /xp-add). Paliers → rôles + avantages (voir PALIERS_XP).
 // ============================================================
 
 import { Client, Guild, GuildMember } from "discord.js";
@@ -71,7 +72,21 @@ export async function xpMessage(membre: GuildMember): Promise<void> {
     INSERT INTO xp (userId, points, dernierMessage) VALUES (?, 0, ?)
     ON CONFLICT(userId) DO UPDATE SET dernierMessage = excluded.dernierMessage
   `).run(membre.id, maintenant);
-  await ajouterXp(membre, XP.parMessage);
+  const gain = XP.parMessageMin + Math.floor(Math.random() * (XP.parMessageMax - XP.parMessageMin + 1));
+  await ajouterXp(membre, gain);
+}
+
+/** XP de réaction avec son propre cooldown. */
+export async function xpReaction(membre: GuildMember): Promise<void> {
+  const row = db.prepare("SELECT dernierReaction FROM xp WHERE userId = ?").get(membre.id) as { dernierReaction: number } | undefined;
+  const maintenant = Date.now();
+  if (row && maintenant - row.dernierReaction < XP.cooldownReactionMs) return;
+
+  db.prepare(`
+    INSERT INTO xp (userId, points, dernierReaction) VALUES (?, 0, ?)
+    ON CONFLICT(userId) DO UPDATE SET dernierReaction = excluded.dernierReaction
+  `).run(membre.id, maintenant);
+  await ajouterXp(membre, XP.parReaction);
 }
 
 /** Tick vocal (cron toutes les `vocalTrancheMinutes` min) : +10 à chaque membre humain en vocal. */
