@@ -13,7 +13,6 @@ import { DELAIS, EDITION, ROLE_BENEVOLE_DU_MOIS, SALONS, TEXTES, XP } from "../c
 import { dmSur, joursAvant, roleParNom, salonTexte } from "./util.js";
 import { log, logErreur } from "./logs.js";
 import { tickVocal } from "./xp.js";
-import { traiterNonVerifies } from "./onboarding.js";
 
 function guildPrincipale(client: Client): Guild | undefined {
   const id = process.env.GUILD_ID;
@@ -129,10 +128,6 @@ export function demarrerCrons(client: Client): void {
     if (!guild) return;
     try {
       await majCountdown(guild);
-      const stats = await traiterNonVerifies(guild);
-      if (stats.rappels + stats.avertis + stats.kicks > 0) {
-        await log(guild, "⏰ Rappels vérification", `Rappels 48h : ${stats.rappels} • Avertissements J-1 : ${stats.avertis} • Kicks : ${stats.kicks}`);
-      }
       await archiverCovoitSiFini(guild);
     } catch (err) {
       await logErreur(guild, "cron 9h", err);

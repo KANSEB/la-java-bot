@@ -65,7 +65,7 @@ for (const c of channels) {
 
 // ---------- 1b. Suppression des salons sans intérêt ----------
 console.log("\n— 1b. Salons supprimés —");
-for (const motif of ["objets-trouves", "archives-editions"]) {
+for (const motif of ["objets-trouves", "archives-editions", "verification"]) {
   const c = channels.find((ch) => ch.name.includes(motif));
   if (c) {
     await act(`Supprime ${c.name}`, () => api(`/channels/${c.id}`, { method: "DELETE" }));
@@ -115,6 +115,13 @@ for (const p of PALIERS_XP) {
     if (cree) roles.push(cree);
   }
 }
+// Le rôle "Non vérifié" appartenait à l'ancien système de vérification du bot
+const obsolete = roleParNom("Non vérifié");
+if (obsolete) {
+  await act(`Supprime le rôle obsolète "Non vérifié"`, () => api(`/guilds/${GUILD}/roles/${obsolete.id}`, { method: "DELETE" }));
+  roles = roles.filter((r) => r.id !== obsolete.id);
+}
+
 const ATTENTE = "⏳ En attente de validation";
 if (!roleParNom(ATTENTE)) {
   const cree = await act(`Crée le rôle "${ATTENTE}"`, () =>
@@ -338,26 +345,53 @@ const PROFILS = [
   { titre: "Partenaire", emoji: "🤝", valider: true },
   { titre: "Curieux - Public", emoji: "👀", valider: false },
 ];
+const SOURCES = [
+  { titre: "Instagram", emoji: "📷" },
+  { titre: "TikTok", emoji: "🎵" },
+  { titre: "Bouche à oreille", emoji: "🗣️" },
+  { titre: "Le site de La Java", emoji: "🌐" },
+  { titre: "Sur place, à une édition", emoji: "🎪" },
+  { titre: "Un artiste", emoji: "🎧" },
+  { titre: "La newsletter", emoji: "📬" },
+  { titre: "Autre", emoji: "✨" },
+];
 const membre = roleParNom("Membre"), attente = roleParNom(ATTENTE);
 const publics = [...LECTURE_SEULE, ...OUVERTS].map((n) => salonParNom(n)).filter(Boolean);
+const generalPublic = salonParNom(SALONS.general);
 console.log(`Salons par défaut : ${publics.length} (minimum 7) — profils validés à la main : ${PROFILS.filter((p) => p.valider).map((p) => p.titre).join(", ")}`);
-await act("Active le questionnaire d'arrivée (onboarding natif)", () =>
+await act("Active le questionnaire d'arrivée (2 questions : profil + source)", () =>
   api(`/guilds/${GUILD}/onboarding`, {
     method: "PUT",
     body: JSON.stringify({
-      prompts: [{
-        id: "0", // id fictif exigé par l'API (remplacé par Discord à la création)
-        type: 0, single_select: true, required: true, in_onboarding: true,
-        title: "Quel est ton profil à La Java ? 🎪",
-        options: PROFILS.map((p, i) => ({
-          id: String(i + 1),
-          title: p.titre,
-          emoji: { name: p.emoji },
-          // Profils sensibles → rôle "En attente", le Staff attribue le vrai rôle ensuite
-          role_ids: [p.valider ? attente.id : membre.id],
-          channel_ids: [],
-        })),
-      }],
+      prompts: [
+        {
+          id: "0", // id fictif exigé par l'API (remplacé par Discord à la création)
+          type: 0, single_select: true, required: true, in_onboarding: true,
+          title: "Quel est ton profil à La Java ? 🎪",
+          options: PROFILS.map((p, i) => ({
+            id: String(i + 1),
+            title: p.titre,
+            emoji: { name: p.emoji },
+            // Profils sensibles → rôle "En attente", le Staff attribue le vrai rôle ensuite
+            role_ids: [p.valider ? attente.id : membre.id],
+            channel_ids: [],
+          })),
+        },
+        {
+          id: "100",
+          type: 0, single_select: true, required: true, in_onboarding: true,
+          title: "Où as-tu connu La Java ? 👀",
+          // Chaque option doit donner accès à au moins un salon ou rôle :
+          // on pointe vers le général, déjà public, donc aucun effet de bord
+          options: SOURCES.map((so, i) => ({
+            id: String(101 + i),
+            title: so.titre,
+            emoji: { name: so.emoji },
+            role_ids: [],
+            channel_ids: [generalPublic.id],
+          })),
+        },
+      ],
       default_channel_ids: publics.map((c) => c.id),
       enabled: true,
       mode: 0,

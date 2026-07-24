@@ -4,7 +4,6 @@ import { AttachmentBuilder, PermissionFlagsBits, SlashCommandBuilder } from "dis
 import { db, purgerMembre, type OnboardingRow } from "../db/database.js";
 import { csv } from "../services/util.js";
 import { log } from "../services/logs.js";
-import { traiterNonVerifies } from "../services/onboarding.js";
 import type { Commande } from "./types.js";
 
 export const commandes: Commande[] = [
@@ -30,20 +29,6 @@ export const commandes: Commande[] = [
       }
       const fichier = new AttachmentBuilder(Buffer.from("﻿" + lignes.join("\n"), "utf-8"), { name: "onboarding-la-java.csv" });
       await interaction.editReply({ content: `📊 ${rows.length} candidature(s) exportée(s).`, files: [fichier] });
-    },
-  },
-  {
-    data: new SlashCommandBuilder()
-      .setName("verif-rappel")
-      .setDescription("Lance immédiatement les rappels/kicks des membres Non vérifiés (Staff)")
-      .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
-    staffUniquement: true,
-    execute: async (interaction) => {
-      await interaction.deferReply({ ephemeral: true });
-      const stats = await traiterNonVerifies(interaction.guild);
-      await interaction.editReply(
-        `⏰ Traitement des Non vérifiés terminé :\n• Rappels 48h envoyés : **${stats.rappels}**\n• Avertissements J-1 : **${stats.avertis}**\n• Kicks (7 jours) : **${stats.kicks}**`
-      );
     },
   },
   {

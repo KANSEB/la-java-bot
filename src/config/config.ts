@@ -51,7 +51,6 @@ export const ROLES: Record<string, RoleConfig> = {
   benevole: { nom: "Bénévole", couleur: 0x27ae60, hoist: false, mentionnable: true, permissions: [] },
   benevoleVeteran: { nom: "Bénévole Vétéran", couleur: 0xf1c40f, hoist: false, mentionnable: true, permissions: [] },
   membre: { nom: "Membre", couleur: 0x3498db, hoist: false, mentionnable: false, permissions: [] },
-  nonVerifie: { nom: "Non vérifié", couleur: 0x95a5a6, hoist: false, mentionnable: false, permissions: [] },
 };
 
 // ---------- Rôles cosmétiques ----------
@@ -105,9 +104,6 @@ export const XP = {
 
 // ---------- Délais (heures/jours) ----------
 export const DELAIS = {
-  rappelVerifHeures: 48,
-  avertissementKickJours: 6, // DM préalable à J-1 du kick
-  kickVerifJours: 7,
   dmSequenceHeures: 24,
   benevoleDuMoisJours: 30,
   archivageCovoitJoursApresEvent: 7,
@@ -122,7 +118,6 @@ export const ANTIRAID = {
 // ---------- Noms des salons (clé interne -> nom Discord) ----------
 export const SALONS = {
   bienvenue: "👋・bienvenue",
-  verification: "✅・verification",
   annonces: "📣・annonces",
   lineUp: "🎛・line-up",
   actuServeur: "📰・actu-serveur",
@@ -180,7 +175,6 @@ export const STRUCTURE: CategorieDef[] = [
     acces: "accueil",
     salons: [
       { cle: "bienvenue", type: "texte", lectureSeule: true, sujet: "Règles, présentation et RGPD : commence ici !" },
-      { cle: "verification", type: "texte", lectureSeule: true, sujet: "Clique sur le bouton pour rejoindre la communauté" },
     ],
   },
   {
@@ -331,11 +325,8 @@ export const TEXTES = {
     "",
     "**RGPD :** en répondant au questionnaire, tu acceptes que tes réponses soient conservées par l'équipe pour gérer la communauté. Tu peux demander leur suppression à tout moment auprès du Staff (commande `/oublier-membre`).",
     "",
-    "➡️ Passe dans le salon *verification* pour rejoindre la communauté !",
+    "➡️ Le questionnaire d'arrivée de Discord te demande ton profil : il débloque tes accès. Bonne Java !",
   ].join("\n"),
-  verificationTitre: "✅ Une dernière étape !",
-  verificationCorps: "Clique sur le bouton ci-dessous et réponds à 4 petites questions.\nUn membre du Staff validera ta demande très vite : tu recevras un message privé dès que c'est bon. 🤙",
-  boutonRejoindre: "Rejoindre la communauté",
 
   // Modal
   labelSource: "Comment as-tu connu ce Discord ?",
@@ -346,8 +337,7 @@ export const TEXTES = {
 
   // DM et confirmations onboarding
   dmBienvenue: (serveur: string) =>
-    `Salut ! 👋 Bienvenue sur **${serveur}**.\nPour accéder au serveur, réponds au questionnaire dans le salon de vérification (bouton "Rejoindre la communauté"). Ça prend 30 secondes, et le Staff valide ta demande dans la foulée. À tout de suite ! 🎪`,
-  pingVerification: (userId: string) => `Hey <@${userId}> ! Clique sur le bouton ci-dessus pour rejoindre la communauté 👆`,
+    `Salut ! 👋 Bienvenue sur **${serveur}**.\nTon profil choisi à l'arrivée débloque tes accès. Si tu as coché bénévole, artiste ou partenaire, le Staff confirme ton rôle très vite. En attendant, viens dire bonjour dans le général ! 🎪`,
   soumissionRecue: "🎉 C'est envoyé ! Le Staff regarde ta demande très vite : tu recevras un message privé dès que c'est validé.",
   soumissionDejaEnCours: "Tu as déjà une demande en cours d'examen : le Staff s'en occupe, encore un peu de patience ! 🙏",
   soumissionEpuisee: "Tu as déjà utilisé ta seconde chance après un refus. Contacte directement un membre du Staff si tu penses qu'il y a une erreur.",
@@ -359,13 +349,6 @@ export const TEXTES = {
     `👋 Le Staff a une petite question avant de valider ta demande :\n> ${question}\nRéponds directement à un membre du Staff ou refais le questionnaire en complétant ta réponse !`,
   bienvenueGeneral: (userId: string, profil: string) =>
     `🎪 Faites du bruit pour <@${userId}> qui rejoint la communauté en tant que **${profil}** ! Bienvenue ! 🥳`,
-
-  // Rappels vérification
-  dmRappel48h:
-    "👋 Hey, on a vu que tu n'as pas encore fait le questionnaire d'entrée de La Java ! Ça prend 30 secondes dans le salon de vérification. Sans validation, tu n'as accès à rien : dommage de rater ça 😉",
-  dmAvertissementKick:
-    "⏳ Dernier rappel ! Sans questionnaire rempli d'ici **demain**, tu seras automatiquement retiré du serveur (tu pourras revenir avec une nouvelle invitation). Le questionnaire est dans le salon de vérification 🙏",
-  raisonKick: "Non vérifié depuis plus de 7 jours",
 
   // Séquence bénévole (J+0 / J+1 / J+2)
   dmSequenceBenevole: [

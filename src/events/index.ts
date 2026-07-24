@@ -28,18 +28,8 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       if (membre.user.bot) return;
       await surveillerArrivee(membre.guild);
 
-      // Rôle par défaut : Non vérifié (accès limité à ACCUEIL)
-      const nonVerifie = role(membre.guild, "nonVerifie");
-      if (nonVerifie) await membre.roles.add(nonVerifie.id, "Arrivée sur le serveur").catch(() => {});
-
-      // DM de bienvenue + ping dans #verification
+      // Les rôles sont attribués par l'onboarding natif Discord.
       await dmSur(membre, TEXTES.dmBienvenue(membre.guild.name));
-      const verification = salonTexte(membre.guild, "verification");
-      if (verification) {
-        const ping = await verification.send(TEXTES.pingVerification(membre.id)).catch(() => null);
-        // On nettoie le ping après 5 min pour garder le salon lisible
-        if (ping) setTimeout(() => ping.delete().catch(() => {}), 5 * 60_000);
-      }
 
       await log(membre.guild, "📥 Arrivée", `<@${membre.id}> (${membre.user.username}) a rejoint le serveur. Compte créé <t:${Math.floor(membre.user.createdTimestamp / 1000)}:R>.`);
     } catch (err) {

@@ -201,16 +201,6 @@ async function posterMessages(guild: Guild): Promise<void> {
     await bienvenue.send({ embeds: [embed] });
   }
 
-  // #verification : bouton questionnaire
-  const verification = salonTexte(guild, "verification");
-  if (verification && !(await dejaPoste(verification.id, guild))) {
-    const embed = new EmbedBuilder().setTitle(TEXTES.verificationTitre).setDescription(TEXTES.verificationCorps).setColor(COULEURS.succes);
-    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder().setCustomId("btn_rejoindre").setLabel(TEXTES.boutonRejoindre).setEmoji("🎪").setStyle(ButtonStyle.Success)
-    );
-    await verification.send({ embeds: [embed], components: [row] });
-  }
-
   // #billetterie : bouton ticket
   const billetterie = salonTexte(guild, "billetterie");
   if (billetterie && !(await dejaPoste(billetterie.id, guild))) {
@@ -281,10 +271,3 @@ export function salonsMasques(): { cle: keyof typeof SALONS; nom: string }[] {
   return out;
 }
 
-/** Verrouille/déverrouille #verification (lockdown anti-raid). */
-export async function verrouillerVerification(guild: Guild, verrouiller: boolean): Promise<void> {
-  const nonVerifie = roleParNom(guild, ROLES.nonVerifie.nom);
-  const canal = guild.channels.cache.find((c) => c.name === SALONS.verification);
-  if (!canal || !nonVerifie || !("permissionOverwrites" in canal)) return;
-  await canal.permissionOverwrites.edit(nonVerifie.id, { ViewChannel: !verrouiller });
-}

@@ -358,37 +358,3 @@ async function mettreAJourEmbed(
 }
 
 // ---------- 4. Rappels et kick automatique des Non vérifiés ----------
-export async function traiterNonVerifies(guildParam: import("discord.js").Guild): Promise<{ rappels: number; avertis: number; kicks: number }> {
-  const guild = guildParam;
-  const stats = { rappels: 0, avertis: 0, kicks: 0 };
-  const nonVerifie = role(guild, "nonVerifie");
-  if (!nonVerifie) return stats;
-
-  await guild.members.fetch().catch(() => {});
-  const maintenant = Date.now();
-
-  for (const membre of nonVerifie.members.values()) {
-    if (!membre.joinedTimestamp || membre.user.bot) continue;
-    const heures = (maintenant - membre.joinedTimestamp) / 3_600_000;
-    const jours = heures / 24;
-    const suivi = db.prepare("SELECT * FROM rappels_verif WHERE userId = ?").get(membre.id) as { rappele: number; averti: number } | undefined;
-
-    if (jours >= DELAIS.kickVerifJours) {
-      // Kick après 7 jours (l'avertissement J-1 a été envoyé avant)
-      await dmSur(membre, TEXTES.dmAvertissementKick);
-      await membre.kick(TEXTES.raisonKick).catch(() => {});
-      db.prepare("DELETE FROM rappels_verif WHERE userId = ?").run(membre.id);
-      stats.kicks++;
-      await log(guild, "👢 Kick automatique", `<@${membre.id}> retiré : ${TEXTES.raisonKick}.`, "alerte");
-    } else if (jours >= DELAIS.avertissementKickJours && !suivi?.averti) {
-      await dmSur(membre, TEXTES.dmAvertissementKick);
-      db.prepare("INSERT INTO rappels_verif (userId, rappele, averti) VALUES (?, 1, 1) ON CONFLICT(userId) DO UPDATE SET averti = 1").run(membre.id);
-      stats.avertis++;
-    } else if (heures >= DELAIS.rappelVerifHeures && !suivi?.rappele) {
-      await dmSur(membre, TEXTES.dmRappel48h);
-      db.prepare("INSERT INTO rappels_verif (userId, rappele, averti) VALUES (?, 1, 0) ON CONFLICT(userId) DO UPDATE SET rappele = 1").run(membre.id);
-      stats.rappels++;
-    }
-  }
-  return stats;
-}
