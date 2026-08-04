@@ -68,7 +68,7 @@ export const BADGES: Record<number, { couleur: number }> = {
 // photos…) sont posés en overwrites par scripts/serveur-maj.mjs ; les
 // avantages "humains" (billetterie en avance, giveaways) sont gérés par le Staff.
 export const PALIERS_XP: { seuil: number; nom: string; couleur: number; avantages: string[] }[] = [
-  { seuil: 0, nom: "Nouveau dans la Zone", couleur: 0xbdc3c7, avantages: [] },
+  { seuil: 0, nom: "Nouveau à la Java", couleur: 0xbdc3c7, avantages: [] },
   {
     seuil: 150, nom: "Premier Kick", couleur: 0x74b9ff,
     avantages: ["Participation aux sondages communautaires", "Annonces et line-up en avant-première (48h avant les réseaux)"],
@@ -78,12 +78,12 @@ export const PALIERS_XP: { seuil: number; nom: string; couleur: number; avantage
     avantages: ["Accès au vocal Afters", "Accès au salon vos-photos-videos"],
   },
   {
-    seuil: 1500, nom: "Pilier de Zone", couleur: 0xe67e22,
+    seuil: 1500, nom: "Pilier de la Java", couleur: 0xe67e22,
     avantages: ["Billetterie en avance (48h)", "Giveaways merch", "Création de fils de discussion"],
   },
   {
     seuil: 4000, nom: "Légende de La Java", couleur: 0xffd32a,
-    avantages: ["Tarif préférentiel sur les événements Dans La Zone", "Ton nom au panthéon du serveur"],
+    avantages: ["Tarif préférentiel sur nos autres événements", "Ton nom au panthéon du serveur"],
   },
 ];
 
