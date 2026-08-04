@@ -4,17 +4,17 @@
 // ============================================================
 
 import { AuditLogEvent, Client, EmbedBuilder, Events, Message, PartialMessage } from "discord.js";
-import { COULEURS, DOMAINES_SUSPECTS, TEXTES } from "../config/config.js";
-import { db } from "../db/database.js";
+import { COULEURS, DOMAINES_SUSPECTS, ROLE_ATTENTE, SALONS, TEXTES } from "../config/config.js";
+import { db, kvSet } from "../db/database.js";
 import { surveillerArrivee } from "../services/antiraid.js";
 import { log, logErreur } from "../services/logs.js";
 import {
-  boutonApprouver, boutonPlusInfos, boutonRefuser, modalPlusInfos, modalRefus,
-  ouvrirQuestionnaire, selectionRoles, soumettreQuestionnaire,
+  approuverProfilDemande, boutonApprouver, boutonPlusInfos, boutonRefuser, modalPlusInfos, modalRefus,
+  ouvrirQuestionnaire, selectionRoles, signalerDemandeValidation, soumettreQuestionnaire,
 } from "../services/onboarding.js";
 import { ouvrirTicket } from "../services/tickets.js";
 import { xpMessage, xpReaction } from "../services/xp.js";
-import { dmSur, estStaff, role, salonTexte } from "../services/util.js";
+import { dmSur, estStaff, role, roleParNom, salonTexte } from "../services/util.js";
 import type { Commande } from "../commands/types.js";
 
 // Détection d'invitations Discord tierces et de liens suspects (raccourcisseurs, grabbers)
@@ -63,6 +63,11 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
         ...retires.map((r) => `➖ ${r.name}`),
       ].join(" • ");
       await log(apres.guild, "🎭 Rôles modifiés", `<@${apres.id}> : ${details}`);
+
+      // Candidature : le questionnaire natif vient de poser le rôle d'attente → demande au Staff
+      if (ajoutes.some((r) => r.name === ROLE_ATTENTE.nom)) {
+        await signalerDemandeValidation(apres);
+      }
     } catch (err) {
       console.error("guildMemberUpdate :", err);
     }
@@ -89,14 +94,24 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
     }
   });
 
-  // ---------- XP sur les réactions ----------
+  // ---------- Réactions : acceptation des règles (post bienvenue) + XP ----------
   client.on(Events.MessageReactionAdd, async (reaction, user) => {
     try {
       if (user.bot) return;
-      const guild = reaction.message.guild;
-      if (!guild) return;
+      if (reaction.partial) await reaction.fetch().catch(() => null);
+      const message = reaction.message.partial ? await reaction.message.fetch().catch(() => null) : reaction.message;
+      if (!message?.guild) return;
+      const guild = message.guild;
       const membre = await guild.members.fetch(user.id).catch(() => null);
-      if (membre) await xpReaction(membre);
+      if (!membre) return;
+
+      // Réaction sur le post de bienvenue du bot = règles lues (affiché dans la candidature)
+      if ("name" in message.channel && message.channel.name === SALONS.bienvenue && message.author?.id === client.user?.id) {
+        kvSet(`regles:${membre.id}`, "1");
+        await log(guild, "🎪 Règles acceptées", `<@${membre.id}> a réagi au post de bienvenue.`);
+      }
+
+      await xpReaction(membre);
     } catch (err) {
       await logErreur(reaction.message.guild ?? null, "messageReactionAdd", err);
     }
@@ -145,6 +160,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
         const id = interaction.customId;
         if (id === "btn_rejoindre") return void (await ouvrirQuestionnaire(interaction));
         if (id === "btn_ticket") return void (await ouvrirTicket(interaction));
+        if (id.startsWith("ob_apd:")) return void (await approuverProfilDemande(interaction));
         if (id.startsWith("ob_ap:")) return void (await boutonApprouver(interaction));
         if (id.startsWith("ob_rf:")) return void (await boutonRefuser(interaction));
         if (id.startsWith("ob_mi:")) return void (await boutonPlusInfos(interaction));

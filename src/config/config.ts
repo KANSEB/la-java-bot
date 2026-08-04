@@ -68,13 +68,13 @@ export const BADGES: Record<number, { couleur: number }> = {
 // photos…) sont posés en overwrites par scripts/serveur-maj.mjs ; les
 // avantages "humains" (billetterie en avance, giveaways) sont gérés par le Staff.
 export const PALIERS_XP: { seuil: number; nom: string; couleur: number; avantages: string[] }[] = [
-  { seuil: 0, nom: "Nouveau à la Java", couleur: 0xbdc3c7, avantages: [] },
+  { seuil: 0, nom: "Nouveau", couleur: 0xbdc3c7, avantages: [] },
   {
-    seuil: 150, nom: "Premier Kick", couleur: 0x74b9ff,
+    seuil: 150, nom: "Habitué", couleur: 0x74b9ff,
     avantages: ["Participation aux sondages communautaires", "Annonces et line-up en avant-première (48h avant les réseaux)"],
   },
   {
-    seuil: 500, nom: "Enfant de la Fosse", couleur: 0xa29bfe,
+    seuil: 500, nom: "Fêtard", couleur: 0xa29bfe,
     avantages: ["Accès au vocal Afters", "Accès au salon vos-photos-videos"],
   },
   {
@@ -82,12 +82,27 @@ export const PALIERS_XP: { seuil: number; nom: string; couleur: number; avantage
     avantages: ["Billetterie en avance (48h)", "Giveaways merch", "Création de fils de discussion"],
   },
   {
-    seuil: 4000, nom: "Légende de La Java", couleur: 0xffd32a,
+    seuil: 4000, nom: "Légende de la Java", couleur: 0xffd32a,
     avantages: ["Tarif préférentiel sur nos autres événements", "Ton nom au panthéon du serveur"],
   },
 ];
 
 export const ROLE_BENEVOLE_DU_MOIS = { nom: "Bénévole du Mois", couleur: 0xff3f34 };
+
+// Rôle posé par l'onboarding natif Discord sur TOUTE nouvelle candidature.
+// Le bot le surveille : dès qu'un membre le reçoit, une demande part dans #validation-demandes.
+export const ROLE_ATTENTE = { nom: "⏳ En attente de validation" };
+
+// Marqueurs de profil : le questionnaire natif pose "En attente" + un marqueur,
+// pour que le Staff voie le profil demandé et l'approuve en un clic.
+export const CANDIDATURES: { marqueur: string; profil: string; emoji: string; roleKey: keyof typeof ROLES | null }[] = [
+  { marqueur: "Candidat Bénévole", profil: "Bénévole", emoji: "🙌", roleKey: "benevoleEdition" },
+  { marqueur: "Candidat Référent", profil: "Référent", emoji: "🧭", roleKey: "referent" },
+  { marqueur: "Candidat Artiste", profil: "Artiste programmé", emoji: "🎤", roleKey: "artiste" },
+  { marqueur: "Candidat Artiste Communauté", profil: "Artiste (communauté)", emoji: "🎧", roleKey: "artisteCommunaute" },
+  { marqueur: "Candidat Partenaire", profil: "Partenaire", emoji: "🤝", roleKey: "partenaire" },
+  { marqueur: "Candidat Curieux", profil: "Curieux - Public", emoji: "👀", roleKey: null },
+];
 
 // ---------- XP ----------
 export const XP = {
@@ -156,10 +171,11 @@ export type TypeSalon = "texte" | "annonce" | "forum" | "media" | "vocal" | "sta
 export interface SalonDef {
   cle: keyof typeof SALONS;
   type: TypeSalon;
-  lectureSeule?: boolean; // écriture Staff/Référent uniquement
-  cache?: boolean;        // créé masqué, révélable via /ouvrir-salon
+  lectureSeule?: boolean;   // écriture Staff/Référent uniquement
+  cache?: boolean;          // créé masqué, révélable via /ouvrir-salon
+  visiblePublic?: boolean;  // visible par les non-validés (salons par défaut de l'onboarding natif, min 7)
   sujet?: string;
-  tags?: string[];        // forums uniquement
+  tags?: string[];          // forums uniquement
 }
 
 export interface CategorieDef {
@@ -181,19 +197,19 @@ export const STRUCTURE: CategorieDef[] = [
     nom: "📢 ACTU",
     acces: "public",
     salons: [
-      { cle: "annonces", type: "annonce", lectureSeule: true, sujet: "Les annonces officielles de La Java" },
-      { cle: "lineUp", type: "annonce", lectureSeule: true, sujet: "La programmation, artiste par artiste" },
-      { cle: "actuServeur", type: "texte", lectureSeule: true, sujet: "Changelog du Discord : nouveautés, salons ouverts" },
-      { cle: "presse", type: "texte", lectureSeule: true, cache: true, sujet: "Articles, interviews et retombées presse" },
+      { cle: "annonces", type: "annonce", lectureSeule: true, visiblePublic: true, sujet: "Les annonces officielles de La Java" },
+      { cle: "lineUp", type: "annonce", lectureSeule: true, visiblePublic: true, sujet: "La programmation, artiste par artiste" },
+      { cle: "actuServeur", type: "texte", lectureSeule: true, visiblePublic: true, sujet: "Changelog du Discord : nouveautés, salons ouverts" },
+      { cle: "presse", type: "texte", lectureSeule: true, visiblePublic: true, sujet: "Articles, interviews et retombées presse" },
     ],
   },
   {
     nom: `🎪 LA JAVA ${EDITION.annee}`,
     acces: "public",
     salons: [
-      { cle: "general", type: "texte", sujet: "Le bar principal de la communauté : parle de tout ici" },
-      { cle: "presentations", type: "texte", sujet: "Présente-toi : qui tu es, d'où tu viens, ce que tu écoutes" },
-      { cle: "billetterie", type: "texte", lectureSeule: true, sujet: "Questions billetterie : ouvre un ticket avec le bouton" },
+      { cle: "general", type: "texte", visiblePublic: true, sujet: "Le bar principal de la communauté : parle de tout ici" },
+      { cle: "presentations", type: "texte", visiblePublic: true, sujet: "Présente-toi : qui tu es, d'où tu viens, ce que tu écoutes" },
+      { cle: "billetterie", type: "texte", lectureSeule: true, visiblePublic: true, sujet: "Questions billetterie : ouvre un ticket avec le bouton" },
       { cle: "covoiturage", type: "texte", sujet: "Propose ou cherche un covoit' pour La Java : précise ta ville de départ !" },
       { cle: "photos", type: "texte", cache: true, sujet: "Vos plus beaux souvenirs en photo et vidéo" },
     ],
@@ -291,38 +307,38 @@ export const QUESTIONNAIRE = {
 // ---------- Tous les textes visibles par les utilisateurs ----------
 export const TEXTES = {
   // Accueil / règles
-  bienvenueTitre: "🎪 Bienvenue sur La Java !",
+  emojiDeblocage: "🎪", // réaction sur le post de bienvenue qui débloque les salons Membre
+  bienvenueTitre: "🎪 Bienvenue sur le Discord de La Java !",
   bienvenueCorps: [
-    "Salut et bienvenue sur le Discord de **La Java**, le festival de **DANS LA ZONE** ! 🎶",
-    "",
-    "**Ici, on est là pour :** vivre le festival avant, pendant et après • organiser les bénévoles • accueillir les artistes • partager des sons, des covoits et des souvenirs.",
+    "Salut ! Ici, c'est le **QG en ligne de la communauté La Java** 🎶 On y vit toute l'année : discussions, entraide, sons, covoits, orga bénévole… et bien sûr le festival quand la saison arrive.",
     "",
     "━━━━━ 🧭 **COMMENT MARCHE CE SERVEUR** ━━━━━",
     "",
-    "🚪 **À ton arrivée**, un petit questionnaire te demande ton profil (curieux·se, bénévole, artiste, partenaire…) : il débloque tes accès. Les profils bénévole/artiste/partenaire sont confirmés par le Staff.",
-    "📣 **Les infos officielles** tombent dans les salons annonces et line-up. Le reste, c'est à toi de le faire vivre dans le général !",
-    "⭐ **Plus tu participes, plus tu montes de niveau** : messages, réactions et vocaux te font gagner de l'XP qui débloque de vrais avantages (billetterie en avance, giveaways, salons secrets…). Détails épinglés dans le général.",
-    "🎫 **Un souci billetterie ?** Ouvre un ticket dans le salon billetterie.",
+    "🚪 **À ton arrivée**, le questionnaire Discord te demande ton profil (curieux·se, bénévole, artiste, partenaire…) : c'est ta candidature. **Chaque demande est validée par le Staff** — en attendant, tu peux lire les salons publics mais pas encore écrire.",
+    "🎪 **Réagis avec 🎪 sous ce message** pour confirmer que tu as lu les règles : le Staff le voit dans ta candidature.",
+    "📣 **Les infos officielles** tombent dans annonces et line-up. Le reste, c'est à toi de le faire vivre dans le général !",
+    "⭐ **Plus tu participes** (messages, réactions, vocaux), plus tu gagnes d'XP et montes de niveau : salons secrets, billetterie en avance, giveaways… Détails épinglés dans le général.",
+    "🎫 **Une question, un souci ?** Ouvre un ticket dans le salon billetterie : c'est privé, seul le Staff le voit.",
     "",
-    "━━━━━ 🌈 **LA CHARTE DE LA JAVA** ━━━━━",
+    "━━━━━ 🌈 **LES RÈGLES DU SERVEUR** ━━━━━",
     "",
-    "**1. Bienveillance d'abord.** Tout le monde est le/la bienvenu·e. Zéro tolérance pour le harcèlement, les discriminations (racisme, sexisme, LGBTQIA+phobies, validisme…) et les comportements toxiques : ici comme sur le site du festival.",
+    "**1. Bienveillance d'abord.** Tout le monde est le/la bienvenu·e. Zéro tolérance pour le harcèlement, les discriminations (racisme, sexisme, LGBTQIA+phobies, validisme…) et les comportements toxiques — ici comme sur le site du festival.",
     "",
-    "**2. Le consentement, tout le temps.** Pour une photo, un contact, une danse : on demande, et un non est un non. Pas de partage d'images où quelqu'un est reconnaissable sans son accord.",
+    "**2. Consentement et droit à l'image.** Pas de partage de photos ou vidéos où quelqu'un est reconnaissable sans son accord, ni ici ni ailleurs. Un non est un non.",
     "",
-    "**3. Prends soin de toi et des autres.** La fête est réussie quand tout le monde rentre entier. Quelqu'un va mal, ici ou sur site ? On ne juge pas, on aide : préviens le Staff ou ouvre un ticket.",
+    "**3. Pas de spam ni de pub sauvage.** Pas de revente de billets hors canaux officiels, pas de contenu choquant ou illégal.",
     "",
-    "**4. Respect du lieu et de la planète.** Le site, le matos, la nature : on en prend soin et on ne laisse aucune trace derrière nous.",
+    "**4. La modération se discute en DM** avec le Staff, jamais en public dans les salons.",
     "",
-    "**5. Sur ce Discord.** Pas de spam ni de pub sauvage, pas de revente de billets hors canaux officiels, pas de contenu choquant ou illégal. Une décision de modération se discute en DM avec le Staff, pas en public.",
+    "**5. Prends soin des autres.** Quelqu'un va mal, ici ou sur site ? On ne juge pas, on aide : préviens le Staff ou ouvre un ticket.",
     "",
     "**6. Backstage.** Ce qui se passe backstage reste backstage 😉",
     "",
-    "🆘 **Un souci, un doute, un signalement ?** Ouvre un ticket dans la billetterie ou écris directement à un membre du Staff : c'est confidentiel.",
+    "🆘 **Un doute, un signalement ?** Ticket dans la billetterie ou DM à un membre du Staff : c'est confidentiel.",
     "",
-    "**RGPD :** en répondant au questionnaire, tu acceptes que tes réponses soient conservées par l'équipe pour gérer la communauté. Tu peux demander leur suppression à tout moment auprès du Staff (commande `/oublier-membre`).",
+    "**RGPD :** en répondant au questionnaire, tu acceptes que tes réponses soient conservées par l'équipe pour gérer la communauté. Tu peux demander leur suppression à tout moment auprès du Staff.",
     "",
-    "➡️ Le questionnaire d'arrivée de Discord te demande ton profil : il débloque tes accès. Bonne Java !",
+    "🎪 **Dernière étape : réagis 🎪 juste en dessous pour confirmer ta lecture des règles. Le Staff valide ta demande très vite — bonne Java !**",
   ].join("\n"),
 
   // Modal

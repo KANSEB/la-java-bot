@@ -9,6 +9,9 @@ import { Client, GatewayIntentBits, Partials } from "discord.js";
 import { assertEnv } from "./services/util.js";
 import "./db/database.js"; // initialise la base + migrations au chargement
 import { demarrerCrons, majCountdown } from "./services/crons.js";
+import { signalerDemandeValidation } from "./services/onboarding.js";
+import { roleParNom } from "./services/util.js";
+import { ROLE_ATTENTE } from "./config/config.js";
 import { enregistrerEvenements } from "./events/index.js";
 import type { Commande } from "./commands/types.js";
 
@@ -58,6 +61,22 @@ client.once("clientReady", async () => {
   demarrerCrons(client);
   // Compte à rebours mis à jour dès le démarrage (sans attendre le cron de 9h)
   await majCountdown(guild).catch((err) => console.error("countdown initial :", err));
+
+  // Rattrapage : candidatures en attente jamais signalées au Staff (bot hors ligne, bug...)
+  try {
+    await guild.members.fetch();
+    const attente = roleParNom(guild, ROLE_ATTENTE.nom);
+    let signalees = 0;
+    if (attente) {
+      for (const membre of attente.members.values()) {
+        await signalerDemandeValidation(membre); // dédupliqué en interne via kv
+        signalees++;
+      }
+    }
+    console.log(`[onboarding] rattrapage : ${signalees} candidature(s) en attente vérifiée(s)`);
+  } catch (err) {
+    console.error("rattrapage candidatures :", err);
+  }
 });
 
 // Filets de sécurité : le bot ne crashe jamais sur une promesse oubliée

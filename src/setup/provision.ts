@@ -93,23 +93,27 @@ export function overwritesPour(
   const staff = roles.get("staff");
   const referent = roles.get("referent");
   const membre = roles.get("membre");
-  const nonVerifie = roles.get("nonVerifie");
-  const ow: OverwriteResolvable[] = [{ id: everyone, deny: [VOIR] }];
+  const ow: OverwriteResolvable[] = [];
 
   // Salon masqué : visible Staff uniquement tant qu'il n'est pas révélé
   if (salonDef.cache && !ignorerCache) {
+    ow.push({ id: everyone, deny: [VOIR] });
     if (staff) ow.push({ id: staff.id, allow: [VOIR, ...ECRIRE, ...VOCAL] });
     return ow;
   }
 
   const lectureSeule = salonDef.lectureSeule === true;
 
-  if (cat.acces === "accueil") {
-    // ACCUEIL : Non vérifié voit mais n'écrit pas ; les membres validés ne le voient plus
-    if (nonVerifie) ow.push({ id: nonVerifie.id, allow: [VOIR], deny: ECRIRE });
+  if (cat.acces === "accueil" || salonDef.visiblePublic) {
+    // Visible par tous (exigé par l'onboarding natif : min 7 salons par défaut),
+    // mais seuls les Membres validés écrivent. Les réactions restent ouvertes (candidature 🎪).
+    ow.push({ id: everyone, allow: [VOIR, P.AddReactions], deny: ECRIRE });
+    if (membre && !lectureSeule && cat.acces !== "accueil") ow.push({ id: membre.id, allow: [VOIR, ...ECRIRE] });
   } else if (cat.acces === "public") {
+    ow.push({ id: everyone, deny: [VOIR] });
     if (membre) ow.push({ id: membre.id, allow: [VOIR, ...(lectureSeule ? [] : ECRIRE), ...VOCAL], deny: lectureSeule ? ECRIRE : [] });
   } else {
+    ow.push({ id: everyone, deny: [VOIR] });
     for (const cle of cat.acces) {
       const r = roles.get(cle);
       if (r) ow.push({ id: r.id, allow: [VOIR, ...(lectureSeule ? [] : ECRIRE), ...VOCAL], deny: lectureSeule ? ECRIRE : [] });
