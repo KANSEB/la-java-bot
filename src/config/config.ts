@@ -13,6 +13,7 @@ export const EDITION = {
   // Date de l'événement (ISO) : pilote le compte à rebours et l'auto-archivage covoiturage
   dateEvenement: "2026-08-28",
   villesDepart: ["Paris", "Quimper", "Rennes", "Nantes"],
+  lienBilletterie: "https://www.billetweb.fr/la-java-ete-festival",
 };
 
 // ---------- Rôles fonctionnels (ordre hiérarchique, du plus haut au plus bas) ----------
@@ -388,8 +389,15 @@ export const TEXTES = {
     `🌟 **Bénévole du Mois** 🌟\nBravo <@${userId}> ! ${texte}\nLe rôle ✨ est à toi pour 30 jours : porte-le fièrement !`,
 
   // Tickets
-  billetterieTitre: "🎟 Billetterie & Support",
-  billetterieCorps: "Un souci avec ta commande, une question sur les tarifs, un remboursement ?\nOuvre un ticket privé : seul le Staff verra ta demande.",
+  billetterieTitre: "🎫 Billetterie La Java",
+  billetterieCorps: [
+    `🎟 **Prends ta place ici, et nulle part ailleurs :**\n👉 ${EDITION.lienBilletterie}`,
+    "",
+    "**Une question, un souci de commande, un remboursement ?**",
+    "Ouvre un ticket avec le bouton ci-dessous : un fil privé s'ouvre avec le Staff, personne d'autre ne voit vos échanges.",
+    "",
+    "⚠️ **Aucune revente hors canaux officiels** : les annonces de revente sauvage sont supprimées et leurs auteurs sanctionnés.",
+  ].join("\n"),
   boutonTicket: "Ouvrir un ticket",
   ticketOuvert: (userId: string, staffRoleId: string) =>
     `✉️ Ticket ouvert par <@${userId}> : <@&${staffRoleId}> est prévenu.\nExplique-nous ta demande, on te répond au plus vite !`,
