@@ -48,14 +48,20 @@ export async function ajouterXp(membre: GuildMember, points: number, motif?: str
 
   const palierAvant = palierPour(avant);
   const palierApres = palierPour(apres);
-  if (palierApres.nom !== palierAvant.nom) {
-    // Remplace l'ancien rôle de palier par le nouveau
+  const roleApres = roleParNom(membre.guild, palierApres.nom);
+
+  // Synchronise le rôle dès qu'il manque (nouveau membre, rôle retiré à la main...),
+  // pas uniquement lors d'un franchissement de seuil.
+  if (roleApres && !membre.roles.cache.has(roleApres.id)) {
     for (const p of PALIERS_XP) {
       const r = roleParNom(membre.guild, p.nom);
       if (!r) continue;
       if (p.nom === palierApres.nom) await membre.roles.add(r.id, "Palier XP atteint").catch(() => {});
       else if (membre.roles.cache.has(r.id)) await membre.roles.remove(r.id, "Palier XP remplacé").catch(() => {});
     }
+  }
+
+  if (palierApres.nom !== palierAvant.nom) {
     await log(membre.guild, "🏆 Palier XP", `<@${membre.id}> atteint **${palierApres.nom}** (${apres} XP)${motif ? ` — ${motif}` : ""}`, "succes");
     return palierApres.nom;
   }

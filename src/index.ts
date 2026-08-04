@@ -39,7 +39,8 @@ const client = new Client({
     GatewayIntentBits.GuildVoiceStates,  // XP vocal
     GatewayIntentBits.GuildMessageReactions, // sondages
   ],
-  partials: [Partials.Message, Partials.GuildMember, Partials.Channel],
+  // Reaction/User : nécessaires pour l'XP sur les réactions aux messages non mis en cache
+  partials: [Partials.Message, Partials.GuildMember, Partials.Channel, Partials.Reaction, Partials.User],
 });
 
 enregistrerEvenements(client, registre);
