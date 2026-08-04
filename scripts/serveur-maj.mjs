@@ -189,7 +189,7 @@ if (!salonParNom(SALONS.important) && catReferents) {
 // ---------- 6. Ouverture des salons publics ----------
 console.log("\n— 6. Ouverture au public —");
 const LECTURE_SEULE = [SALONS.annonces, SALONS.lineUp, SALONS.actuServeur, SALONS.presse];
-const OUVERTS = [SALONS.bienvenue, SALONS.general, SALONS.presentations, SALONS.billetterie, SALONS.hebergement];
+const OUVERTS = [SALONS.bienvenue, SALONS.general, SALONS.presentations, SALONS.billetterie];
 const majOverwrite = async (salon, overwrite) =>
   api(`/channels/${salon.id}/permissions/${overwrite.id}`, { method: "PUT", body: JSON.stringify(overwrite) });
 for (const nom of LECTURE_SEULE) {
@@ -231,11 +231,8 @@ if (APPLY) {
 
 // ---------- 7b. Forums : tags, sujets et permissions ----------
 console.log("\n— 7b. Configuration des forums —");
+// (covoiturage est désormais un simple salon texte : géré par le provisioning)
 const FORUMS = [
-  {
-    nom: SALONS.covoiturage, sujet: "Propose ou cherche un covoit' pour La Java. Un trajet = un post, pense aux tags !",
-    tags: ["Je propose", "Je cherche", "Départ Paris", "Départ Quimper", "Départ Rennes", "Départ Nantes", "Complet"],
-  },
   {
     nom: SALONS.demos, sujet: "Balance tes prods, demande des retours. Un morceau ou un set = un post.",
     tags: ["Techno", "House", "Bass", "Live", "DJ Set", "Feedback demandé"],
