@@ -134,6 +134,7 @@ export const ANTIRAID = {
 // ---------- Noms des salons (clé interne -> nom Discord) ----------
 export const SALONS = {
   bienvenue: "👋・bienvenue",
+  guide: "📖・guide-discord",
   annonces: "📣・annonces",
   actuServeur: "🔔・actu-serveur",
   presse: "📰・presse-et-retombees",
@@ -191,6 +192,7 @@ export const STRUCTURE: CategorieDef[] = [
     acces: "accueil",
     salons: [
       { cle: "bienvenue", type: "texte", lectureSeule: true, sujet: "Règles, présentation et RGPD : commence ici !" },
+      { cle: "guide", type: "texte", lectureSeule: true, visiblePublic: true, sujet: "Nouveau sur Discord ou sur ce serveur ? Le tuto est ici" },
     ],
   },
   {
@@ -389,6 +391,40 @@ export const TEXTES = {
     `🌟 **Bénévole du Mois** 🌟\nBravo <@${userId}> ! ${texte}\nLe rôle ✨ est à toi pour 30 jours : porte-le fièrement !`,
 
   // Tickets
+  // Guide Discord (salon 📖・guide-discord, deux embeds épinglés)
+  guideDiscordTitre: "📖 Discord pour les débutants",
+  guideDiscordCorps: [
+    "Jamais utilisé Discord ? Pas de panique, 2 minutes de lecture et tu es à l'aise 👇",
+    "",
+    "🏠 **Un serveur, des salons.** Ce serveur est notre maison commune ; chaque salon (la liste à gauche) est une pièce avec son thème. Le `#💬・general`, c'est le bar : on y parle de tout.",
+    "",
+    "💬 **Écrire et répondre.** Tape ton message en bas du salon. Pour répondre à quelqu'un : clic droit (ou appui long sur mobile) sur son message → **Répondre**.",
+    "",
+    "😄 **Réagir.** Survole un message → l'icône émoji permet d'ajouter une réaction. C'est comme un like, et ici ça rapporte même de l'XP !",
+    "",
+    "🔔 **Les notifications.** Trop de bips ? Clic droit sur le nom du serveur → **Notifications** → *Uniquement @mentions*. Tu peux aussi mettre en sourdine un salon précis.",
+    "",
+    "🗣 **Les vocaux.** Clique sur un salon vocal (🔊) pour y entrer, re-clique sur *Raccrocher* pour sortir. Les icônes micro/casque en bas à gauche te permettent de te couper le son.",
+    "",
+    "🧵 **Les fils.** Une discussion qui part loin ? Clic droit sur un message → **Créer un fil** : ça ouvre une mini-conversation sans envahir le salon.",
+    "",
+    "📱 **Sur mobile.** Balaye vers la droite pour afficher la liste des salons, vers la gauche pour voir qui est en ligne.",
+  ].join("\n"),
+  guideServeurTitre: "🎪 Ce serveur, mode d'emploi",
+  guideServeurCorps: [
+    "**🚪 Ton arrivée.** Tu as répondu au questionnaire en entrant : c'est ta candidature. Le Staff la valide (en général très vite) et le serveur s'ouvre : nouveaux salons, écriture débloquée. Pense à réagir 🎪 au message de bienvenue pour montrer que tu as lu les règles !",
+    "",
+    "**⭐ Les niveaux.** Participer (messages, réactions, vocaux) fait gagner de l'XP : Nouveau → Habitué → Fêtard → Pilier de la Java → Légende de la Java, avec de vrais avantages à chaque palier (salons secrets, billetterie en avance, giveaways…). Le détail est épinglé dans le général. Tape `/mon-profil` pour voir où tu en es, `/classement` pour le top 20.",
+    "",
+    "**🎫 La billetterie.** Le lien officiel et le support sont dans le salon billetterie. Une question sur ta commande ? Le bouton *Ouvrir un ticket* crée une conversation privée avec le Staff.",
+    "",
+    "**🎂 Ton anniversaire.** Tape `/anniversaire jour mois` et on te fêtera dans le général le jour J.",
+    "",
+    "**🙌 Bénévoles, artistes, partenaires.** Une fois validé·e, tu as tes salons dédiés (planning, entraide, backstage, démos…). Tout ce qui te concerne y passe.",
+    "",
+    "**🆘 Besoin d'aide ?** Ticket dans la billetterie, ou DM direct à un membre du **Staff** (en rouge dans la liste des membres). On ne mord pas.",
+  ].join("\n"),
+
   billetterieTitre: "🎫 Billetterie La Java",
   billetterieCorps: [
     `🎟 **Prends ta place ici, et nulle part ailleurs :**\n👉 ${EDITION.lienBilletterie}`,

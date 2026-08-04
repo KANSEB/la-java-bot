@@ -205,6 +205,19 @@ async function posterMessages(guild: Guild): Promise<void> {
     await bienvenue.send({ embeds: [embed] });
   }
 
+  // #guide-discord : tuto Discord + mode d'emploi du serveur (2 embeds épinglés)
+  const guide = salonTexte(guild, "guide");
+  if (guide && !(await dejaPoste(guide.id, guild))) {
+    const m1 = await guide.send({
+      embeds: [new EmbedBuilder().setTitle(TEXTES.guideDiscordTitre).setDescription(TEXTES.guideDiscordCorps).setColor(COULEURS.info)],
+    });
+    const m2 = await guide.send({
+      embeds: [new EmbedBuilder().setTitle(TEXTES.guideServeurTitre).setDescription(TEXTES.guideServeurCorps).setColor(COULEURS.primaire)],
+    });
+    await m1.pin().catch(() => {});
+    await m2.pin().catch(() => {});
+  }
+
   // #billetterie : bouton ticket
   const billetterie = salonTexte(guild, "billetterie");
   if (billetterie && !(await dejaPoste(billetterie.id, guild, true))) {
