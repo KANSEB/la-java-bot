@@ -134,7 +134,6 @@ export const ANTIRAID = {
 export const SALONS = {
   bienvenue: "👋・bienvenue",
   annonces: "📣・annonces",
-  lineUp: "🎵・line-up",
   actuServeur: "🔔・actu-serveur",
   presse: "📰・presse-et-retombees",
   general: "💬・general",
@@ -197,8 +196,7 @@ export const STRUCTURE: CategorieDef[] = [
     nom: "📢 ACTU",
     acces: "public",
     salons: [
-      { cle: "annonces", type: "annonce", lectureSeule: true, visiblePublic: true, sujet: "Les annonces officielles de La Java" },
-      { cle: "lineUp", type: "annonce", lectureSeule: true, visiblePublic: true, sujet: "La programmation, artiste par artiste" },
+      { cle: "annonces", type: "annonce", lectureSeule: true, visiblePublic: true, sujet: "Les annonces officielles de La Java : infos, line-up, billetterie" },
       { cle: "actuServeur", type: "texte", lectureSeule: true, visiblePublic: true, sujet: "Changelog du Discord : nouveautés, salons ouverts" },
       { cle: "presse", type: "texte", lectureSeule: true, visiblePublic: true, sujet: "Articles, interviews et retombées presse" },
     ],
@@ -316,7 +314,7 @@ export const TEXTES = {
     "",
     "🚪 **À ton arrivée**, le questionnaire Discord te demande ton profil (curieux·se, bénévole, artiste, partenaire…) : c'est ta candidature. **Chaque demande est validée par le Staff** — en attendant, tu peux lire les salons publics mais pas encore écrire.",
     "🎪 **Réagis avec 🎪 sous ce message** pour confirmer que tu as lu les règles : le Staff le voit dans ta candidature.",
-    "📣 **Les infos officielles** tombent dans annonces et line-up. Le reste, c'est à toi de le faire vivre dans le général !",
+    "📣 **Les infos officielles** (line-up, billetterie…) tombent dans le salon annonces. Le reste, c'est à toi de le faire vivre dans le général !",
     "⭐ **Plus tu participes** (messages, réactions, vocaux), plus tu gagnes d'XP et montes de niveau : salons secrets, billetterie en avance, giveaways… Détails épinglés dans le général.",
     "🎫 **Une question, un souci ?** Ouvre un ticket dans le salon billetterie : c'est privé, seul le Staff le voit.",
     "",

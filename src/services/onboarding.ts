@@ -244,6 +244,13 @@ export async function approuverProfilDemande(interaction: ButtonInteraction<"cac
     return;
   }
 
+  // Garde anti-double traitement (deux Staff qui cliquent, vieil embed résiduel...)
+  const dossier = db.prepare("SELECT statut FROM onboarding WHERE userId = ?").get(userId) as { statut: string } | undefined;
+  if (dossier?.statut === "approuve") {
+    await interaction.editReply("✅ Cette candidature a déjà été approuvée.");
+    return;
+  }
+
   const candidature = candidatureDe(membre);
   const rolesAAjouter: string[] = [];
   const membreRole = role(guild, "membre");
@@ -277,8 +284,13 @@ export async function approuverProfilDemande(interaction: ButtonInteraction<"cac
     .run(interaction.user.id, Date.now(), userId);
 
   const dmOk = await dmSur(membre, TEXTES.dmApprouve(nomsAttribues.join(", ")));
+  // Message de bienvenue : une seule fois par membre, avec le vrai profil attribué
+  const profilAffiche = candidature?.profil ?? nomsAttribues.find((n) => n !== "Membre") ?? "Membre";
   const general = salonTexte(guild, "general");
-  if (general) await general.send(TEXTES.bienvenueGeneral(userId, candidature?.profil ?? "Membre")).catch(() => {});
+  if (general && kvGet(`bienvenue:${userId}`) !== "1") {
+    await general.send(TEXTES.bienvenueGeneral(userId, profilAffiche)).catch(() => {});
+    kvSet(`bienvenue:${userId}`, "1");
+  }
 
   await mettreAJourEmbed(interaction, interaction.message.id, "approuve", interaction.user.id);
   await interaction.editReply(`✅ <@${userId}> approuvé avec : ${nomsAttribues.join(", ")}.${dmOk ? "" : "\n⚠️ DM impossible (messages privés fermés)."}`);
@@ -334,7 +346,14 @@ export async function selectionRoles(interaction: StringSelectMenuInteraction<"c
     return;
   }
 
-  // Attribution : Membre (toujours) + rôles choisis, retrait de Non vérifié
+  // Garde anti-double traitement (deux Staff qui cliquent, vieil embed résiduel...)
+  const dossier = db.prepare("SELECT statut FROM onboarding WHERE userId = ?").get(userId) as { statut: string } | undefined;
+  if (dossier?.statut === "approuve") {
+    await interaction.editReply({ content: "✅ Cette candidature a déjà été approuvée.", components: [] });
+    return;
+  }
+
+  // Attribution : Membre (toujours) + rôles choisis
   const rolesAAjouter = new Set<string>();
   const membreRole = role(guild, "membre");
   if (membreRole) rolesAAjouter.add(membreRole.id);
@@ -377,12 +396,14 @@ export async function selectionRoles(interaction: StringSelectMenuInteraction<"c
   db.prepare("UPDATE onboarding SET statut = 'approuve', validateurId = ?, dateValidation = ? WHERE userId = ?")
     .run(interaction.user.id, Date.now(), userId);
 
-  // DM de confirmation + bienvenue publique
+  // DM de confirmation + bienvenue publique (une seule fois, avec le vrai rôle attribué)
   const dmOk = await dmSur(membre, TEXTES.dmApprouve(nomsAttribues.join(", ")));
+  const profilLabel = nomsAttribues.find((n) => n !== ROLES.membre.nom) ?? ROLES.membre.nom;
   const general = salonTexte(guild, "general");
-  const profilRow = db.prepare("SELECT roleDemande FROM onboarding WHERE userId = ?").get(userId) as { roleDemande: string } | undefined;
-  const profilLabel = QUESTIONNAIRE.profils.find((p) => p.value === profilRow?.roleDemande)?.label ?? "Membre";
-  if (general) await general.send(TEXTES.bienvenueGeneral(userId, profilLabel)).catch(() => {});
+  if (general && kvGet(`bienvenue:${userId}`) !== "1") {
+    await general.send(TEXTES.bienvenueGeneral(userId, profilLabel)).catch(() => {});
+    kvSet(`bienvenue:${userId}`, "1");
+  }
 
   await mettreAJourEmbed(interaction, messageId, "approuve", interaction.user.id);
   await interaction.editReply({

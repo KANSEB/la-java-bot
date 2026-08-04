@@ -55,7 +55,7 @@ const prompts = onboarding.prompts.map((p) => {
   };
 });
 // Salons par défaut reconstruits depuis les salons publics existants (min 7 exigé par Discord)
-const PUBLICS = [SALONS.bienvenue, SALONS.annonces, SALONS.lineUp, SALONS.actuServeur, SALONS.presse, SALONS.general, SALONS.presentations, SALONS.billetterie];
+const PUBLICS = [SALONS.bienvenue, SALONS.annonces, SALONS.actuServeur, SALONS.presse, SALONS.general, SALONS.presentations, SALONS.billetterie];
 const defaults = PUBLICS.map((n) => salonParNom(n)).filter(Boolean).map((c) => c.id);
 console.log(`Salons par défaut valides : ${defaults.length}`);
 await api(`/guilds/${GUILD}/onboarding`, {

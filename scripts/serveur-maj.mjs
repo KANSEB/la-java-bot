@@ -188,7 +188,7 @@ if (!salonParNom(SALONS.important) && catReferents) {
 
 // ---------- 6. Ouverture des salons publics ----------
 console.log("\n— 6. Ouverture au public —");
-const LECTURE_SEULE = [SALONS.annonces, SALONS.lineUp, SALONS.actuServeur, SALONS.presse];
+const LECTURE_SEULE = [SALONS.annonces, SALONS.actuServeur, SALONS.presse];
 const OUVERTS = [SALONS.bienvenue, SALONS.general, SALONS.presentations, SALONS.billetterie];
 const majOverwrite = async (salon, overwrite) =>
   api(`/channels/${salon.id}/permissions/${overwrite.id}`, { method: "PUT", body: JSON.stringify(overwrite) });
