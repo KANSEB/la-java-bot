@@ -96,14 +96,17 @@ export const ROLE_ATTENTE = { nom: "⏳ En attente de validation" };
 
 // Marqueurs de profil : le questionnaire natif pose "En attente" + un marqueur,
 // pour que le Staff voie le profil demandé et l'approuve en un clic.
+// Le profil "Festivalier" n'est PAS ici : il reçoit directement le rôle Membre.
 export const CANDIDATURES: { marqueur: string; profil: string; emoji: string; roleKey: keyof typeof ROLES | null }[] = [
   { marqueur: "Candidat Bénévole", profil: "Bénévole", emoji: "🙌", roleKey: "benevoleEdition" },
   { marqueur: "Candidat Référent", profil: "Référent", emoji: "🧭", roleKey: "referent" },
   { marqueur: "Candidat Artiste", profil: "Artiste programmé", emoji: "🎤", roleKey: "artiste" },
   { marqueur: "Candidat Artiste Communauté", profil: "Artiste (communauté)", emoji: "🎧", roleKey: "artisteCommunaute" },
   { marqueur: "Candidat Partenaire", profil: "Partenaire", emoji: "🤝", roleKey: "partenaire" },
-  { marqueur: "Candidat Curieux", profil: "Curieux - Public", emoji: "👀", roleKey: null },
 ];
+
+// Profil grand public : accès direct sans validation
+export const PROFIL_DIRECT = { titre: "Festivalier", emoji: "🎉" };
 
 // ---------- XP ----------
 export const XP = {
@@ -315,7 +318,7 @@ export const TEXTES = {
     "",
     "━━━━━ 🧭 **COMMENT MARCHE CE SERVEUR** ━━━━━",
     "",
-    "🚪 **À ton arrivée**, le questionnaire Discord te demande ton profil (curieux·se, bénévole, artiste, partenaire…) : c'est ta candidature. **Chaque demande est validée par le Staff** — en attendant, tu peux lire les salons publics mais pas encore écrire.",
+    "🚪 **À ton arrivée**, le questionnaire Discord te demande ton profil. **Festivalier·e ?** Tu entres directement ! **Bénévole, artiste ou partenaire ?** Ta demande est validée par le Staff — en attendant, tu peux lire les salons publics mais pas encore écrire.",
     "🎪 **Réagis avec 🎪 sous ce message** pour confirmer que tu as lu les règles : le Staff le voit dans ta candidature.",
     "📣 **Les infos officielles** (line-up, billetterie…) tombent dans le salon annonces. Le reste, c'est à toi de le faire vivre dans le général !",
     "⭐ **Plus tu participes** (messages, réactions, vocaux), plus tu gagnes d'XP et montes de niveau : salons secrets, billetterie en avance, giveaways… Détails épinglés dans le général.",
@@ -412,7 +415,7 @@ export const TEXTES = {
   ].join("\n"),
   guideServeurTitre: "🎪 Ce serveur, mode d'emploi",
   guideServeurCorps: [
-    "**🚪 Ton arrivée.** Tu as répondu au questionnaire en entrant : c'est ta candidature. Le Staff la valide (en général très vite) et le serveur s'ouvre : nouveaux salons, écriture débloquée. Pense à réagir 🎪 au message de bienvenue pour montrer que tu as lu les règles !",
+    "**🚪 Ton arrivée.** Le questionnaire d'entrée te demande ton profil : les festivalier·e·s entrent directement, les profils bénévole/artiste/partenaire sont validés par le Staff (en général très vite). Pense à réagir 🎪 au message de bienvenue pour montrer que tu as lu les règles !",
     "",
     "**⭐ Les niveaux.** Participer (messages, réactions, vocaux) fait gagner de l'XP : Nouveau → Habitué → Fêtard → Pilier de la Java → Légende de la Java, avec de vrais avantages à chaque palier (salons secrets, billetterie en avance, giveaways…). Le détail est épinglé dans le général. Tape `/mon-profil` pour voir où tu en es, `/classement` pour le top 20.",
     "",

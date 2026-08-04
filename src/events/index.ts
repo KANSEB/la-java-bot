@@ -4,8 +4,8 @@
 // ============================================================
 
 import { AuditLogEvent, Client, EmbedBuilder, Events, Message, PartialMessage } from "discord.js";
-import { COULEURS, DOMAINES_SUSPECTS, ROLE_ATTENTE, SALONS, TEXTES } from "../config/config.js";
-import { db, kvSet } from "../db/database.js";
+import { COULEURS, DOMAINES_SUSPECTS, PROFIL_DIRECT, ROLE_ATTENTE, ROLES, SALONS, TEXTES } from "../config/config.js";
+import { db, kvGet, kvSet } from "../db/database.js";
 import { surveillerArrivee } from "../services/antiraid.js";
 import { log, logErreur } from "../services/logs.js";
 import {
@@ -67,6 +67,18 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       // Candidature : le questionnaire natif vient de poser le rôle d'attente → demande au Staff
       if (ajoutes.some((r) => r.name === ROLE_ATTENTE.nom)) {
         await signalerDemandeValidation(apres);
+      }
+
+      // Festivalier : Membre reçu directement via le questionnaire (sans candidature)
+      // → message de bienvenue public. Les parcours validés (attente_notifie) sont gérés à l'approbation.
+      if (
+        ajoutes.some((r) => r.name === ROLES.membre.nom) &&
+        kvGet(`attente_notifie:${apres.id}`) !== "1" &&
+        kvGet(`bienvenue:${apres.id}`) !== "1"
+      ) {
+        kvSet(`bienvenue:${apres.id}`, "1");
+        const general = salonTexte(apres.guild, "general");
+        if (general) await general.send(TEXTES.bienvenueGeneral(apres.id, PROFIL_DIRECT.titre)).catch(() => {});
       }
     } catch (err) {
       console.error("guildMemberUpdate :", err);
