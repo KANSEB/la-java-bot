@@ -9,6 +9,7 @@ import { Client, GatewayIntentBits, Partials } from "discord.js";
 import { assertEnv } from "./services/util.js";
 import "./db/database.js"; // initialise la base + migrations au chargement
 import { demarrerCrons, majCountdown } from "./services/crons.js";
+import { rattraperMembresSansRole } from "./services/onboarding.js";
 import { enregistrerEvenements } from "./events/index.js";
 import type { Commande } from "./commands/types.js";
 
@@ -57,6 +58,9 @@ client.once("clientReady", async () => {
   demarrerCrons(client);
   // Compte à rebours mis à jour dès le démarrage (sans attendre le cron de 9h)
   await majCountdown(guild).catch((err) => console.error("countdown initial :", err));
+  // Rattrapage : membres arrivés pendant que le bot était hors ligne
+  const rattrapes = await rattraperMembresSansRole(guild).catch(() => 0);
+  console.log(`[onboarding] rattrapage au démarrage : ${rattrapes} membre(s)`);
 });
 
 // Filets de sécurité : le bot ne crashe jamais sur une promesse oubliée

@@ -114,9 +114,9 @@ async function archiverCovoitSiFini(guild: Guild): Promise<void> {
   if (kvGet("covoitArchive") === "1") return;
   if (joursAvant(EDITION.dateEvenement) > -DELAIS.archivageCovoitJoursApresEvent) return;
 
-  const forum = guild.channels.cache.find((c) => c.name === SALONS.covoiturage && c.type === ChannelType.GuildForum);
-  if (!forum || forum.type !== ChannelType.GuildForum) return;
-  await forum.permissionOverwrites.edit(guild.roles.everyone.id, { SendMessages: false, SendMessagesInThreads: false, CreatePublicThreads: false }).catch(() => {});
+  const covoit = guild.channels.cache.find((c) => c.name === SALONS.covoiturage);
+  if (!covoit || !("permissionOverwrites" in covoit)) return;
+  await covoit.permissionOverwrites.edit(guild.roles.everyone.id, { SendMessages: false, SendMessagesInThreads: false, CreatePublicThreads: false }).catch(() => {});
   kvSet("covoitArchive", "1");
   await log(guild, "🚗 Covoiturage archivé", `Le forum covoiturage est verrouillé (${DELAIS.archivageCovoitJoursApresEvent} jours après l'événement).`);
 }

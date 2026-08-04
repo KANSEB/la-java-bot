@@ -194,7 +194,7 @@ async function creerSalons(guild: Guild, roles: Map<string, Role>, rapport: Rapp
 async function posterMessages(guild: Guild): Promise<void> {
   const { salonTexte } = await import("../services/util.js");
 
-  // #bienvenue : règles + RGPD
+  // #bienvenue : règles + RGPD (message sans bouton)
   const bienvenue = salonTexte(guild, "bienvenue");
   if (bienvenue && !(await dejaPoste(bienvenue.id, guild))) {
     const embed = new EmbedBuilder().setTitle(TEXTES.bienvenueTitre).setDescription(TEXTES.bienvenueCorps).setColor(COULEURS.primaire);
@@ -203,7 +203,7 @@ async function posterMessages(guild: Guild): Promise<void> {
 
   // #verification : bouton questionnaire
   const verification = salonTexte(guild, "verification");
-  if (verification && !(await dejaPoste(verification.id, guild))) {
+  if (verification && !(await dejaPoste(verification.id, guild, true))) {
     const embed = new EmbedBuilder().setTitle(TEXTES.verificationTitre).setDescription(TEXTES.verificationCorps).setColor(COULEURS.succes);
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder().setCustomId("btn_rejoindre").setLabel(TEXTES.boutonRejoindre).setEmoji("🎪").setStyle(ButtonStyle.Success)
@@ -213,7 +213,7 @@ async function posterMessages(guild: Guild): Promise<void> {
 
   // #billetterie : bouton ticket
   const billetterie = salonTexte(guild, "billetterie");
-  if (billetterie && !(await dejaPoste(billetterie.id, guild))) {
+  if (billetterie && !(await dejaPoste(billetterie.id, guild, true))) {
     const embed = new EmbedBuilder().setTitle(TEXTES.billetterieTitre).setDescription(TEXTES.billetterieCorps).setColor(COULEURS.info);
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder().setCustomId("btn_ticket").setLabel(TEXTES.boutonTicket).setEmoji("✉️").setStyle(ButtonStyle.Primary)
@@ -222,12 +222,19 @@ async function posterMessages(guild: Guild): Promise<void> {
   }
 }
 
-/** Un message du bot avec embed existe-t-il déjà dans ce salon ? (idempotence) */
-async function dejaPoste(channelId: string, guild: Guild): Promise<boolean> {
+/**
+ * Un message du bot existe-t-il déjà dans ce salon ? (idempotence)
+ * `avecBouton = true` : on exige un message AVEC composants — un simple embed
+ * (posté par un webhook ou le Staff) ne doit pas empêcher de poster le bouton.
+ */
+async function dejaPoste(channelId: string, guild: Guild, avecBouton = false): Promise<boolean> {
   const canal = guild.channels.cache.get(channelId);
   if (!canal || !canal.isTextBased()) return true;
   const messages = await canal.messages.fetch({ limit: 20 }).catch(() => null);
-  return messages?.some((m) => m.author.id === guild.client.user.id && m.embeds.length > 0) ?? true;
+  if (!messages) return true;
+  return messages.some(
+    (m) => m.author.id === guild.client.user.id && (avecBouton ? m.components.length > 0 : m.embeds.length > 0)
+  );
 }
 
 // ---------- Point d'entrée ----------

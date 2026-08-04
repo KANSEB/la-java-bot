@@ -357,7 +357,36 @@ async function mettreAJourEmbed(
   await message.edit({ embeds: [embed], components: composants as never }).catch(() => {});
 }
 
-// ---------- 4. Rappels et kick automatique des Non vérifiés ----------
+// ---------- 4. Rattrapage au démarrage ----------
+/**
+ * Rattrape les membres arrivés pendant que le bot était hors ligne :
+ * tout humain sans aucun rôle fonctionnel ni "Non vérifié" et non approuvé
+ * reçoit le rôle Non vérifié + le DM de bienvenue.
+ */
+export async function rattraperMembresSansRole(guild: import("discord.js").Guild): Promise<number> {
+  const nonVerifie = role(guild, "nonVerifie");
+  if (!nonVerifie) return 0;
+  await guild.members.fetch().catch(() => {});
+  let rattrapes = 0;
+
+  for (const membre of guild.members.cache.values()) {
+    if (membre.user.bot) continue;
+    // Un seul rôle = @everyone → ce membre est passé entre les mailles
+    if (membre.roles.cache.size > 1) continue;
+    const dossier = db.prepare("SELECT statut FROM onboarding WHERE userId = ?").get(membre.id) as { statut: string } | undefined;
+    if (dossier?.statut === "approuve") continue; // approuvé mais rôles retirés à la main : on ne touche pas
+
+    await membre.roles.add(nonVerifie.id, "Rattrapage : arrivé pendant une coupure du bot").catch(() => {});
+    await dmSur(membre, TEXTES.dmBienvenue(guild.name));
+    rattrapes++;
+  }
+  if (rattrapes > 0) {
+    await log(guild, "🔄 Rattrapage onboarding", `${rattrapes} membre(s) arrivé(s) pendant une coupure du bot ont reçu le rôle Non vérifié et le DM de bienvenue.`, "alerte");
+  }
+  return rattrapes;
+}
+
+// ---------- 5. Rappels et kick automatique des Non vérifiés ----------
 export async function traiterNonVerifies(guildParam: import("discord.js").Guild): Promise<{ rappels: number; avertis: number; kicks: number }> {
   const guild = guildParam;
   const stats = { rappels: 0, avertis: 0, kicks: 0 };
