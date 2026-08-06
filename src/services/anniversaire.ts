@@ -12,12 +12,26 @@ import {
   TextInputStyle,
 } from "discord.js";
 import { db } from "../db/database.js";
-import { TEXTES } from "../config/config.js";
+import { ANNIVERSAIRES, TEXTES } from "../config/config.js";
+import { role } from "./util.js";
 
 // Février à 29 jours : on accepte le 29/02, l'annonce tombera les années bissextiles
 const JOURS_PAR_MOIS = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
+/** Les anniversaires sont un rituel d'équipe : réservés aux rôles listés en config. */
+export function peutRenseignerAnniversaire(membre: import("discord.js").GuildMember): boolean {
+  return ANNIVERSAIRES.rolesAutorises.some((cle) => {
+    const r = role(membre.guild, cle);
+    return r !== undefined && membre.roles.cache.has(r.id);
+  });
+}
+
 export async function ouvrirModalAnniversaire(interaction: ButtonInteraction<"cached">): Promise<void> {
+  if (!peutRenseignerAnniversaire(interaction.member)) {
+    await interaction.reply({ content: TEXTES.anniversaireReserve, ephemeral: true });
+    return;
+  }
+
   const modal = new ModalBuilder()
     .setCustomId("modal_anniversaire")
     .setTitle(TEXTES.anniversaireTitre)
@@ -35,6 +49,11 @@ export async function ouvrirModalAnniversaire(interaction: ButtonInteraction<"ca
 }
 
 export async function enregistrerAnniversaire(interaction: ModalSubmitInteraction<"cached">): Promise<void> {
+  if (!peutRenseignerAnniversaire(interaction.member)) {
+    await interaction.reply({ content: TEXTES.anniversaireReserve, ephemeral: true });
+    return;
+  }
+
   const jour = Number(interaction.fields.getTextInputValue("jour").trim());
   const mois = Number(interaction.fields.getTextInputValue("mois").trim());
 

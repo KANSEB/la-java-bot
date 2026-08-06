@@ -128,6 +128,15 @@ export const DELAIS = {
   archivageCovoitJoursApresEvent: 7,
 };
 
+// ---------- Anniversaires ----------
+// Réservés à l'équipe : dans le général ce serait du bruit, entre bénévoles
+// c'est un petit rituel sympa. `salonAnnonce` et `rolesAutorises` suffisent
+// à tout déplacer (par ex. vers "general" pour ouvrir à tout le monde).
+export const ANNIVERSAIRES = {
+  salonAnnonce: "benevoles" as const,
+  rolesAutorises: ["benevoleEdition", "benevole", "benevoleVeteran", "referent", "staff"] as (keyof typeof ROLES)[],
+};
+
 // Fuseau horaire des tâches planifiées : les serveurs d'hébergement tournent
 // en UTC, sans ça les anniversaires tomberaient à midi au lieu de 10h.
 export const FUSEAU = "Europe/Paris";
@@ -323,7 +332,6 @@ export const TEXTES = {
     "━━━━━ 🧭 **COMMENT MARCHE CE SERVEUR** ━━━━━",
     "",
     "🎪 **Pour entrer : réagis avec 🎪 sous ce message.** C'est ta façon de dire que tu as lu les règles ci-dessous — le serveur s'ouvre à toi dans la seconde.",
-    "🎂 **Ton anniversaire** : clique sur le bouton sous ce message, deux cases à remplir et c'est fait. On te le souhaitera dans le général le jour J !",
     "🙌 **Bénévole, artiste ou partenaire ?** Tu l'as indiqué dans le questionnaire d'arrivée : le Staff valide ta demande et tes salons dédiés s'ajoutent ensuite.",
     "📣 **Les infos officielles** (line-up, billetterie…) tombent dans le salon annonces. Le reste, c'est à toi de le faire vivre dans le général !",
     "⭐ **Plus tu participes** (messages, réactions, vocaux), plus tu gagnes d'XP et montes de niveau : salons secrets, billetterie en avance, giveaways… Détails épinglés dans le général.",
@@ -407,6 +415,16 @@ export const TEXTES = {
   anniversaireEnregistre: (jour: number, mois: number) =>
     `🎂 C'est noté : le **${jour}/${String(mois).padStart(2, "0")}** ! On te souhaitera ton anniversaire dans le général le jour J.\nOn ne demande jamais ton année de naissance, et tu peux demander la suppression au Staff quand tu veux.`,
   anniversaireInvalide: "⚠️ Cette date n'existe pas — vérifie le jour et le mois (chiffres uniquement, par exemple 15 et 3 pour le 15 mars).",
+  anniversaireReserve: "🎂 Les anniversaires sont réservés à l'équipe (bénévoles, référents, staff) — c'est notre petit rituel interne 😉",
+  anniversaireTitreSalon: "🎂 Les anniversaires de l'équipe",
+  anniversaireCorpsSalon: [
+    "On aime souhaiter les anniversaires entre nous — clique sur le bouton pour renseigner le tien.",
+    "",
+    "Deux cases à remplir (jour et mois), et c'est tout : **on ne demande jamais ton année de naissance**.",
+    "Le jour J, un message part ici pour te souhaiter la fête 🎉",
+    "",
+    "Tu peux changer ta date quand tu veux en recliquant, ou demander sa suppression au Staff.",
+  ].join("\n"),
   accesDebloque: (userId: string) =>
     `🎪 Bienvenue à La Java, <@${userId}> ! Tu as accepté les règles, le serveur est grand ouvert. Pense à te présenter et à renseigner ton anniversaire avec le bouton dans le salon de bienvenue 🎂`,
   accesRetire:
@@ -439,7 +457,7 @@ export const TEXTES = {
     "",
     "**🎫 La billetterie.** Le lien officiel et le support sont dans le salon billetterie. Une question sur ta commande ? Le bouton *Ouvrir un ticket* crée une conversation privée avec le Staff.",
     "",
-    "**🎂 Ton anniversaire.** Tape `/anniversaire jour mois` et on te fêtera dans le général le jour J.",
+    "**🎂 Les anniversaires.** C'est un rituel réservé à l'équipe : si tu es bénévole, référent ou staff, un bouton dans le salon bénévoles te permet de renseigner le tien.",
     "",
     "**🙌 Bénévoles, artistes, partenaires.** Une fois validé·e, tu as tes salons dédiés (planning, entraide, backstage, démos…). Tout ce qui te concerne y passe.",
     "",

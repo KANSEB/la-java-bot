@@ -9,7 +9,7 @@
 import { ChannelType, Client, Guild } from "discord.js";
 import cron from "node-cron";
 import { db, kvGet, kvSet } from "../db/database.js";
-import { DELAIS, EDITION, FUSEAU, ROLE_BENEVOLE_DU_MOIS, SALONS, TEXTES, XP } from "../config/config.js";
+import { ANNIVERSAIRES, DELAIS, EDITION, FUSEAU, ROLE_BENEVOLE_DU_MOIS, SALONS, TEXTES, XP } from "../config/config.js";
 import { dmSur, joursAvant, roleParNom, salonTexte } from "./util.js";
 import { log, logErreur } from "./logs.js";
 import { tickVocal } from "./xp.js";
@@ -60,14 +60,15 @@ async function annoncerAnniversaires(guild: Guild): Promise<void> {
     .all(jour, mois) as { userId: string }[];
   if (rows.length === 0) return;
 
-  const general = salonTexte(guild, "general");
-  if (!general) return;
+  // Annonce dans le salon d'équipe, pas dans le général (rituel interne)
+  const salon = salonTexte(guild, ANNIVERSAIRES.salonAnnonce);
+  if (!salon) return;
   for (const { userId } of rows) {
     const membre = await guild.members.fetch(userId).catch(() => null);
     if (!membre) continue; // parti du serveur → on n'annonce pas
     const messages = TEXTES.messagesAnniversaire;
     const message = messages[Math.floor(Math.random() * messages.length)];
-    await general.send(message(userId)).catch(() => {});
+    await salon.send(message(userId)).catch(() => {});
   }
 }
 

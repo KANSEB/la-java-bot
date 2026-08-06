@@ -4,7 +4,7 @@
 // 2. Le message de bienvenue est réécrit, reçoit le bouton anniversaire
 //    et la réaction 🎪 posée par le bot
 import "dotenv/config";
-import { COULEURS, SALONS, TEXTES } from "../dist/config/config.js";
+import { ANNIVERSAIRES, COULEURS, SALONS, TEXTES } from "../dist/config/config.js";
 
 const TOKEN = process.env.DISCORD_TOKEN;
 const GUILD = process.env.GUILD_ID;
@@ -52,20 +52,14 @@ const post = messages.find((m) => m.author.id === me.id && m.embeds.length > 0);
 
 const corps = {
   embeds: [{ title: TEXTES.bienvenueTitre, description: TEXTES.bienvenueCorps, color: COULEURS.primaire }],
-  components: [{
-    type: 1,
-    components: [{
-      type: 2, style: 2, label: TEXTES.boutonAnniversaire,
-      emoji: { name: "🎂" }, custom_id: "btn_anniversaire",
-    }],
-  }],
+  components: [],
 };
 
 let postId;
 if (post) {
   await api(`/channels/${bienvenue.id}/messages/${post.id}`, { method: "PATCH", body: JSON.stringify(corps) });
   postId = post.id;
-  console.log("✅ Message de bienvenue mis à jour (texte + bouton anniversaire)");
+  console.log("✅ Message de bienvenue mis à jour");
 } else {
   const nouveau = await api(`/channels/${bienvenue.id}/messages`, { method: "POST", body: JSON.stringify(corps) });
   postId = nouveau.id;
@@ -74,4 +68,30 @@ if (post) {
 
 await api(`/channels/${bienvenue.id}/messages/${postId}/reactions/${encodeURIComponent(TEXTES.emojiDeblocage)}/@me`, { method: "PUT" });
 console.log(`✅ Réaction ${TEXTES.emojiDeblocage} posée : c'est elle qui ouvre le serveur`);
+
+// ---------- 3. Bouton anniversaire dans le salon d'équipe ----------
+const salonAnniv = salonParNom(SALONS[ANNIVERSAIRES.salonAnnonce]);
+if (!salonAnniv) {
+  console.log("⚠️ Salon d'équipe introuvable, bouton anniversaire non posé");
+} else {
+  const anciens = await api(`/channels/${salonAnniv.id}/messages?limit=30`);
+  const dejaLa = anciens.find((m) => m.author.id === me.id && m.components?.length > 0);
+  if (dejaLa) {
+    console.log("ℹ️ Bouton anniversaire déjà présent dans le salon d'équipe");
+  } else {
+    const msg = await api(`/channels/${salonAnniv.id}/messages`, {
+      method: "POST",
+      body: JSON.stringify({
+        embeds: [{ title: TEXTES.anniversaireTitreSalon, description: TEXTES.anniversaireCorpsSalon, color: COULEURS.primaire }],
+        components: [{
+          type: 1,
+          components: [{ type: 2, style: 2, label: TEXTES.boutonAnniversaire, emoji: { name: "🎂" }, custom_id: "btn_anniversaire" }],
+        }],
+      }),
+    });
+    await api(`/channels/${salonAnniv.id}/pins/${msg.id}`, { method: "PUT" }).catch(() => {});
+    console.log(`✅ Bouton anniversaire posé et épinglé dans ${salonAnniv.name}`);
+  }
+}
+
 console.log("\n🎪 Nouveau parcours d'arrivée actif !");

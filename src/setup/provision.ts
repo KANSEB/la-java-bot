@@ -19,7 +19,7 @@ import {
   type OverwriteResolvable,
 } from "discord.js";
 import {
-  BADGES, COULEURS, EDITION, nomBadge, PALIERS_XP, ROLE_BENEVOLE_DU_MOIS,
+  ANNIVERSAIRES, BADGES, COULEURS, EDITION, nomBadge, PALIERS_XP, ROLE_BENEVOLE_DU_MOIS,
   ROLES, SALONS, STRUCTURE, TEXTES, type CategorieDef, type SalonDef,
 } from "../config/config.js";
 import { roleParNom } from "../services/util.js";
@@ -198,15 +198,26 @@ async function creerSalons(guild: Guild, roles: Map<string, Role>, rapport: Rapp
 async function posterMessages(guild: Guild): Promise<void> {
   const { salonTexte } = await import("../services/util.js");
 
-  // #bienvenue : règles + bouton anniversaire, la réaction 🎪 ouvre le serveur
+  // #bienvenue : règles, avec la réaction 🎪 qui ouvre le serveur
   const bienvenue = salonTexte(guild, "bienvenue");
   if (bienvenue && !(await dejaPoste(bienvenue.id, guild))) {
     const embed = new EmbedBuilder().setTitle(TEXTES.bienvenueTitre).setDescription(TEXTES.bienvenueCorps).setColor(COULEURS.primaire);
+    const message = await bienvenue.send({ embeds: [embed] });
+    await message.react(TEXTES.emojiDeblocage).catch(() => {});
+  }
+
+  // Salon d'équipe : bouton anniversaire (rituel interne, pas dans le général)
+  const salonAnniv = salonTexte(guild, ANNIVERSAIRES.salonAnnonce);
+  if (salonAnniv && !(await dejaPoste(salonAnniv.id, guild, true))) {
+    const embed = new EmbedBuilder()
+      .setTitle(TEXTES.anniversaireTitreSalon)
+      .setDescription(TEXTES.anniversaireCorpsSalon)
+      .setColor(COULEURS.primaire);
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder().setCustomId("btn_anniversaire").setLabel(TEXTES.boutonAnniversaire).setEmoji("🎂").setStyle(ButtonStyle.Secondary)
     );
-    const message = await bienvenue.send({ embeds: [embed], components: [row] });
-    await message.react(TEXTES.emojiDeblocage).catch(() => {});
+    const message = await salonAnniv.send({ embeds: [embed], components: [row] });
+    await message.pin().catch(() => {});
   }
 
   // #guide-discord : tuto Discord + mode d'emploi du serveur (2 embeds épinglés)

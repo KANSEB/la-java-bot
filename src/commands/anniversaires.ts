@@ -3,7 +3,8 @@
 
 import { EmbedBuilder, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import { db, type AnniversaireRow } from "../db/database.js";
-import { COULEURS } from "../config/config.js";
+import { COULEURS, TEXTES } from "../config/config.js";
+import { peutRenseignerAnniversaire } from "../services/anniversaire.js";
 import type { Commande } from "./types.js";
 
 const JOURS_PAR_MOIS = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -16,6 +17,11 @@ export const commandes: Commande[] = [
       .addIntegerOption((o) => o.setName("jour").setDescription("Jour (1-31)").setRequired(true).setMinValue(1).setMaxValue(31))
       .addIntegerOption((o) => o.setName("mois").setDescription("Mois (1-12)").setRequired(true).setMinValue(1).setMaxValue(12)),
     execute: async (interaction) => {
+      // Même règle que le bouton : rituel réservé à l'équipe
+      if (!peutRenseignerAnniversaire(interaction.member)) {
+        await interaction.reply({ content: TEXTES.anniversaireReserve, ephemeral: true });
+        return;
+      }
       const jour = interaction.options.getInteger("jour", true);
       const mois = interaction.options.getInteger("mois", true);
       if (jour > JOURS_PAR_MOIS[mois - 1]) {
@@ -24,10 +30,7 @@ export const commandes: Commande[] = [
       }
       db.prepare("INSERT INTO anniversaires (userId, jour, mois) VALUES (?, ?, ?) ON CONFLICT(userId) DO UPDATE SET jour = excluded.jour, mois = excluded.mois")
         .run(interaction.user.id, jour, mois);
-      await interaction.reply({
-        content: `🎂 C'est noté : le **${jour}/${String(mois).padStart(2, "0")}**, on te souhaitera ton anniversaire dans le général ! (Tu peux te faire oublier à tout moment via le Staff.)`,
-        ephemeral: true,
-      });
+      await interaction.reply({ content: TEXTES.anniversaireEnregistre(jour, mois), ephemeral: true });
     },
   },
   {
