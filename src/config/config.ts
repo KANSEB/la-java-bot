@@ -382,7 +382,7 @@ export const TEXTES = {
 
   // Séquence bénévole (J+0 / J+1 / J+2)
   dmSequenceBenevole: [
-    "🙌 **Bienvenue dans l'équipe bénévoles de La Java !**\nTu as maintenant accès à la catégorie BÉNÉVOLES : les annonces internes, le planning et le covoit' bénévoles. Le salon des annonces bénévoles est ton point de repère : tout ce qui est important y passe.",
+    "🙌 **Bienvenue dans l'équipe bénévoles de La Java !**\nTu as maintenant accès à la catégorie BÉNÉVOLES : les annonces internes, le planning et le covoit' bénévoles. Le salon des annonces bénévoles est ton point de repère : tout ce qui est important y passe.\n\n🎂 **Un dernier truc** : dans ce même salon, un message épinglé te propose de renseigner ton anniversaire — deux cases à remplir, jour et mois. C'est notre petit rituel d'équipe, on ne voudrait pas rater le tien !",
     "📅 **Les shifts, comment ça marche ?**\nLe planning est publié dans le salon planning-shifts (messages épinglés). Tu y trouveras tes créneaux, ton poste et ton référent. Une question ? Pose-la dans le salon bénévoles : quelqu'un te répond vite.",
     "🙋 **Dernière étape : viens te présenter !**\nPasse dans le salon présentations raconter qui tu es, d'où tu viens et pourquoi tu donnes un coup de main. C'est le meilleur moyen de rencontrer l'équipe avant le jour J. À très vite ! 🎪",
   ],
