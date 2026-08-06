@@ -9,7 +9,7 @@
 import { ChannelType, Client, Guild } from "discord.js";
 import cron from "node-cron";
 import { db, kvGet, kvSet } from "../db/database.js";
-import { DELAIS, EDITION, ROLE_BENEVOLE_DU_MOIS, SALONS, TEXTES, XP } from "../config/config.js";
+import { DELAIS, EDITION, FUSEAU, ROLE_BENEVOLE_DU_MOIS, SALONS, TEXTES, XP } from "../config/config.js";
 import { dmSur, joursAvant, roleParNom, salonTexte } from "./util.js";
 import { log, logErreur } from "./logs.js";
 import { tickVocal } from "./xp.js";
@@ -48,11 +48,16 @@ export async function majCountdown(guild: Guild): Promise<void> {
   }
 }
 
-// ---------- Anniversaires (10h, jamais l'année : RGPD) ----------
+// ---------- Anniversaires (10h heure française, jamais l'année : RGPD) ----------
 async function annoncerAnniversaires(guild: Guild): Promise<void> {
-  const auj = new Date();
+  // Date lue à l'heure de Paris, pas à celle du serveur (UTC chez l'hébergeur)
+  const parisien = new Intl.DateTimeFormat("fr-FR", { timeZone: FUSEAU, day: "numeric", month: "numeric" })
+    .formatToParts(new Date());
+  const jour = Number(parisien.find((p) => p.type === "day")?.value);
+  const mois = Number(parisien.find((p) => p.type === "month")?.value);
+
   const rows = db.prepare("SELECT userId FROM anniversaires WHERE jour = ? AND mois = ?")
-    .all(auj.getDate(), auj.getMonth() + 1) as { userId: string }[];
+    .all(jour, mois) as { userId: string }[];
   if (rows.length === 0) return;
 
   const general = salonTexte(guild, "general");
@@ -121,6 +126,10 @@ async function archiverCovoitSiFini(guild: Guild): Promise<void> {
 }
 
 // ---------- Enregistrement des crons ----------
+// Toutes les heures sont exprimées à l'heure française : sans le fuseau
+// explicite, un serveur en UTC décalerait tout d'une ou deux heures.
+const OPTIONS = { timezone: FUSEAU };
+
 export function demarrerCrons(client: Client): void {
   // 09h00 — maintenance quotidienne
   cron.schedule("0 9 * * *", async () => {
@@ -132,7 +141,7 @@ export function demarrerCrons(client: Client): void {
     } catch (err) {
       await logErreur(guild, "cron 9h", err);
     }
-  });
+  }, OPTIONS);
 
   // 10h00 — anniversaires
   cron.schedule("0 10 * * *", async () => {
@@ -143,7 +152,7 @@ export function demarrerCrons(client: Client): void {
     } catch (err) {
       await logErreur(guild, "cron anniversaires", err);
     }
-  });
+  }, OPTIONS);
 
   // Toutes les heures — expirations + séquences DM
   cron.schedule("0 * * * *", async () => {
@@ -155,7 +164,7 @@ export function demarrerCrons(client: Client): void {
     } catch (err) {
       await logErreur(guild, "cron horaire", err);
     }
-  });
+  }, OPTIONS);
 
   // Toutes les N minutes — XP vocal
   cron.schedule(`*/${XP.vocalTrancheMinutes} * * * *`, async () => {
@@ -164,7 +173,7 @@ export function demarrerCrons(client: Client): void {
     } catch (err) {
       await logErreur(guildPrincipale(client) ?? null, "cron XP vocal", err);
     }
-  });
+  }, OPTIONS);
 
-  console.log("[crons] tâches planifiées démarrées");
+  console.log(`[crons] tâches planifiées démarrées (fuseau ${FUSEAU})`);
 }

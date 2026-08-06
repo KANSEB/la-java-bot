@@ -128,6 +128,10 @@ export const DELAIS = {
   archivageCovoitJoursApresEvent: 7,
 };
 
+// Fuseau horaire des tâches planifiées : les serveurs d'hébergement tournent
+// en UTC, sans ça les anniversaires tomberaient à midi au lieu de 10h.
+export const FUSEAU = "Europe/Paris";
+
 // ---------- Anti-raid ----------
 export const ANTIRAID = {
   seuilArrivees: 10,
