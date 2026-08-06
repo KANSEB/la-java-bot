@@ -13,7 +13,7 @@ import { surveillerArrivee } from "../services/antiraid.js";
 import { log, logErreur } from "../services/logs.js";
 import {
   approuverProfilDemande, boutonApprouver, boutonPlusInfos, boutonRefuser, modalPlusInfos, modalRefus,
-  ouvrirQuestionnaire, selectionRoles, signalerDemandeValidation, soumettreQuestionnaire,
+  nettoyerCandidature, ouvrirQuestionnaire, selectionRoles, signalerDemandeValidation, soumettreQuestionnaire,
 } from "../services/onboarding.js";
 import { enregistrerAnniversaire, ouvrirModalAnniversaire } from "../services/anniversaire.js";
 import { ouvrirTicket } from "../services/tickets.js";
@@ -71,6 +71,20 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       // Candidature : le questionnaire natif vient de poser le rôle d'attente → demande au Staff
       if (ajoutes.some((r) => r.name === ROLE_ATTENTE.nom)) {
         await signalerDemandeValidation(apres);
+      }
+
+      // Rôle fonctionnel attribué (bouton du Staff ou à la main dans Discord) :
+      // la candidature n'a plus lieu d'être, et l'accès communauté doit suivre.
+      const fonctionnels = new Set(
+        (["staff", "referent", "artiste", "artisteCommunaute", "partenaire", "benevoleEdition", "benevole", "benevoleVeteran"] as (keyof typeof ROLES)[])
+          .map((cle) => ROLES[cle].nom)
+      );
+      if (ajoutes.some((r) => fonctionnels.has(r.name))) {
+        await nettoyerCandidature(apres); // retire ⏳ En attente + les marqueurs Candidat
+        const membreRole = role(apres.guild, "membre");
+        if (membreRole && !apres.roles.cache.has(membreRole.id)) {
+          await apres.roles.add(membreRole.id, "Rôle attribué : accès communauté").catch(() => {});
+        }
       }
 
       // Festivalier : Membre reçu directement via le questionnaire (sans candidature)
