@@ -10,9 +10,11 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
     "postinstall": "tsc"
+  },
+  "allowScripts": {
+    "better-sqlite3": true
   },
   "dependencies": {
     "@types/better-sqlite3": "^7.6.11",
@@ -23,8 +25,5 @@
     "dotenv": "^16.4.5",
     "node-cron": "^3.0.3",
     "typescript": "^5.6.0"
-  },
-  "devDependencies": {
-    "tsx": "^4.19.0"
   }
 }

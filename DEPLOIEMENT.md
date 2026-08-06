@@ -130,6 +130,8 @@ Puis dans Discord : le bot doit apparaître **en ligne** (pastille verte), et
 
 | Symptôme dans la console | Cause et solution |
 |---|---|
+| `Cannot find module '/home/container/index.js'` | Le fichier `index.js` manque à la racine → crée-le avec la seule ligne `import "./dist/index.js";` (c'est lui que lance la commande de démarrage du panel) |
+| `npm warn allow-scripts ... better-sqlite3` | Simple avertissement avec npm 11 : les scripts tournent encore. Le champ `allowScripts` du `package.json` autorise déjà better-sqlite3 pour le jour où npm 12 les bloquera pour de bon |
 | `Cannot find module 'discord.js'` | `npm install` n'a pas tourné → lance-le depuis la console du panneau |
 | `better-sqlite3 ... was compiled against a different Node.js version` | Reste de `node_modules` Windows → supprime le dossier `node_modules` sur le serveur et relance |
 | `Used disallowed intents` | Les intents privilégiés sont désactivés → portail développeur Discord → onglet Bot → active **SERVER MEMBERS** et **MESSAGE CONTENT** |
