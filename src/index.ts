@@ -9,7 +9,7 @@ import { Client, GatewayIntentBits, Partials } from "discord.js";
 import { assertEnv } from "./services/util.js";
 import "./db/database.js"; // initialise la base + migrations au chargement
 import { demarrerCrons, majCountdown } from "./services/crons.js";
-import { signalerDemandeValidation } from "./services/onboarding.js";
+import { rattraperReactionsAcces, signalerDemandeValidation } from "./services/onboarding.js";
 import { roleParNom } from "./services/util.js";
 import { ROLE_ATTENTE } from "./config/config.js";
 import { enregistrerEvenements } from "./events/index.js";
@@ -74,6 +74,10 @@ client.once("clientReady", async () => {
       }
     }
     console.log(`[onboarding] rattrapage : ${signalees} candidature(s) en attente vérifiée(s)`);
+
+    // Réactions 🎪 posées pendant la coupure : Discord ne les rejoue pas
+    const acces = await rattraperReactionsAcces(guild);
+    console.log(`[acces] rattrapage : ${acces} membre(s) débloqué(s) via la réaction 🎪`);
   } catch (err) {
     console.error("rattrapage candidatures :", err);
   }

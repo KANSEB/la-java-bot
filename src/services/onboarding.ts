@@ -505,4 +505,39 @@ async function mettreAJourEmbed(
   await message.edit({ embeds: [embed], components: composants as never }).catch(() => {});
 }
 
+// ---------- 3b. Rattrapage des réactions d'accès ----------
+/**
+ * Discord ne rejoue pas les réactions posées pendant que le bot était hors ligne
+ * (redémarrage, mise à jour...). Au démarrage on relit donc la liste des membres
+ * ayant réagi 🎪 sur le post de bienvenue et on donne le rôle Membre à ceux qui
+ * ne l'ont pas : sans ça, ils resteraient bloqués dehors sans comprendre pourquoi.
+ */
+export async function rattraperReactionsAcces(guild: import("discord.js").Guild): Promise<number> {
+  const bienvenue = salonTexte(guild, "bienvenue");
+  const membreRole = role(guild, "membre");
+  if (!bienvenue || !membreRole) return 0;
+
+  const messages = await bienvenue.messages.fetch({ limit: 20 }).catch(() => null);
+  const post = messages?.find((m) => m.author.id === guild.client.user.id && m.embeds.length > 0);
+  const reaction = post?.reactions.cache.find((r) => r.emoji.name === TEXTES.emojiDeblocage);
+  if (!reaction) return 0;
+
+  const utilisateurs = await reaction.users.fetch().catch(() => null);
+  if (!utilisateurs) return 0;
+
+  let ajoutes = 0;
+  for (const user of utilisateurs.values()) {
+    if (user.bot) continue;
+    const membre = await guild.members.fetch(user.id).catch(() => null);
+    if (!membre || membre.roles.cache.has(membreRole.id)) continue;
+    await membre.roles.add(membreRole.id, "Rattrapage : réaction 🎪 posée hors ligne").catch(() => {});
+    kvSet(`regles:${membre.id}`, "1");
+    ajoutes++;
+  }
+  if (ajoutes > 0) {
+    await log(guild, "🎪 Accès rattrapés", `${ajoutes} membre(s) avaient réagi pendant une coupure du bot : rôle Membre attribué.`, "succes");
+  }
+  return ajoutes;
+}
+
 // ---------- 4. Rappels et kick automatique des Non vérifiés ----------

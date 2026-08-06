@@ -198,11 +198,15 @@ async function creerSalons(guild: Guild, roles: Map<string, Role>, rapport: Rapp
 async function posterMessages(guild: Guild): Promise<void> {
   const { salonTexte } = await import("../services/util.js");
 
-  // #bienvenue : règles + RGPD
+  // #bienvenue : règles + bouton anniversaire, la réaction 🎪 ouvre le serveur
   const bienvenue = salonTexte(guild, "bienvenue");
   if (bienvenue && !(await dejaPoste(bienvenue.id, guild))) {
     const embed = new EmbedBuilder().setTitle(TEXTES.bienvenueTitre).setDescription(TEXTES.bienvenueCorps).setColor(COULEURS.primaire);
-    await bienvenue.send({ embeds: [embed] });
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder().setCustomId("btn_anniversaire").setLabel(TEXTES.boutonAnniversaire).setEmoji("🎂").setStyle(ButtonStyle.Secondary)
+    );
+    const message = await bienvenue.send({ embeds: [embed], components: [row] });
+    await message.react(TEXTES.emojiDeblocage).catch(() => {});
   }
 
   // #guide-discord : tuto Discord + mode d'emploi du serveur (2 embeds épinglés)

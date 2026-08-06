@@ -322,8 +322,9 @@ export const TEXTES = {
     "",
     "━━━━━ 🧭 **COMMENT MARCHE CE SERVEUR** ━━━━━",
     "",
-    "🚪 **À ton arrivée**, le questionnaire Discord te demande ton profil. **Festivalier·e ?** Tu entres directement ! **Bénévole, artiste ou partenaire ?** Ta demande est validée par le Staff — en attendant, tu peux lire les salons publics mais pas encore écrire.",
-    "🎪 **Réagis avec 🎪 sous ce message** pour confirmer que tu as lu les règles : le Staff le voit dans ta candidature.",
+    "🎪 **Pour entrer : réagis avec 🎪 sous ce message.** C'est ta façon de dire que tu as lu les règles ci-dessous — le serveur s'ouvre à toi dans la seconde.",
+    "🎂 **Ton anniversaire** : clique sur le bouton sous ce message, deux cases à remplir et c'est fait. On te le souhaitera dans le général le jour J !",
+    "🙌 **Bénévole, artiste ou partenaire ?** Tu l'as indiqué dans le questionnaire d'arrivée : le Staff valide ta demande et tes salons dédiés s'ajoutent ensuite.",
     "📣 **Les infos officielles** (line-up, billetterie…) tombent dans le salon annonces. Le reste, c'est à toi de le faire vivre dans le général !",
     "⭐ **Plus tu participes** (messages, réactions, vocaux), plus tu gagnes d'XP et montes de niveau : salons secrets, billetterie en avance, giveaways… Détails épinglés dans le général.",
     "🎫 **Une question, un souci ?** Ouvre un ticket dans le salon billetterie : c'est privé, seul le Staff le voit.",
@@ -346,7 +347,7 @@ export const TEXTES = {
     "",
     "**RGPD :** en répondant au questionnaire, tu acceptes que tes réponses soient conservées par l'équipe pour gérer la communauté. Tu peux demander leur suppression à tout moment auprès du Staff.",
     "",
-    "🎪 **Dernière étape : réagis 🎪 juste en dessous pour confirmer ta lecture des règles. Le Staff valide ta demande très vite — bonne Java !**",
+    "👇 **Réagis avec 🎪 juste en dessous pour débloquer le serveur. Bonne Java !**",
   ].join("\n"),
 
   // Modal
@@ -398,6 +399,19 @@ export const TEXTES = {
     `🌟 **Bénévole du Mois** 🌟\nBravo <@${userId}> ! ${texte}\nLe rôle ✨ est à toi pour 30 jours : porte-le fièrement !`,
 
   // Tickets
+  // Accès débloqué par la réaction 🎪 sur le post de bienvenue
+  boutonAnniversaire: "Renseigner mon anniversaire",
+  anniversaireTitre: "🎂 Ton anniversaire",
+  anniversaireLabelJour: "Jour (1 à 31)",
+  anniversaireLabelMois: "Mois (1 à 12)",
+  anniversaireEnregistre: (jour: number, mois: number) =>
+    `🎂 C'est noté : le **${jour}/${String(mois).padStart(2, "0")}** ! On te souhaitera ton anniversaire dans le général le jour J.\nOn ne demande jamais ton année de naissance, et tu peux demander la suppression au Staff quand tu veux.`,
+  anniversaireInvalide: "⚠️ Cette date n'existe pas — vérifie le jour et le mois (chiffres uniquement, par exemple 15 et 3 pour le 15 mars).",
+  accesDebloque: (userId: string) =>
+    `🎪 Bienvenue à La Java, <@${userId}> ! Tu as accepté les règles, le serveur est grand ouvert. Pense à te présenter et à renseigner ton anniversaire avec le bouton dans le salon de bienvenue 🎂`,
+  accesRetire:
+    "Tu as retiré ta réaction 🎪 sur le message de bienvenue : ton accès au serveur est suspendu. Remets la réaction quand tu veux pour le retrouver !",
+
   // Guide Discord (salon 📖・guide-discord, deux embeds épinglés)
   guideDiscordTitre: "📖 Discord pour les débutants",
   guideDiscordCorps: [

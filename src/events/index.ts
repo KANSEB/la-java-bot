@@ -3,7 +3,10 @@
 // messages (XP + filtre liens), logs de modération.
 // ============================================================
 
-import { AuditLogEvent, Client, EmbedBuilder, Events, Message, PartialMessage } from "discord.js";
+import {
+  AuditLogEvent, Client, EmbedBuilder, Events, Message, MessageReaction, PartialMessage,
+  PartialMessageReaction, PartialUser, User,
+} from "discord.js";
 import { COULEURS, DOMAINES_SUSPECTS, PROFIL_DIRECT, ROLE_ATTENTE, ROLES, SALONS, TEXTES } from "../config/config.js";
 import { db, kvGet, kvSet } from "../db/database.js";
 import { surveillerArrivee } from "../services/antiraid.js";
@@ -12,6 +15,7 @@ import {
   approuverProfilDemande, boutonApprouver, boutonPlusInfos, boutonRefuser, modalPlusInfos, modalRefus,
   ouvrirQuestionnaire, selectionRoles, signalerDemandeValidation, soumettreQuestionnaire,
 } from "../services/onboarding.js";
+import { enregistrerAnniversaire, ouvrirModalAnniversaire } from "../services/anniversaire.js";
 import { ouvrirTicket } from "../services/tickets.js";
 import { xpMessage, xpReaction } from "../services/xp.js";
 import { dmSur, estStaff, role, roleParNom, salonTexte } from "../services/util.js";
@@ -106,26 +110,69 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
     }
   });
 
-  // ---------- Réactions : acceptation des règles (post bienvenue) + XP ----------
+  // ---------- Réactions ----------
+  /**
+   * Résout la réaction en (membre, est-ce le post de bienvenue du bot, est-ce l'emoji 🎪).
+   * Les réactions peuvent arriver « partielles » : on complète avant de décider.
+   */
+  const contexteReaction = async (
+    reaction: MessageReaction | PartialMessageReaction,
+    user: User | PartialUser
+  ) => {
+    if (user.bot) return null;
+    if (reaction.partial) await reaction.fetch().catch(() => null);
+    const message = reaction.message.partial ? await reaction.message.fetch().catch(() => null) : reaction.message;
+    if (!message?.guild) return null;
+    const membre = await message.guild.members.fetch(user.id).catch(() => null);
+    if (!membre) return null;
+
+    const surPostBienvenue =
+      "name" in message.channel &&
+      message.channel.name === SALONS.bienvenue &&
+      message.author?.id === client.user?.id;
+    const bonEmoji = reaction.emoji.name === TEXTES.emojiDeblocage;
+    return { guild: message.guild, membre, porteDacces: surPostBienvenue && bonEmoji };
+  };
+
+  // Réaction 🎪 sur le post de bienvenue = acceptation des règles → accès au serveur
   client.on(Events.MessageReactionAdd, async (reaction, user) => {
     try {
-      if (user.bot) return;
-      if (reaction.partial) await reaction.fetch().catch(() => null);
-      const message = reaction.message.partial ? await reaction.message.fetch().catch(() => null) : reaction.message;
-      if (!message?.guild) return;
-      const guild = message.guild;
-      const membre = await guild.members.fetch(user.id).catch(() => null);
-      if (!membre) return;
+      const ctx = await contexteReaction(reaction, user);
+      if (!ctx) return;
+      const { guild, membre, porteDacces } = ctx;
 
-      // Réaction sur le post de bienvenue du bot = règles lues (affiché dans la candidature)
-      if ("name" in message.channel && message.channel.name === SALONS.bienvenue && message.author?.id === client.user?.id) {
+      if (porteDacces) {
         kvSet(`regles:${membre.id}`, "1");
-        await log(guild, "🎪 Règles acceptées", `<@${membre.id}> a réagi au post de bienvenue.`);
+        const membreRole = role(guild, "membre");
+        if (membreRole && !membre.roles.cache.has(membreRole.id)) {
+          await membre.roles.add(membreRole.id, "Règles acceptées (réaction 🎪)").catch(() => {});
+          await dmSur(membre, TEXTES.accesDebloque(membre.id));
+          await log(guild, "🎪 Accès débloqué", `<@${membre.id}> a accepté les règles : rôle Membre attribué.`, "succes");
+        }
       }
 
       await xpReaction(membre);
     } catch (err) {
       await logErreur(reaction.message.guild ?? null, "messageReactionAdd", err);
+    }
+  });
+
+  // Réaction 🎪 retirée = accès suspendu (réversible : il suffit de re-réagir)
+  client.on(Events.MessageReactionRemove, async (reaction, user) => {
+    try {
+      const ctx = await contexteReaction(reaction, user);
+      if (!ctx?.porteDacces) return;
+      const { guild, membre } = ctx;
+
+      kvSet(`regles:${membre.id}`, "0");
+      const membreRole = role(guild, "membre");
+      if (membreRole && membre.roles.cache.has(membreRole.id)) {
+        await membre.roles.remove(membreRole.id, "Réaction 🎪 retirée").catch(() => {});
+        await dmSur(membre, TEXTES.accesRetire);
+        await log(guild, "🚪 Accès suspendu", `<@${membre.id}> a retiré sa réaction : rôle Membre retiré.`, "alerte");
+      }
+    } catch (err) {
+      await logErreur(reaction.message.guild ?? null, "messageReactionRemove", err);
     }
   });
 
@@ -171,6 +218,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       if (interaction.isButton()) {
         const id = interaction.customId;
         if (id === "btn_rejoindre") return void (await ouvrirQuestionnaire(interaction));
+        if (id === "btn_anniversaire") return void (await ouvrirModalAnniversaire(interaction));
         if (id === "btn_ticket") return void (await ouvrirTicket(interaction));
         if (id.startsWith("ob_apd:")) return void (await approuverProfilDemande(interaction));
         if (id.startsWith("ob_ap:")) return void (await boutonApprouver(interaction));
@@ -182,6 +230,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       if (interaction.isModalSubmit()) {
         const id = interaction.customId;
         if (id === "modal_questionnaire") return void (await soumettreQuestionnaire(interaction));
+        if (id === "modal_anniversaire") return void (await enregistrerAnniversaire(interaction));
         if (id.startsWith("ob_rfm:")) return void (await modalRefus(interaction));
         if (id.startsWith("ob_mim:")) return void (await modalPlusInfos(interaction));
         return;
