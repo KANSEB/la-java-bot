@@ -47,7 +47,6 @@ export const ROLES: Record<string, RoleConfig> = {
   },
   artiste: { nom: "Artiste", couleur: 0x9b59b6, hoist: true, mentionnable: true, permissions: [] },
   artisteCommunaute: { nom: "Artiste Communauté", couleur: 0xb388eb, hoist: false, mentionnable: true, permissions: [] },
-  partenaire: { nom: "Partenaire", couleur: 0x1abc9c, hoist: false, mentionnable: true, permissions: [] },
   benevoleEdition: { nom: `Bénévole ${EDITION.annee}`, couleur: 0x2ecc71, hoist: true, mentionnable: true, permissions: [] },
   benevole: { nom: "Bénévole", couleur: 0x27ae60, hoist: false, mentionnable: true, permissions: [] },
   benevoleVeteran: { nom: "Bénévole Vétéran", couleur: 0xf1c40f, hoist: false, mentionnable: true, permissions: [] },
@@ -107,7 +106,6 @@ export const CANDIDATURES: { marqueur: string; profil: string; emoji: string; ro
   { marqueur: "Candidat Référent", profil: "Référent", emoji: "🧭", roleKey: "referent" },
   { marqueur: "Candidat Artiste", profil: "Artiste programmé", emoji: "🎤", roleKey: "artiste" },
   { marqueur: "Candidat Artiste Communauté", profil: "Artiste (communauté)", emoji: "🎧", roleKey: "artisteCommunaute" },
-  { marqueur: "Candidat Partenaire", profil: "Partenaire", emoji: "🤝", roleKey: "partenaire" },
 ];
 
 // Profil grand public : accès direct sans validation
@@ -320,7 +318,6 @@ export const QUESTIONNAIRE = {
     { label: "Référent", value: "referent", emoji: "🧭", roleKey: "referent" },
     { label: "Artiste programmé", value: "artiste_programme", emoji: "🎤", roleKey: "artiste" },
     { label: "Artiste (communauté)", value: "artiste_communaute", emoji: "🎧", roleKey: "artisteCommunaute" },
-    { label: "Partenaire", value: "partenaire", emoji: "🤝", roleKey: "partenaire" },
     { label: "Curieux - Public", value: "curieux", emoji: "👀", roleKey: null },
   ] as { label: string; value: string; emoji: string; roleKey: keyof typeof ROLES | null }[],
   maxSoumissions: 2, // 1 soumission + 1 seule nouvelle tentative après refus
@@ -337,7 +334,7 @@ export const TEXTES = {
     "━━━━━ 🧭 **COMMENT MARCHE CE SERVEUR** ━━━━━",
     "",
     "🎪 **Pour entrer : réagis avec 🎪 sous ce message.** C'est ta façon de dire que tu as lu les règles ci-dessous — le serveur s'ouvre à toi dans la seconde.",
-    "🙌 **Bénévole, artiste ou partenaire ?** Tu l'as indiqué dans le questionnaire d'arrivée : le Staff valide ta demande et tes salons dédiés s'ajoutent ensuite.",
+    "🙌 **Bénévole ou artiste ?** Tu l'as indiqué dans le questionnaire d'arrivée : le Staff valide ta demande et tes salons dédiés s'ajoutent ensuite.",
     "📣 **Les infos officielles** (line-up, billetterie…) tombent dans le salon annonces. Le reste, c'est à toi de le faire vivre dans le général !",
     "⭐ **Plus tu participes** (messages, réactions, vocaux), plus tu gagnes d'XP et montes de niveau : salons secrets, billetterie en avance, giveaways… Détails épinglés dans le général.",
     "🎫 **Une question, un souci ?** Ouvre un ticket dans le salon billetterie : c'est privé, seul le Staff le voit.",
@@ -372,7 +369,7 @@ export const TEXTES = {
 
   // DM et confirmations onboarding
   dmBienvenue: (serveur: string) =>
-    `Salut ! 👋 Bienvenue sur **${serveur}**.\n\n**Une seule chose à faire pour entrer :** va dans le salon 👋・bienvenue et clique sur la réaction 🎪 sous le message des règles. Le serveur s'ouvre aussitôt.\n\nSi tu as coché bénévole, artiste ou partenaire dans le questionnaire, le Staff confirme ton rôle très vite — pas besoin d'attendre pour venir dire bonjour ! 🎪`,
+    `Salut ! 👋 Bienvenue sur **${serveur}**.\n\n**Une seule chose à faire pour entrer :** va dans le salon 👋・bienvenue et clique sur la réaction 🎪 sous le message des règles. Le serveur s'ouvre aussitôt.\n\nSi tu as coché bénévole ou artiste dans le questionnaire, le Staff confirme ton rôle très vite — pas besoin d'attendre pour venir dire bonjour ! 🎪`,
   soumissionRecue: "🎉 C'est envoyé ! Le Staff regarde ta demande très vite : tu recevras un message privé dès que c'est validé.",
   nouvelleCandidature: (userId: string, staffRoleId?: string) =>
     `${staffRoleId ? `<@&${staffRoleId}> ` : ""}📥 **Nouvelle candidature** de <@${userId}> — à valider ci-dessous :`,
@@ -462,7 +459,7 @@ export const TEXTES = {
   ].join("\n"),
   guideServeurTitre: "🎪 Ce serveur, mode d'emploi",
   guideServeurCorps: [
-    "**🚪 Ton arrivée.** Le questionnaire d'entrée te demande ton profil : les festivalier·e·s entrent directement, les profils bénévole/artiste/partenaire sont validés par le Staff (en général très vite). Pense à réagir 🎪 au message de bienvenue pour montrer que tu as lu les règles !",
+    "**🚪 Ton arrivée.** Le questionnaire d'entrée te demande ton profil : les profils bénévole/référent/artiste sont validés par le Staff (en général très vite). Dans tous les cas, c'est la réaction 🎪 sur le message de bienvenue qui t'ouvre le serveur : sans elle, tu ne vois rien.",
     "",
     "**⭐ Les niveaux.** Participer (messages, réactions, vocaux) fait gagner de l'XP : Nouveau → Habitué → Fêtard → Pilier de la Java → Légende de la Java, avec de vrais avantages à chaque palier (salons secrets, billetterie en avance, giveaways…). Le détail est épinglé dans le général. Tape `/mon-profil` pour voir où tu en es, `/classement` pour le top 20.",
     "",
@@ -470,7 +467,7 @@ export const TEXTES = {
     "",
     "**🎂 Les anniversaires.** C'est un rituel réservé à l'équipe : si tu es bénévole, référent ou staff, un bouton dans le salon bénévoles te permet de renseigner le tien.",
     "",
-    "**🙌 Bénévoles, artistes, partenaires.** Une fois validé·e, tu as tes salons dédiés (planning, entraide, backstage, démos…). Tout ce qui te concerne y passe.",
+    "**🙌 Bénévoles et artistes.** Une fois validé·e, tu as tes salons dédiés (planning, entraide, backstage, démos…). Tout ce qui te concerne y passe.",
     "",
     "**🆘 Besoin d'aide ?** Ticket dans la billetterie, ou DM direct à un membre du **Staff** (en rouge dans la liste des membres). On ne mord pas.",
   ].join("\n"),
