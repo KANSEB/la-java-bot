@@ -93,7 +93,7 @@ export const ROLE_BENEVOLE_DU_MOIS = { nom: "Bénévole du Mois", couleur: 0xff3
 // Rôle-barrière posé sur chaque arrivant : il masque tout le serveur sauf le
 // salon des règles. Il est retiré à la réaction 🎪 — c'est ce geste, et lui seul,
 // qui ouvre le serveur. Sans permission propre : il ne fait qu'interdire.
-export const ROLE_PORTE = { nom: "🚧 Règles non acceptées", couleur: 0x4f545c };
+export const ROLE_PORTE = { nom: "👋 Nouvel arrivant", couleur: 0x4f545c };
 
 // Rôle posé par l'onboarding natif Discord sur TOUTE nouvelle candidature.
 // Le bot le surveille : dès qu'un membre le reçoit, une demande part dans #validation-demandes.

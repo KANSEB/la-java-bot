@@ -12,9 +12,9 @@ import { db, kvGet, kvSet } from "../db/database.js";
 import { surveillerArrivee } from "../services/antiraid.js";
 import { log, logErreur } from "../services/logs.js";
 import {
-  approuverProfilDemande, boutonApprouver, boutonPlusInfos, boutonRefuser, candidatureDe, modalPlusInfos,
-  modalRefus, nettoyerCandidature, ouvrirQuestionnaire, selectionRoles, signalerDemandeValidation,
-  soumettreQuestionnaire,
+  appliquerProfilReserve, approuverProfilDemande, boutonApprouver, boutonPlusInfos, boutonRefuser,
+  candidatureDe, modalPlusInfos, modalRefus, nettoyerCandidature, ouvrirQuestionnaire, selectionRoles,
+  signalerDemandeValidation, soumettreQuestionnaire,
 } from "../services/onboarding.js";
 import { enregistrerAnniversaire, ouvrirModalAnniversaire } from "../services/anniversaire.js";
 import { ouvrirTicket } from "../services/tickets.js";
@@ -191,8 +191,11 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
         const membreRole = role(guild, "membre");
         if (membreRole && !membre.roles.cache.has(membreRole.id)) {
           await membre.roles.add(membreRole.id, "Règles acceptées (réaction 🎪)").catch(() => {});
+          // Profil validé pendant qu'il n'avait pas encore accepté : on le pose maintenant.
+          const reserves = await appliquerProfilReserve(membre);
           await dmSur(membre, TEXTES.accesDebloque(membre.id));
-          await log(guild, "🎪 Accès débloqué", `<@${membre.id}> a accepté les règles : serveur ouvert.`, "succes");
+          await log(guild, "🎪 Accès débloqué",
+            `<@${membre.id}> a accepté les règles : serveur ouvert.${reserves.length > 0 ? ` Profil en attente appliqué : ${reserves.join(", ")}.` : ""}`, "succes");
         }
       }
 

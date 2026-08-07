@@ -19,7 +19,7 @@ import {
   TextInputBuilder,
   TextInputStyle,
 } from "discord.js";
-import { db, kvGet, kvSet, type OnboardingRow } from "../db/database.js";
+import { db, kvDel, kvGet, kvSet, type OnboardingRow } from "../db/database.js";
 import {
   CANDIDATURES, COULEURS, DELAIS, EDITION, QUESTIONNAIRE, ROLE_ATTENTE, ROLES, SALONS, SEUIL_COMPTE_RECENT_JOURS, TEXTES,
 } from "../config/config.js";
@@ -291,20 +291,11 @@ export async function approuverProfilDemande(interaction: ButtonInteraction<"cac
   }
 
   const candidature = candidatureDe(membre);
-  // Le rôle Membre n'est PAS attribué ici : il ne s'obtient qu'en acceptant les
-  // règles (réaction 🎪). Valider une candidature donne le profil, pas l'accès.
-  const rolesAAjouter: string[] = [];
-  const nomsAttribues: string[] = [];
-  if (candidature?.roleKey) {
-    const r = role(guild, candidature.roleKey);
-    if (r) {
-      rolesAAjouter.push(r.id);
-      nomsAttribues.push(r.name);
-    }
-  }
+  const clesProfil = candidature?.roleKey ? [candidature.roleKey] : [];
+  const nomsAttribues = nomsDesRoles(guild, clesProfil);
 
   try {
-    await membre.roles.add(rolesAAjouter, "Candidature approuvée");
+    await poserOuReserverProfil(membre, clesProfil, "Candidature approuvée");
   } catch (err) {
     await interaction.editReply(`⚠️ Impossible d'attribuer les rôles (le rôle du bot doit être au-dessus). ${err instanceof Error ? err.message : ""}`);
     return;
@@ -341,6 +332,40 @@ function listeRoles(noms: string[]): string {
   return noms.length > 0 ? noms.join(", ") : "aucun rôle de profil";
 }
 
+function nomsDesRoles(guild: GuildMember["guild"], cles: string[]): string[] {
+  return cles.map((c) => role(guild, c as keyof typeof ROLES)?.name).filter((n): n is string => n !== undefined);
+}
+
+/**
+ * Attribue les rôles de profil, ou les met en réserve si les règles ne sont pas
+ * encore acceptées. Un rôle posé trop tôt ouvrirait sa catégorie malgré la
+ * barrière : sous Discord, l'autorisation portée par un rôle l'emporte sur
+ * l'interdiction portée par un autre. La réserve est vidée à la réaction 🎪.
+ */
+async function poserOuReserverProfil(membre: GuildMember, cles: string[], motif: string): Promise<void> {
+  if (cles.length === 0) return;
+  if (!aAccepteLesRegles(membre)) {
+    kvSet(`profil_attente:${membre.id}`, cles.join(","));
+    return;
+  }
+  const ids = cles.map((c) => role(membre.guild, c as keyof typeof ROLES)?.id).filter((i): i is string => i !== undefined);
+  if (ids.length > 0) await membre.roles.add(ids, motif);
+}
+
+/**
+ * Applique les rôles de profil mis en réserve, une fois les règles acceptées.
+ * Renvoie les noms attribués — vide s'il n'y avait rien en attente.
+ */
+export async function appliquerProfilReserve(membre: GuildMember): Promise<string[]> {
+  const brut = kvGet(`profil_attente:${membre.id}`);
+  if (!brut) return [];
+  const cles = brut.split(",").filter(Boolean);
+  const ids = cles.map((c) => role(membre.guild, c as keyof typeof ROLES)?.id).filter((i): i is string => i !== undefined);
+  if (ids.length > 0) await membre.roles.add(ids, "Profil validé, règles acceptées").catch(() => {});
+  kvDel(`profil_attente:${membre.id}`);
+  return nomsDesRoles(membre.guild, cles);
+}
+
 /** Le membre n'a pas encore accepté les règles : son accès reste bloqué. */
 function aAccepteLesRegles(membre: GuildMember): boolean {
   const membreRole = role(membre.guild, "membre");
@@ -352,9 +377,11 @@ function rappelReglesSiBesoin(membre: GuildMember): string {
   return aAccepteLesRegles(membre) ? "" : TEXTES.rappelRegles;
 }
 
-/** Note pour le Staff : la validation ne suffit pas, le membre doit encore réagir 🎪. */
+/** Note pour le Staff : le profil est réservé tant que les règles ne sont pas acceptées. */
 function accesEnAttente(membre: GuildMember): string {
-  return aAccepteLesRegles(membre) ? "" : `\n⏳ Il doit encore accepter les règles (réaction 🎪 dans ${SALONS.bienvenue}) pour accéder aux salons.`;
+  return aAccepteLesRegles(membre)
+    ? ""
+    : `\n⏳ Rôle mis en attente : il sera posé automatiquement dès qu'il aura accepté les règles (réaction 🎪 dans ${SALONS.bienvenue}).`;
 }
 
 // ---------- 3. Boutons Staff ----------
@@ -415,24 +442,13 @@ export async function selectionRoles(interaction: StringSelectMenuInteraction<"c
 
   // Attribution des seuls rôles choisis : l'accès aux salons (rôle Membre) ne
   // s'obtient qu'en acceptant les règles, jamais par une décision du Staff.
-  const rolesAAjouter = new Set<string>();
-  const nomsAttribues: string[] = [];
-  let estBenevole = false;
-  let estArtiste = false;
-
-  for (const cle of interaction.values) {
-    if (cle === "membre") continue; // l'accès passe par la réaction 🎪
-    const r = role(guild, cle as keyof typeof ROLES);
-    if (r) {
-      rolesAAjouter.add(r.id);
-      nomsAttribues.push(r.name);
-      if (cle === "benevoleEdition") estBenevole = true;
-      if (cle === "artiste") estArtiste = true;
-    }
-  }
+  const clesProfil = interaction.values.filter((c) => c !== "membre"); // l'accès passe par la réaction 🎪
+  const nomsAttribues = nomsDesRoles(guild, clesProfil);
+  const estBenevole = clesProfil.includes("benevoleEdition");
+  const estArtiste = clesProfil.includes("artiste");
 
   try {
-    await membre.roles.add([...rolesAAjouter], "Onboarding approuvé");
+    await poserOuReserverProfil(membre, clesProfil, "Onboarding approuvé");
     await nettoyerCandidature(membre);
   } catch (err) {
     await interaction.editReply({ content: `⚠️ Impossible d'attribuer les rôles (vérifie que le rôle du bot est au-dessus des rôles à attribuer). ${err instanceof Error ? err.message : ""}`, components: [] });
@@ -590,6 +606,7 @@ export async function rattraperReactionsAcces(guild: import("discord.js").Guild)
     if (!membre || membre.roles.cache.has(membreRole.id)) continue;
     await membre.roles.add(membreRole.id, "Rattrapage : réaction 🎪 posée hors ligne").catch(() => {});
     await leverBarriere(membre);
+    await appliquerProfilReserve(membre);
     kvSet(`regles:${membre.id}`, "1");
     ajoutes++;
   }
