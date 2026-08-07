@@ -252,6 +252,22 @@ async function posterMessages(guild: Guild): Promise<void> {
     await m2.pin().catch(() => {});
   }
 
+  // #guide-staff : mode d'emploi interne, en 3 messages épinglés
+  const guideStaff = salonTexte(guild, "guideStaff");
+  if (guideStaff && !(await dejaPoste(guideStaff.id, guild))) {
+    const pages: [string, string, number][] = [
+      [TEXTES.guideStaffTitre, TEXTES.guideStaffCorps, COULEURS.primaire],
+      [TEXTES.guideStaffCommandesTitre, TEXTES.guideStaffCommandesCorps, COULEURS.info],
+      [TEXTES.guideStaffAdminTitre, TEXTES.guideStaffAdminCorps, COULEURS.alerte],
+    ];
+    for (const [titre, corps, couleur] of pages) {
+      const m = await guideStaff.send({
+        embeds: [new EmbedBuilder().setTitle(titre).setDescription(corps).setColor(couleur)],
+      });
+      await m.pin().catch(() => {});
+    }
+  }
+
   // #billetterie : bouton ticket
   const billetterie = salonTexte(guild, "billetterie");
   if (billetterie && !(await dejaPoste(billetterie.id, guild, true))) {
