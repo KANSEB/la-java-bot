@@ -604,10 +604,12 @@ export async function rattraperReactionsAcces(guild: import("discord.js").Guild)
     if (user.bot) continue;
     const membre = await guild.members.fetch(user.id).catch(() => null);
     if (!membre || membre.roles.cache.has(membreRole.id)) continue;
+    // Marqué AVANT l'attribution : l'événement de changement de rôle annulerait
+    // sinon un accès pourtant légitime, la réaction n'étant pas encore enregistrée.
+    kvSet(`regles:${membre.id}`, "1");
     await membre.roles.add(membreRole.id, "Rattrapage : réaction 🎪 posée hors ligne").catch(() => {});
     await leverBarriere(membre);
     await appliquerProfilReserve(membre);
-    kvSet(`regles:${membre.id}`, "1");
     ajoutes++;
   }
   if (ajoutes > 0) {

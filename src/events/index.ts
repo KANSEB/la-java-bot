@@ -106,6 +106,26 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
         await nettoyerCandidature(apres); // retire ⏳ En attente + les marqueurs Candidat
       }
 
+      // Membre obtenu autrement que par la réaction 🎪 — option du questionnaire
+      // natif, attribution à la main : la barrière serait percée, l'autorisation
+      // portée par Membre l'emportant sur l'interdiction portée par la barrière.
+      // On rétablit la règle plutôt que de la faire dépendre d'un réglage Discord.
+      if (
+        ajoutes.some((r) => r.name === ROLES.membre.nom) &&
+        kvGet(`regles:${apres.id}`) !== "1" &&
+        !estStaff(apres)
+      ) {
+        const membreRole = role(apres.guild, "membre");
+        if (membreRole) {
+          await apres.roles.remove(membreRole.id, "Règles pas encore acceptées").catch(() => {});
+          await poserBarriere(apres);
+          await log(apres.guild, "🚪 Accès prématuré annulé",
+            `<@${apres.id}> a reçu **${ROLES.membre.nom}** sans avoir accepté les règles : rôle retiré. Si cela se répète, c'est qu'une option du questionnaire natif accorde ce rôle — elle doit accorder un rôle cosmétique à la place.`,
+            "alerte");
+        }
+        return;
+      }
+
       // Bienvenue publique du grand public. Les parcours validés au bouton
       // (attente_notifie) sont annoncés à l'approbation, avec leur vrai profil.
       if (
