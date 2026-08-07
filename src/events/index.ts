@@ -19,7 +19,7 @@ import {
 import { enregistrerAnniversaire, ouvrirModalAnniversaire } from "../services/anniversaire.js";
 import { ouvrirTicket } from "../services/tickets.js";
 import { xpMessage, xpReaction } from "../services/xp.js";
-import { dmSur, estStaff, role, roleParNom, salonTexte } from "../services/util.js";
+import { dmSur, estStaff, leverBarriere, poserBarriere, role, roleParNom, salonTexte } from "../services/util.js";
 import type { Commande } from "../commands/types.js";
 
 // Détection d'invitations Discord tierces et de liens suspects (raccourcisseurs, grabbers)
@@ -32,6 +32,10 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
     try {
       if (membre.user.bot) return;
       await surveillerArrivee(membre.guild);
+
+      // Barrière posée en premier : tant que les règles ne sont pas acceptées,
+      // seul le salon qui les porte est visible.
+      await poserBarriere(membre);
 
       // Les rôles sont attribués par l'onboarding natif Discord.
       await dmSur(membre, TEXTES.dmBienvenue(membre.guild.name));
@@ -182,11 +186,13 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
 
       if (porteDacces) {
         kvSet(`regles:${membre.id}`, "1");
+        // Lever la barrière d'abord : c'est elle qui masque le serveur.
+        await leverBarriere(membre);
         const membreRole = role(guild, "membre");
         if (membreRole && !membre.roles.cache.has(membreRole.id)) {
           await membre.roles.add(membreRole.id, "Règles acceptées (réaction 🎪)").catch(() => {});
           await dmSur(membre, TEXTES.accesDebloque(membre.id));
-          await log(guild, "🎪 Accès débloqué", `<@${membre.id}> a accepté les règles : rôle Membre attribué.`, "succes");
+          await log(guild, "🎪 Accès débloqué", `<@${membre.id}> a accepté les règles : serveur ouvert.`, "succes");
         }
       }
 
@@ -207,8 +213,9 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       const membreRole = role(guild, "membre");
       if (membreRole && membre.roles.cache.has(membreRole.id)) {
         await membre.roles.remove(membreRole.id, "Réaction 🎪 retirée").catch(() => {});
+        await poserBarriere(membre);
         await dmSur(membre, TEXTES.accesRetire);
-        await log(guild, "🚪 Accès suspendu", `<@${membre.id}> a retiré sa réaction : rôle Membre retiré.`, "alerte");
+        await log(guild, "🚪 Accès suspendu", `<@${membre.id}> a retiré sa réaction : serveur de nouveau masqué.`, "alerte");
       }
     } catch (err) {
       await logErreur(reaction.message.guild ?? null, "messageReactionRemove", err);

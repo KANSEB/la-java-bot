@@ -90,6 +90,11 @@ export const PALIERS_XP: { seuil: number; nom: string; couleur: number; avantage
 
 export const ROLE_BENEVOLE_DU_MOIS = { nom: "Bénévole du Mois", couleur: 0xff3f34 };
 
+// Rôle-barrière posé sur chaque arrivant : il masque tout le serveur sauf le
+// salon des règles. Il est retiré à la réaction 🎪 — c'est ce geste, et lui seul,
+// qui ouvre le serveur. Sans permission propre : il ne fait qu'interdire.
+export const ROLE_PORTE = { nom: "🚧 Règles non acceptées", couleur: 0x4f545c };
+
 // Rôle posé par l'onboarding natif Discord sur TOUTE nouvelle candidature.
 // Le bot le surveille : dès qu'un membre le reçoit, une demande part dans #validation-demandes.
 export const ROLE_ATTENTE = { nom: "⏳ En attente de validation" };
@@ -367,7 +372,7 @@ export const TEXTES = {
 
   // DM et confirmations onboarding
   dmBienvenue: (serveur: string) =>
-    `Salut ! 👋 Bienvenue sur **${serveur}**.\nTon profil choisi à l'arrivée débloque tes accès. Si tu as coché bénévole, artiste ou partenaire, le Staff confirme ton rôle très vite. En attendant, viens dire bonjour dans le général ! 🎪`,
+    `Salut ! 👋 Bienvenue sur **${serveur}**.\n\n**Une seule chose à faire pour entrer :** va dans le salon 👋・bienvenue et clique sur la réaction 🎪 sous le message des règles. Le serveur s'ouvre aussitôt.\n\nSi tu as coché bénévole, artiste ou partenaire dans le questionnaire, le Staff confirme ton rôle très vite — pas besoin d'attendre pour venir dire bonjour ! 🎪`,
   soumissionRecue: "🎉 C'est envoyé ! Le Staff regarde ta demande très vite : tu recevras un message privé dès que c'est validé.",
   nouvelleCandidature: (userId: string, staffRoleId?: string) =>
     `${staffRoleId ? `<@&${staffRoleId}> ` : ""}📥 **Nouvelle candidature** de <@${userId}> — à valider ci-dessous :`,

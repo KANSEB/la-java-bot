@@ -20,7 +20,7 @@ import {
 } from "discord.js";
 import {
   ANNIVERSAIRES, BADGES, COULEURS, EDITION, nomBadge, PALIERS_XP, ROLE_BENEVOLE_DU_MOIS,
-  ROLES, SALONS, STRUCTURE, TEXTES, type CategorieDef, type SalonDef,
+  ROLE_PORTE, ROLES, SALONS, STRUCTURE, TEXTES, type CategorieDef, type SalonDef,
 } from "../config/config.js";
 import { roleParNom } from "../services/util.js";
 import { log } from "../services/logs.js";
@@ -55,6 +55,20 @@ async function creerRoles(guild: Guild, rapport: RapportSetup): Promise<Map<stri
     }
     map.set(cle, r);
   }
+
+  // Rôle-barrière : aucune permission propre, il n'existe que pour porter les
+  // interdictions de lecture posées sur les salons.
+  let porte = roleParNom(guild, ROLE_PORTE.nom);
+  if (!porte) {
+    porte = await guild.roles.create({
+      name: ROLE_PORTE.nom, color: ROLE_PORTE.couleur, hoist: false, mentionable: false,
+      permissions: [], reason: "Setup La Java (barrière règles)",
+    });
+    rapport.rolesCrees.push(ROLE_PORTE.nom);
+  } else {
+    rapport.existants++;
+  }
+  map.set("porte", porte);
 
   // Rôles cosmétiques : badges d'édition, paliers XP, Bénévole du Mois — aucune permission
   const cosmetiques: { nom: string; couleur: number }[] = [
@@ -119,6 +133,11 @@ export function overwritesPour(
       if (r) ow.push({ id: r.id, allow: [VOIR, ...(lectureSeule ? [] : ECRIRE), ...VOCAL], deny: lectureSeule ? ECRIRE : [] });
     }
   }
+
+  // Barrière : tant que les règles ne sont pas acceptées, rien n'est visible
+  // hormis le salon qui les porte — c'est là que se trouve la réaction 🎪.
+  const porte = roleParNom(guild, ROLE_PORTE.nom);
+  if (porte && salonDef.cle !== "bienvenue") ow.push({ id: porte.id, deny: [VOIR] });
 
   // Le Staff voit et écrit toujours partout ; les Référents écrivent dans les salons lecture seule publics (ACTU)
   if (staff) ow.push({ id: staff.id, allow: [VOIR, ...ECRIRE, ...VOCAL] });

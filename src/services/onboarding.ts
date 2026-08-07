@@ -23,7 +23,7 @@ import { db, kvGet, kvSet, type OnboardingRow } from "../db/database.js";
 import {
   CANDIDATURES, COULEURS, DELAIS, EDITION, QUESTIONNAIRE, ROLE_ATTENTE, ROLES, SALONS, SEUIL_COMPTE_RECENT_JOURS, TEXTES,
 } from "../config/config.js";
-import { ageCompteJours, dmSur, estStaff, horodatage, role, roleParNom, salonTexte } from "./util.js";
+import { ageCompteJours, dmSur, estStaff, horodatage, leverBarriere, role, roleParNom, salonTexte } from "./util.js";
 import { log, logErreur } from "./logs.js";
 import { attribuerBadge } from "./badges.js";
 
@@ -589,6 +589,7 @@ export async function rattraperReactionsAcces(guild: import("discord.js").Guild)
     const membre = await guild.members.fetch(user.id).catch(() => null);
     if (!membre || membre.roles.cache.has(membreRole.id)) continue;
     await membre.roles.add(membreRole.id, "Rattrapage : réaction 🎪 posée hors ligne").catch(() => {});
+    await leverBarriere(membre);
     kvSet(`regles:${membre.id}`, "1");
     ajoutes++;
   }
