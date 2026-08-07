@@ -176,11 +176,26 @@ export async function nettoyerCandidature(membre: GuildMember): Promise<void> {
   }
 }
 
+// Signalements en cours d'envoi. Le verrou kv n'est posé qu'après l'envoi (pour
+// pouvoir réessayer en cas d'échec) : sans ce garde-fou, l'arrivée et le
+// changement de rôle, qui se suivent de très près, posteraient deux embeds.
+const signalementsEnCours = new Set<string>();
+
 /**
  * Poste la demande de validation dans #validation-demandes dès qu'un membre
  * reçoit le rôle d'attente (questionnaire natif rempli). Dédupliqué via kv.
  */
 export async function signalerDemandeValidation(membre: GuildMember): Promise<void> {
+  if (signalementsEnCours.has(membre.id)) return;
+  signalementsEnCours.add(membre.id);
+  try {
+    await signaler(membre);
+  } finally {
+    signalementsEnCours.delete(membre.id);
+  }
+}
+
+async function signaler(membre: GuildMember): Promise<void> {
   const guild = membre.guild;
   // Verrou anti-doublon. Il saute si le dossier a été clos entre-temps : le membre
   // repostule après un refus, c'est une nouvelle candidature à signaler.

@@ -95,11 +95,18 @@ export async function xpReaction(membre: GuildMember): Promise<void> {
   await ajouterXp(membre, XP.parReaction);
 }
 
-/** Tick vocal (cron toutes les `vocalTrancheMinutes` min) : +10 à chaque membre humain en vocal. */
+/**
+ * Tick vocal (cron toutes les `vocalTrancheMinutes` min) : +10 à chaque membre
+ * humain réellement présent en vocal. Sont exclus le salon AFK et les membres
+ * casque coupé : sans ça, se garer une nuit en vocal suffisait à monter d'un
+ * palier sans avoir participé à quoi que ce soit.
+ */
 export async function tickVocal(client: Client): Promise<void> {
   for (const guild of client.guilds.cache.values()) {
     for (const state of guild.voiceStates.cache.values()) {
       if (!state.channelId || !state.member || state.member.user.bot) continue;
+      if (state.channelId === guild.afkChannelId) continue;
+      if (state.deaf || state.selfDeaf) continue;
       await ajouterXp(state.member, XP.vocalPointsParTranche).catch(() => {});
     }
   }
