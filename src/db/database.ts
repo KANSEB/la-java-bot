@@ -137,6 +137,11 @@ export function kvDel(cle: string): void {
   db.prepare("DELETE FROM kv WHERE cle = ?").run(cle);
 }
 
+/** Toutes les entrées dont la clé commence par `prefixe` (pour lister un état : profils en réserve...). */
+export function kvListe(prefixe: string): { cle: string; valeur: string }[] {
+  return db.prepare("SELECT cle, valeur FROM kv WHERE cle LIKE ? ORDER BY cle").all(`${prefixe}%`) as { cle: string; valeur: string }[];
+}
+
 // ---------- Purge RGPD : efface TOUTES les données d'un membre ----------
 export function purgerMembre(userId: string): number {
   let total = 0;

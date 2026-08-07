@@ -104,6 +104,18 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       // uniquement en acceptant les règles (réaction 🎪), quel que soit le profil.
       if (ajoutes.some((r) => fonctionnels.has(r.name))) {
         await nettoyerCandidature(apres); // retire ⏳ En attente + les marqueurs Candidat
+
+        // Rôle posé à la main avant l'acceptation des règles : son autorisation
+        // ouvre sa catégorie malgré la barrière. On ne le retire pas — c'est un
+        // geste délibéré du Staff — mais sans ce signalement personne ne saurait
+        // que ce membre circule sans être passé par les règles.
+        const membreRole = role(apres.guild, "membre");
+        const aAccepte = membreRole !== undefined && apres.roles.cache.has(membreRole.id);
+        if (!aAccepte && !estStaff(apres)) {
+          await log(apres.guild, "⚠️ Rôle posé avant les règles",
+            `<@${apres.id}> a reçu un rôle de profil sans avoir accepté les règles : il voit déjà sa catégorie. Le bouton **Approuver**, lui, met le rôle en réserve jusqu'à la réaction 🎪. Visible dans \`/suivi\`.`,
+            "alerte");
+        }
       }
 
       // Membre obtenu autrement que par la réaction 🎪 — option du questionnaire
