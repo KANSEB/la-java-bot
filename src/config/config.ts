@@ -373,6 +373,10 @@ export const TEXTES = {
     `${staffRoleId ? `<@&${staffRoleId}> ` : ""}📥 **Nouvelle candidature** de <@${userId}> — à valider ci-dessous :`,
   soumissionDejaEnCours: "Tu as déjà une demande en cours d'examen : le Staff s'en occupe, encore un peu de patience ! 🙏",
   soumissionEpuisee: "Tu as déjà utilisé ta seconde chance après un refus. Contacte directement un membre du Staff si tu penses qu'il y a une erreur.",
+  // Ajouté au DM de validation tant que les règles ne sont pas acceptées :
+  // le profil est accordé, mais l'accès aux salons passe par la réaction 🎪.
+  rappelRegles:
+    "\n\n⚠️ **Il te reste une étape :** passe dans le salon 👋・bienvenue et clique sur la réaction 🎪 sous le message des règles. C'est ce qui t'ouvre les salons de la communauté — sans ça tu ne pourras pas écrire.",
   dmApprouve: (roles: string) =>
     `🎉 **C'est bon, tu es de la famille !** Ta demande a été validée.\nTes rôles : ${roles}\nViens te présenter dans le salon présentations et dire bonjour dans le général. À très vite ! 🎪`,
   dmRefuse: (motif: string) =>

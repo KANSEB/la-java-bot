@@ -291,10 +291,10 @@ export async function approuverProfilDemande(interaction: ButtonInteraction<"cac
   }
 
   const candidature = candidatureDe(membre);
+  // Le rôle Membre n'est PAS attribué ici : il ne s'obtient qu'en acceptant les
+  // règles (réaction 🎪). Valider une candidature donne le profil, pas l'accès.
   const rolesAAjouter: string[] = [];
-  const membreRole = role(guild, "membre");
-  if (membreRole) rolesAAjouter.push(membreRole.id);
-  const nomsAttribues: string[] = membreRole ? [membreRole.name] : [];
+  const nomsAttribues: string[] = [];
   if (candidature?.roleKey) {
     const r = role(guild, candidature.roleKey);
     if (r) {
@@ -322,9 +322,9 @@ export async function approuverProfilDemande(interaction: ButtonInteraction<"cac
   db.prepare("UPDATE onboarding SET statut = 'approuve', validateurId = ?, dateValidation = ? WHERE userId = ?")
     .run(interaction.user.id, Date.now(), userId);
 
-  const dmOk = await dmSur(membre, TEXTES.dmApprouve(nomsAttribues.join(", ")));
+  const dmOk = await dmSur(membre, TEXTES.dmApprouve(listeRoles(nomsAttribues)) + rappelReglesSiBesoin(membre));
   // Message de bienvenue : une seule fois par membre, avec le vrai profil attribué
-  const profilAffiche = candidature?.profil ?? nomsAttribues.find((n) => n !== "Membre") ?? "Membre";
+  const profilAffiche = candidature?.profil ?? nomsAttribues[0] ?? "Membre";
   const general = salonTexte(guild, "general");
   if (general && kvGet(`bienvenue:${userId}`) !== "1") {
     await general.send(TEXTES.bienvenueGeneral(userId, profilAffiche)).catch(() => {});
@@ -332,8 +332,29 @@ export async function approuverProfilDemande(interaction: ButtonInteraction<"cac
   }
 
   await mettreAJourEmbed(interaction, interaction.message.id, "approuve", interaction.user.id);
-  await interaction.editReply(`✅ <@${userId}> approuvé avec : ${nomsAttribues.join(", ")}.${dmOk ? "" : "\n⚠️ DM impossible (messages privés fermés)."}`);
-  await log(guild, "✅ Candidature approuvée", `<@${userId}> validé par <@${interaction.user.id}> — rôles : ${nomsAttribues.join(", ")}`, "succes");
+  await interaction.editReply(`✅ <@${userId}> approuvé avec : ${listeRoles(nomsAttribues)}.${accesEnAttente(membre)}${dmOk ? "" : "\n⚠️ DM impossible (messages privés fermés)."}`);
+  await log(guild, "✅ Candidature approuvée", `<@${userId}> validé par <@${interaction.user.id}> — rôles : ${listeRoles(nomsAttribues)}`, "succes");
+}
+
+/** Rôles attribués, ou mention explicite qu'il n'y en a aucun (candidature sans profil). */
+function listeRoles(noms: string[]): string {
+  return noms.length > 0 ? noms.join(", ") : "aucun rôle de profil";
+}
+
+/** Le membre n'a pas encore accepté les règles : son accès reste bloqué. */
+function aAccepteLesRegles(membre: GuildMember): boolean {
+  const membreRole = role(membre.guild, "membre");
+  return membreRole !== undefined && membre.roles.cache.has(membreRole.id);
+}
+
+/** Rappel ajouté au DM de validation tant que les règles ne sont pas acceptées. */
+function rappelReglesSiBesoin(membre: GuildMember): string {
+  return aAccepteLesRegles(membre) ? "" : TEXTES.rappelRegles;
+}
+
+/** Note pour le Staff : la validation ne suffit pas, le membre doit encore réagir 🎪. */
+function accesEnAttente(membre: GuildMember): string {
+  return aAccepteLesRegles(membre) ? "" : `\n⏳ Il doit encore accepter les règles (réaction 🎪 dans ${SALONS.bienvenue}) pour accéder aux salons.`;
 }
 
 // ---------- 3. Boutons Staff ----------
@@ -353,11 +374,11 @@ export async function boutonApprouver(interaction: ButtonInteraction<"cached">):
   }
   const userId = interaction.customId.split(":")[1];
 
-  // Rôles attribuables (fonctionnels, hors Non vérifié / Membre qui est automatique)
+  // Rôles de profil attribuables. Membre n'y figure pas : ce n'est pas un profil
+  // mais la clé d'accès, et elle ne s'obtient qu'en acceptant les règles.
   const options = (Object.keys(ROLES) as (keyof typeof ROLES)[])
     .filter((c) => c !== "nonVerifie" && c !== "membre")
     .map((c) => ({ label: ROLES[c].nom, value: c }));
-  options.push({ label: "Membre uniquement (Curieux - Public)", value: "membre" });
 
   const select = new StringSelectMenuBuilder()
     .setCustomId(`ob_aps:${userId}:${interaction.message.id}`)
@@ -392,16 +413,15 @@ export async function selectionRoles(interaction: StringSelectMenuInteraction<"c
     return;
   }
 
-  // Attribution : Membre (toujours) + rôles choisis
+  // Attribution des seuls rôles choisis : l'accès aux salons (rôle Membre) ne
+  // s'obtient qu'en acceptant les règles, jamais par une décision du Staff.
   const rolesAAjouter = new Set<string>();
-  const membreRole = role(guild, "membre");
-  if (membreRole) rolesAAjouter.add(membreRole.id);
   const nomsAttribues: string[] = [];
   let estBenevole = false;
   let estArtiste = false;
 
   for (const cle of interaction.values) {
-    if (cle === "membre") continue; // déjà ajouté
+    if (cle === "membre") continue; // l'accès passe par la réaction 🎪
     const r = role(guild, cle as keyof typeof ROLES);
     if (r) {
       rolesAAjouter.add(r.id);
@@ -410,7 +430,6 @@ export async function selectionRoles(interaction: StringSelectMenuInteraction<"c
       if (cle === "artiste") estArtiste = true;
     }
   }
-  if (membreRole) nomsAttribues.unshift(membreRole.name);
 
   try {
     await membre.roles.add([...rolesAAjouter], "Onboarding approuvé");
@@ -436,8 +455,8 @@ export async function selectionRoles(interaction: StringSelectMenuInteraction<"c
     .run(interaction.user.id, Date.now(), userId);
 
   // DM de confirmation + bienvenue publique (une seule fois, avec le vrai rôle attribué)
-  const dmOk = await dmSur(membre, TEXTES.dmApprouve(nomsAttribues.join(", ")));
-  const profilLabel = nomsAttribues.find((n) => n !== ROLES.membre.nom) ?? ROLES.membre.nom;
+  const dmOk = await dmSur(membre, TEXTES.dmApprouve(listeRoles(nomsAttribues)) + rappelReglesSiBesoin(membre));
+  const profilLabel = nomsAttribues[0] ?? ROLES.membre.nom;
   const general = salonTexte(guild, "general");
   if (general && kvGet(`bienvenue:${userId}`) !== "1") {
     await general.send(TEXTES.bienvenueGeneral(userId, profilLabel)).catch(() => {});
@@ -446,10 +465,10 @@ export async function selectionRoles(interaction: StringSelectMenuInteraction<"c
 
   await mettreAJourEmbed(interaction, messageId, "approuve", interaction.user.id);
   await interaction.editReply({
-    content: `✅ <@${userId}> approuvé avec : ${nomsAttribues.join(", ")}.${dmOk ? "" : "\n⚠️ DM impossible (messages privés fermés)."}`,
+    content: `✅ <@${userId}> approuvé avec : ${listeRoles(nomsAttribues)}.${accesEnAttente(membre)}${dmOk ? "" : "\n⚠️ DM impossible (messages privés fermés)."}`,
     components: [],
   });
-  await log(guild, "✅ Candidature approuvée", `<@${userId}> validé par <@${interaction.user.id}> — rôles : ${nomsAttribues.join(", ")}`, "succes");
+  await log(guild, "✅ Candidature approuvée", `<@${userId}> validé par <@${interaction.user.id}> — rôles : ${listeRoles(nomsAttribues)}`, "succes");
 }
 
 /** [Refuser] → modal motif. */

@@ -96,12 +96,10 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
         (["staff", "referent", "artiste", "artisteCommunaute", "partenaire", "benevoleEdition", "benevole", "benevoleVeteran"] as (keyof typeof ROLES)[])
           .map((cle) => ROLES[cle].nom)
       );
+      // Le rôle Membre n'est PAS ajouté ici : l'accès aux salons s'obtient
+      // uniquement en acceptant les règles (réaction 🎪), quel que soit le profil.
       if (ajoutes.some((r) => fonctionnels.has(r.name))) {
         await nettoyerCandidature(apres); // retire ⏳ En attente + les marqueurs Candidat
-        const membreRole = role(apres.guild, "membre");
-        if (membreRole && !apres.roles.cache.has(membreRole.id)) {
-          await apres.roles.add(membreRole.id, "Rôle attribué : accès communauté").catch(() => {});
-        }
       }
 
       // Bienvenue publique du grand public. Les parcours validés au bouton
