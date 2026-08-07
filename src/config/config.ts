@@ -369,6 +369,8 @@ export const TEXTES = {
   dmBienvenue: (serveur: string) =>
     `Salut ! 👋 Bienvenue sur **${serveur}**.\nTon profil choisi à l'arrivée débloque tes accès. Si tu as coché bénévole, artiste ou partenaire, le Staff confirme ton rôle très vite. En attendant, viens dire bonjour dans le général ! 🎪`,
   soumissionRecue: "🎉 C'est envoyé ! Le Staff regarde ta demande très vite : tu recevras un message privé dès que c'est validé.",
+  nouvelleCandidature: (userId: string, staffRoleId?: string) =>
+    `${staffRoleId ? `<@&${staffRoleId}> ` : ""}📥 **Nouvelle candidature** de <@${userId}> — à valider ci-dessous :`,
   soumissionDejaEnCours: "Tu as déjà une demande en cours d'examen : le Staff s'en occupe, encore un peu de patience ! 🙏",
   soumissionEpuisee: "Tu as déjà utilisé ta seconde chance après un refus. Contacte directement un membre du Staff si tu penses qu'il y a une erreur.",
   dmApprouve: (roles: string) =>

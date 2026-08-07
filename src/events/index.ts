@@ -58,7 +58,15 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
   // ---------- Changements de rôles ----------
   client.on(Events.GuildMemberUpdate, async (avant, apres) => {
     try {
-      if (avant.partial) return;
+      // `avant` est partiel quand le membre n'était pas en cache (redémarrage récent
+      // du bot, membre inactif) : impossible de comparer les rôles. On ne peut pas
+      // pour autant ignorer l'événement, sinon la candidature d'un membre non mis en
+      // cache passe à la trappe jusqu'au prochain redémarrage. Repli sur l'état actuel.
+      if (avant.partial) {
+        const attente = roleParNom(apres.guild, ROLE_ATTENTE.nom);
+        if (attente && apres.roles.cache.has(attente.id)) await signalerDemandeValidation(apres);
+        return;
+      }
       const ajoutes = apres.roles.cache.filter((r) => !avant.roles.cache.has(r.id));
       const retires = avant.roles.cache.filter((r) => !apres.roles.cache.has(r.id));
       if (ajoutes.size === 0 && retires.size === 0) return;

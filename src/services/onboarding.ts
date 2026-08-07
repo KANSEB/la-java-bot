@@ -19,12 +19,12 @@ import {
   TextInputBuilder,
   TextInputStyle,
 } from "discord.js";
-import { db, kvGet, kvSet, type OnboardingRow } from "../db/database.js";
+import { db, kvDel, kvGet, kvSet, type OnboardingRow } from "../db/database.js";
 import {
-  CANDIDATURES, COULEURS, DELAIS, EDITION, QUESTIONNAIRE, ROLE_ATTENTE, ROLES, SEUIL_COMPTE_RECENT_JOURS, TEXTES,
+  CANDIDATURES, COULEURS, DELAIS, EDITION, QUESTIONNAIRE, ROLE_ATTENTE, ROLES, SALONS, SEUIL_COMPTE_RECENT_JOURS, TEXTES,
 } from "../config/config.js";
 import { ageCompteJours, dmSur, estStaff, horodatage, role, roleParNom, salonTexte } from "./util.js";
-import { log } from "./logs.js";
+import { log, logErreur } from "./logs.js";
 import { attribuerBadge } from "./badges.js";
 
 const STATUTS_AFFICHES: Record<OnboardingRow["statut"], string> = {
@@ -174,6 +174,9 @@ export async function nettoyerCandidature(membre: GuildMember): Promise<void> {
       await membre.roles.remove(r.id, "Candidature traitée").catch(() => {});
     }
   }
+  // Dossier clos : le verrou anti-doublon doit sauter, sinon une seconde
+  // candidature (après un refus) ne serait jamais signalée au Staff.
+  kvDel(`attente_notifie:${membre.id}`);
 }
 
 /**
@@ -183,8 +186,13 @@ export async function nettoyerCandidature(membre: GuildMember): Promise<void> {
 export async function signalerDemandeValidation(membre: GuildMember): Promise<void> {
   const guild = membre.guild;
   if (kvGet(`attente_notifie:${membre.id}`) === "1") return;
-  const canal = salonTexte(guild, "validation");
-  if (!canal) return;
+  // Repli sur staff-general si le salon de validation a été renommé ou supprimé :
+  // une candidature ne doit jamais disparaître en silence.
+  const canal = salonTexte(guild, "validation") ?? salonTexte(guild, "staffGeneral");
+  if (!canal) {
+    console.error(`[onboarding] salons ${SALONS.validation} / ${SALONS.staffGeneral} introuvables : candidature de ${membre.user.username} non signalée.`);
+    return;
+  }
 
   const candidature = candidatureDe(membre);
   const age = ageCompteJours(membre.user);
@@ -220,7 +228,21 @@ export async function signalerDemandeValidation(membre: GuildMember): Promise<vo
     new ButtonBuilder().setCustomId(`ob_mi:${membre.id}`).setLabel("Plus d'infos").setEmoji("❓").setStyle(ButtonStyle.Secondary)
   );
 
-  await canal.send({ embeds: [embed], components: [boutons] });
+  // Le ping du rôle Staff est ce qui déclenche la notification Discord : sans lui
+  // l'embed arrive en silence dans le salon et personne ne le voit passer.
+  const staff = role(guild, "staff");
+  try {
+    await canal.send({
+      content: TEXTES.nouvelleCandidature(membre.id, staff?.id),
+      embeds: [embed],
+      components: [boutons],
+      allowedMentions: { roles: staff ? [staff.id] : [] },
+    });
+  } catch (err) {
+    // Verrou non posé : le rattrapage au prochain démarrage réessaiera.
+    await logErreur(guild, `signalement de la candidature de ${membre.user.username} dans #${canal.name}`, err);
+    return;
+  }
   kvSet(`attente_notifie:${membre.id}`, "1");
   await log(guild, "📥 Nouvelle candidature", `<@${membre.id}> a rempli le questionnaire (profil : ${candidature?.profil ?? "inconnu"}).`);
 }
