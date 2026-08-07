@@ -19,12 +19,12 @@ import {
   TextInputBuilder,
   TextInputStyle,
 } from "discord.js";
-import { db, kvGet, kvSet, type OnboardingRow } from "../db/database.js";
+import { db, kvDel, kvGet, kvSet, type OnboardingRow } from "../db/database.js";
 import {
-  CANDIDATURES, COULEURS, DELAIS, EDITION, QUESTIONNAIRE, ROLE_ATTENTE, ROLES, SEUIL_COMPTE_RECENT_JOURS, TEXTES,
+  CANDIDATURES, COULEURS, DELAIS, EDITION, QUESTIONNAIRE, ROLE_ATTENTE, ROLES, SALONS, SEUIL_COMPTE_RECENT_JOURS, TEXTES,
 } from "../config/config.js";
-import { ageCompteJours, dmSur, estStaff, horodatage, role, roleParNom, salonTexte } from "./util.js";
-import { log } from "./logs.js";
+import { ageCompteJours, dmSur, estStaff, horodatage, leverBarriere, role, roleParNom, salonTexte } from "./util.js";
+import { log, logErreur } from "./logs.js";
 import { attribuerBadge } from "./badges.js";
 
 const STATUTS_AFFICHES: Record<OnboardingRow["statut"], string> = {
@@ -176,15 +176,40 @@ export async function nettoyerCandidature(membre: GuildMember): Promise<void> {
   }
 }
 
+// Signalements en cours d'envoi. Le verrou kv n'est posé qu'après l'envoi (pour
+// pouvoir réessayer en cas d'échec) : sans ce garde-fou, l'arrivée et le
+// changement de rôle, qui se suivent de très près, posteraient deux embeds.
+const signalementsEnCours = new Set<string>();
+
 /**
  * Poste la demande de validation dans #validation-demandes dès qu'un membre
  * reçoit le rôle d'attente (questionnaire natif rempli). Dédupliqué via kv.
  */
 export async function signalerDemandeValidation(membre: GuildMember): Promise<void> {
+  if (signalementsEnCours.has(membre.id)) return;
+  signalementsEnCours.add(membre.id);
+  try {
+    await signaler(membre);
+  } finally {
+    signalementsEnCours.delete(membre.id);
+  }
+}
+
+async function signaler(membre: GuildMember): Promise<void> {
   const guild = membre.guild;
-  if (kvGet(`attente_notifie:${membre.id}`) === "1") return;
-  const canal = salonTexte(guild, "validation");
-  if (!canal) return;
+  // Verrou anti-doublon. Il saute si le dossier a été clos entre-temps : le membre
+  // repostule après un refus, c'est une nouvelle candidature à signaler.
+  const dossier = db.prepare("SELECT statut FROM onboarding WHERE userId = ?").get(membre.id) as Pick<OnboardingRow, "statut"> | undefined;
+  const dossierClos = dossier?.statut === "approuve" || dossier?.statut === "refuse";
+  if (kvGet(`attente_notifie:${membre.id}`) === "1" && !dossierClos) return;
+
+  // Repli sur staff-general si le salon de validation a été renommé ou supprimé :
+  // une candidature ne doit jamais disparaître en silence.
+  const canal = salonTexte(guild, "validation") ?? salonTexte(guild, "staffGeneral");
+  if (!canal) {
+    console.error(`[onboarding] salons ${SALONS.validation} / ${SALONS.staffGeneral} introuvables : candidature de ${membre.user.username} non signalée.`);
+    return;
+  }
 
   const candidature = candidatureDe(membre);
   const age = ageCompteJours(membre.user);
@@ -220,7 +245,21 @@ export async function signalerDemandeValidation(membre: GuildMember): Promise<vo
     new ButtonBuilder().setCustomId(`ob_mi:${membre.id}`).setLabel("Plus d'infos").setEmoji("❓").setStyle(ButtonStyle.Secondary)
   );
 
-  await canal.send({ embeds: [embed], components: [boutons] });
+  // Le ping du rôle Staff est ce qui déclenche la notification Discord : sans lui
+  // l'embed arrive en silence dans le salon et personne ne le voit passer.
+  const staff = role(guild, "staff");
+  try {
+    await canal.send({
+      content: TEXTES.nouvelleCandidature(membre.id, staff?.id),
+      embeds: [embed],
+      components: [boutons],
+      allowedMentions: { roles: staff ? [staff.id] : [] },
+    });
+  } catch (err) {
+    // Verrou non posé : le rattrapage au prochain démarrage réessaiera.
+    await logErreur(guild, `signalement de la candidature de ${membre.user.username} dans #${canal.name}`, err);
+    return;
+  }
   kvSet(`attente_notifie:${membre.id}`, "1");
   await log(guild, "📥 Nouvelle candidature", `<@${membre.id}> a rempli le questionnaire (profil : ${candidature?.profil ?? "inconnu"}).`);
 }
@@ -252,20 +291,11 @@ export async function approuverProfilDemande(interaction: ButtonInteraction<"cac
   }
 
   const candidature = candidatureDe(membre);
-  const rolesAAjouter: string[] = [];
-  const membreRole = role(guild, "membre");
-  if (membreRole) rolesAAjouter.push(membreRole.id);
-  const nomsAttribues: string[] = membreRole ? [membreRole.name] : [];
-  if (candidature?.roleKey) {
-    const r = role(guild, candidature.roleKey);
-    if (r) {
-      rolesAAjouter.push(r.id);
-      nomsAttribues.push(r.name);
-    }
-  }
+  const clesProfil = candidature?.roleKey ? [candidature.roleKey] : [];
+  const nomsAttribues = nomsDesRoles(guild, clesProfil);
 
   try {
-    await membre.roles.add(rolesAAjouter, "Candidature approuvée");
+    await poserOuReserverProfil(membre, clesProfil, "Candidature approuvée");
   } catch (err) {
     await interaction.editReply(`⚠️ Impossible d'attribuer les rôles (le rôle du bot doit être au-dessus). ${err instanceof Error ? err.message : ""}`);
     return;
@@ -283,9 +313,9 @@ export async function approuverProfilDemande(interaction: ButtonInteraction<"cac
   db.prepare("UPDATE onboarding SET statut = 'approuve', validateurId = ?, dateValidation = ? WHERE userId = ?")
     .run(interaction.user.id, Date.now(), userId);
 
-  const dmOk = await dmSur(membre, TEXTES.dmApprouve(nomsAttribues.join(", ")));
+  const dmOk = await dmSur(membre, TEXTES.dmApprouve(listeRoles(nomsAttribues)) + rappelReglesSiBesoin(membre));
   // Message de bienvenue : une seule fois par membre, avec le vrai profil attribué
-  const profilAffiche = candidature?.profil ?? nomsAttribues.find((n) => n !== "Membre") ?? "Membre";
+  const profilAffiche = candidature?.profil ?? nomsAttribues[0] ?? "Membre";
   const general = salonTexte(guild, "general");
   if (general && kvGet(`bienvenue:${userId}`) !== "1") {
     await general.send(TEXTES.bienvenueGeneral(userId, profilAffiche)).catch(() => {});
@@ -293,8 +323,65 @@ export async function approuverProfilDemande(interaction: ButtonInteraction<"cac
   }
 
   await mettreAJourEmbed(interaction, interaction.message.id, "approuve", interaction.user.id);
-  await interaction.editReply(`✅ <@${userId}> approuvé avec : ${nomsAttribues.join(", ")}.${dmOk ? "" : "\n⚠️ DM impossible (messages privés fermés)."}`);
-  await log(guild, "✅ Candidature approuvée", `<@${userId}> validé par <@${interaction.user.id}> — rôles : ${nomsAttribues.join(", ")}`, "succes");
+  await interaction.editReply(`✅ <@${userId}> approuvé avec : ${listeRoles(nomsAttribues)}.${accesEnAttente(membre)}${dmOk ? "" : "\n⚠️ DM impossible (messages privés fermés)."}`);
+  await log(guild, "✅ Candidature approuvée", `<@${userId}> validé par <@${interaction.user.id}> — rôles : ${listeRoles(nomsAttribues)}`, "succes");
+}
+
+/** Rôles attribués, ou mention explicite qu'il n'y en a aucun (candidature sans profil). */
+function listeRoles(noms: string[]): string {
+  return noms.length > 0 ? noms.join(", ") : "aucun rôle de profil";
+}
+
+function nomsDesRoles(guild: GuildMember["guild"], cles: string[]): string[] {
+  return cles.map((c) => role(guild, c as keyof typeof ROLES)?.name).filter((n): n is string => n !== undefined);
+}
+
+/**
+ * Attribue les rôles de profil, ou les met en réserve si les règles ne sont pas
+ * encore acceptées. Un rôle posé trop tôt ouvrirait sa catégorie malgré la
+ * barrière : sous Discord, l'autorisation portée par un rôle l'emporte sur
+ * l'interdiction portée par un autre. La réserve est vidée à la réaction 🎪.
+ */
+async function poserOuReserverProfil(membre: GuildMember, cles: string[], motif: string): Promise<void> {
+  if (cles.length === 0) return;
+  if (!aAccepteLesRegles(membre)) {
+    kvSet(`profil_attente:${membre.id}`, cles.join(","));
+    return;
+  }
+  const ids = cles.map((c) => role(membre.guild, c as keyof typeof ROLES)?.id).filter((i): i is string => i !== undefined);
+  if (ids.length > 0) await membre.roles.add(ids, motif);
+}
+
+/**
+ * Applique les rôles de profil mis en réserve, une fois les règles acceptées.
+ * Renvoie les noms attribués — vide s'il n'y avait rien en attente.
+ */
+export async function appliquerProfilReserve(membre: GuildMember): Promise<string[]> {
+  const brut = kvGet(`profil_attente:${membre.id}`);
+  if (!brut) return [];
+  const cles = brut.split(",").filter(Boolean);
+  const ids = cles.map((c) => role(membre.guild, c as keyof typeof ROLES)?.id).filter((i): i is string => i !== undefined);
+  if (ids.length > 0) await membre.roles.add(ids, "Profil validé, règles acceptées").catch(() => {});
+  kvDel(`profil_attente:${membre.id}`);
+  return nomsDesRoles(membre.guild, cles);
+}
+
+/** Le membre n'a pas encore accepté les règles : son accès reste bloqué. */
+function aAccepteLesRegles(membre: GuildMember): boolean {
+  const membreRole = role(membre.guild, "membre");
+  return membreRole !== undefined && membre.roles.cache.has(membreRole.id);
+}
+
+/** Rappel ajouté au DM de validation tant que les règles ne sont pas acceptées. */
+function rappelReglesSiBesoin(membre: GuildMember): string {
+  return aAccepteLesRegles(membre) ? "" : TEXTES.rappelRegles;
+}
+
+/** Note pour le Staff : le profil est réservé tant que les règles ne sont pas acceptées. */
+function accesEnAttente(membre: GuildMember): string {
+  return aAccepteLesRegles(membre)
+    ? ""
+    : `\n⏳ Rôle mis en attente : il sera posé automatiquement dès qu'il aura accepté les règles (réaction 🎪 dans ${SALONS.bienvenue}).`;
 }
 
 // ---------- 3. Boutons Staff ----------
@@ -314,11 +401,11 @@ export async function boutonApprouver(interaction: ButtonInteraction<"cached">):
   }
   const userId = interaction.customId.split(":")[1];
 
-  // Rôles attribuables (fonctionnels, hors Non vérifié / Membre qui est automatique)
+  // Rôles de profil attribuables. Membre n'y figure pas : ce n'est pas un profil
+  // mais la clé d'accès, et elle ne s'obtient qu'en acceptant les règles.
   const options = (Object.keys(ROLES) as (keyof typeof ROLES)[])
     .filter((c) => c !== "nonVerifie" && c !== "membre")
     .map((c) => ({ label: ROLES[c].nom, value: c }));
-  options.push({ label: "Membre uniquement (Curieux - Public)", value: "membre" });
 
   const select = new StringSelectMenuBuilder()
     .setCustomId(`ob_aps:${userId}:${interaction.message.id}`)
@@ -353,28 +440,15 @@ export async function selectionRoles(interaction: StringSelectMenuInteraction<"c
     return;
   }
 
-  // Attribution : Membre (toujours) + rôles choisis
-  const rolesAAjouter = new Set<string>();
-  const membreRole = role(guild, "membre");
-  if (membreRole) rolesAAjouter.add(membreRole.id);
-  const nomsAttribues: string[] = [];
-  let estBenevole = false;
-  let estArtiste = false;
-
-  for (const cle of interaction.values) {
-    if (cle === "membre") continue; // déjà ajouté
-    const r = role(guild, cle as keyof typeof ROLES);
-    if (r) {
-      rolesAAjouter.add(r.id);
-      nomsAttribues.push(r.name);
-      if (cle === "benevoleEdition") estBenevole = true;
-      if (cle === "artiste") estArtiste = true;
-    }
-  }
-  if (membreRole) nomsAttribues.unshift(membreRole.name);
+  // Attribution des seuls rôles choisis : l'accès aux salons (rôle Membre) ne
+  // s'obtient qu'en acceptant les règles, jamais par une décision du Staff.
+  const clesProfil = interaction.values.filter((c) => c !== "membre"); // l'accès passe par la réaction 🎪
+  const nomsAttribues = nomsDesRoles(guild, clesProfil);
+  const estBenevole = clesProfil.includes("benevoleEdition");
+  const estArtiste = clesProfil.includes("artiste");
 
   try {
-    await membre.roles.add([...rolesAAjouter], "Onboarding approuvé");
+    await poserOuReserverProfil(membre, clesProfil, "Onboarding approuvé");
     await nettoyerCandidature(membre);
   } catch (err) {
     await interaction.editReply({ content: `⚠️ Impossible d'attribuer les rôles (vérifie que le rôle du bot est au-dessus des rôles à attribuer). ${err instanceof Error ? err.message : ""}`, components: [] });
@@ -397,8 +471,8 @@ export async function selectionRoles(interaction: StringSelectMenuInteraction<"c
     .run(interaction.user.id, Date.now(), userId);
 
   // DM de confirmation + bienvenue publique (une seule fois, avec le vrai rôle attribué)
-  const dmOk = await dmSur(membre, TEXTES.dmApprouve(nomsAttribues.join(", ")));
-  const profilLabel = nomsAttribues.find((n) => n !== ROLES.membre.nom) ?? ROLES.membre.nom;
+  const dmOk = await dmSur(membre, TEXTES.dmApprouve(listeRoles(nomsAttribues)) + rappelReglesSiBesoin(membre));
+  const profilLabel = nomsAttribues[0] ?? ROLES.membre.nom;
   const general = salonTexte(guild, "general");
   if (general && kvGet(`bienvenue:${userId}`) !== "1") {
     await general.send(TEXTES.bienvenueGeneral(userId, profilLabel)).catch(() => {});
@@ -407,10 +481,10 @@ export async function selectionRoles(interaction: StringSelectMenuInteraction<"c
 
   await mettreAJourEmbed(interaction, messageId, "approuve", interaction.user.id);
   await interaction.editReply({
-    content: `✅ <@${userId}> approuvé avec : ${nomsAttribues.join(", ")}.${dmOk ? "" : "\n⚠️ DM impossible (messages privés fermés)."}`,
+    content: `✅ <@${userId}> approuvé avec : ${listeRoles(nomsAttribues)}.${accesEnAttente(membre)}${dmOk ? "" : "\n⚠️ DM impossible (messages privés fermés)."}`,
     components: [],
   });
-  await log(guild, "✅ Candidature approuvée", `<@${userId}> validé par <@${interaction.user.id}> — rôles : ${nomsAttribues.join(", ")}`, "succes");
+  await log(guild, "✅ Candidature approuvée", `<@${userId}> validé par <@${interaction.user.id}> — rôles : ${listeRoles(nomsAttribues)}`, "succes");
 }
 
 /** [Refuser] → modal motif. */
@@ -531,6 +605,8 @@ export async function rattraperReactionsAcces(guild: import("discord.js").Guild)
     const membre = await guild.members.fetch(user.id).catch(() => null);
     if (!membre || membre.roles.cache.has(membreRole.id)) continue;
     await membre.roles.add(membreRole.id, "Rattrapage : réaction 🎪 posée hors ligne").catch(() => {});
+    await leverBarriere(membre);
+    await appliquerProfilReserve(membre);
     kvSet(`regles:${membre.id}`, "1");
     ajoutes++;
   }

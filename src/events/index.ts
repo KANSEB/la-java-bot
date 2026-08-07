@@ -12,13 +12,14 @@ import { db, kvGet, kvSet } from "../db/database.js";
 import { surveillerArrivee } from "../services/antiraid.js";
 import { log, logErreur } from "../services/logs.js";
 import {
-  approuverProfilDemande, boutonApprouver, boutonPlusInfos, boutonRefuser, modalPlusInfos, modalRefus,
-  nettoyerCandidature, ouvrirQuestionnaire, selectionRoles, signalerDemandeValidation, soumettreQuestionnaire,
+  appliquerProfilReserve, approuverProfilDemande, boutonApprouver, boutonPlusInfos, boutonRefuser,
+  candidatureDe, modalPlusInfos, modalRefus, nettoyerCandidature, ouvrirQuestionnaire, selectionRoles,
+  signalerDemandeValidation, soumettreQuestionnaire,
 } from "../services/onboarding.js";
 import { enregistrerAnniversaire, ouvrirModalAnniversaire } from "../services/anniversaire.js";
 import { ouvrirTicket } from "../services/tickets.js";
 import { xpMessage, xpReaction } from "../services/xp.js";
-import { dmSur, estStaff, role, roleParNom, salonTexte } from "../services/util.js";
+import { dmSur, estStaff, leverBarriere, poserBarriere, role, roleParNom, salonTexte } from "../services/util.js";
 import type { Commande } from "../commands/types.js";
 
 // Détection d'invitations Discord tierces et de liens suspects (raccourcisseurs, grabbers)
@@ -32,10 +33,22 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       if (membre.user.bot) return;
       await surveillerArrivee(membre.guild);
 
+      // Barrière posée en premier : tant que les règles ne sont pas acceptées,
+      // seul le salon qui les porte est visible.
+      await poserBarriere(membre);
+
       // Les rôles sont attribués par l'onboarding natif Discord.
       await dmSur(membre, TEXTES.dmBienvenue(membre.guild.name));
 
       await log(membre.guild, "📥 Arrivée", `<@${membre.id}> (${membre.user.username}) a rejoint le serveur. Compte créé <t:${Math.floor(membre.user.createdTimestamp / 1000)}:R>.`);
+
+      // Le questionnaire natif est rempli PENDANT l'arrivée : les rôles peuvent déjà
+      // être posés ici, sans qu'aucun guildMemberUpdate ne suive. Sans ce contrôle la
+      // candidature n'était signalée qu'au redémarrage suivant, via le rattrapage.
+      const attente = roleParNom(membre.guild, ROLE_ATTENTE.nom);
+      if (attente && membre.roles.cache.has(attente.id)) {
+        await signalerDemandeValidation(membre);
+      }
     } catch (err) {
       await logErreur(membre.guild, "guildMemberAdd", err);
     }
@@ -58,7 +71,15 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
   // ---------- Changements de rôles ----------
   client.on(Events.GuildMemberUpdate, async (avant, apres) => {
     try {
-      if (avant.partial) return;
+      // `avant` est partiel quand le membre n'était pas en cache (redémarrage récent
+      // du bot, membre inactif) : impossible de comparer les rôles. On ne peut pas
+      // pour autant ignorer l'événement, sinon la candidature d'un membre non mis en
+      // cache passe à la trappe jusqu'au prochain redémarrage. Repli sur l'état actuel.
+      if (avant.partial) {
+        const attente = roleParNom(apres.guild, ROLE_ATTENTE.nom);
+        if (attente && apres.roles.cache.has(attente.id)) await signalerDemandeValidation(apres);
+        return;
+      }
       const ajoutes = apres.roles.cache.filter((r) => !avant.roles.cache.has(r.id));
       const retires = avant.roles.cache.filter((r) => !apres.roles.cache.has(r.id));
       if (ajoutes.size === 0 && retires.size === 0) return;
@@ -76,27 +97,35 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       // Rôle fonctionnel attribué (bouton du Staff ou à la main dans Discord) :
       // la candidature n'a plus lieu d'être, et l'accès communauté doit suivre.
       const fonctionnels = new Set(
-        (["staff", "referent", "artiste", "artisteCommunaute", "partenaire", "benevoleEdition", "benevole", "benevoleVeteran"] as (keyof typeof ROLES)[])
+        (["staff", "referent", "artiste", "artisteCommunaute", "benevoleEdition", "benevole", "benevoleVeteran"] as (keyof typeof ROLES)[])
           .map((cle) => ROLES[cle].nom)
       );
+      // Le rôle Membre n'est PAS ajouté ici : l'accès aux salons s'obtient
+      // uniquement en acceptant les règles (réaction 🎪), quel que soit le profil.
       if (ajoutes.some((r) => fonctionnels.has(r.name))) {
         await nettoyerCandidature(apres); // retire ⏳ En attente + les marqueurs Candidat
-        const membreRole = role(apres.guild, "membre");
-        if (membreRole && !apres.roles.cache.has(membreRole.id)) {
-          await apres.roles.add(membreRole.id, "Rôle attribué : accès communauté").catch(() => {});
-        }
       }
 
-      // Festivalier : Membre reçu directement via le questionnaire (sans candidature)
-      // → message de bienvenue public. Les parcours validés (attente_notifie) sont gérés à l'approbation.
+      // Bienvenue publique du grand public. Les parcours validés au bouton
+      // (attente_notifie) sont annoncés à l'approbation, avec leur vrai profil.
       if (
         ajoutes.some((r) => r.name === ROLES.membre.nom) &&
         kvGet(`attente_notifie:${apres.id}`) !== "1" &&
         kvGet(`bienvenue:${apres.id}`) !== "1"
       ) {
-        kvSet(`bienvenue:${apres.id}`, "1");
-        const general = salonTexte(apres.guild, "general");
-        if (general) await general.send(TEXTES.bienvenueGeneral(apres.id, PROFIL_DIRECT.titre)).catch(() => {});
+        // Candidature encore en cours : on se tait, l'annonce viendra à la validation.
+        const attenteRole = roleParNom(apres.guild, ROLE_ATTENTE.nom);
+        const enCandidature =
+          (attenteRole !== undefined && apres.roles.cache.has(attenteRole.id)) ||
+          candidatureDe(apres) !== undefined;
+        if (!enCandidature) {
+          // Un bénévole/artiste dont le rôle a été posé à la main n'est pas un
+          // festivalier : on l'annonce avec le rôle qu'il a réellement.
+          const roleFonctionnel = apres.roles.cache.find((r) => fonctionnels.has(r.name));
+          kvSet(`bienvenue:${apres.id}`, "1");
+          const general = salonTexte(apres.guild, "general");
+          if (general) await general.send(TEXTES.bienvenueGeneral(apres.id, roleFonctionnel?.name ?? PROFIL_DIRECT.titre)).catch(() => {});
+        }
       }
     } catch (err) {
       console.error("guildMemberUpdate :", err);
@@ -157,11 +186,16 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
 
       if (porteDacces) {
         kvSet(`regles:${membre.id}`, "1");
+        // Lever la barrière d'abord : c'est elle qui masque le serveur.
+        await leverBarriere(membre);
         const membreRole = role(guild, "membre");
         if (membreRole && !membre.roles.cache.has(membreRole.id)) {
           await membre.roles.add(membreRole.id, "Règles acceptées (réaction 🎪)").catch(() => {});
+          // Profil validé pendant qu'il n'avait pas encore accepté : on le pose maintenant.
+          const reserves = await appliquerProfilReserve(membre);
           await dmSur(membre, TEXTES.accesDebloque(membre.id));
-          await log(guild, "🎪 Accès débloqué", `<@${membre.id}> a accepté les règles : rôle Membre attribué.`, "succes");
+          await log(guild, "🎪 Accès débloqué",
+            `<@${membre.id}> a accepté les règles : serveur ouvert.${reserves.length > 0 ? ` Profil en attente appliqué : ${reserves.join(", ")}.` : ""}`, "succes");
         }
       }
 
@@ -182,8 +216,9 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       const membreRole = role(guild, "membre");
       if (membreRole && membre.roles.cache.has(membreRole.id)) {
         await membre.roles.remove(membreRole.id, "Réaction 🎪 retirée").catch(() => {});
+        await poserBarriere(membre);
         await dmSur(membre, TEXTES.accesRetire);
-        await log(guild, "🚪 Accès suspendu", `<@${membre.id}> a retiré sa réaction : rôle Membre retiré.`, "alerte");
+        await log(guild, "🚪 Accès suspendu", `<@${membre.id}> a retiré sa réaction : serveur de nouveau masqué.`, "alerte");
       }
     } catch (err) {
       await logErreur(reaction.message.guild ?? null, "messageReactionRemove", err);

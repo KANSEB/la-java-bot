@@ -47,7 +47,6 @@ export const ROLES: Record<string, RoleConfig> = {
   },
   artiste: { nom: "Artiste", couleur: 0x9b59b6, hoist: true, mentionnable: true, permissions: [] },
   artisteCommunaute: { nom: "Artiste Communauté", couleur: 0xb388eb, hoist: false, mentionnable: true, permissions: [] },
-  partenaire: { nom: "Partenaire", couleur: 0x1abc9c, hoist: false, mentionnable: true, permissions: [] },
   benevoleEdition: { nom: `Bénévole ${EDITION.annee}`, couleur: 0x2ecc71, hoist: true, mentionnable: true, permissions: [] },
   benevole: { nom: "Bénévole", couleur: 0x27ae60, hoist: false, mentionnable: true, permissions: [] },
   benevoleVeteran: { nom: "Bénévole Vétéran", couleur: 0xf1c40f, hoist: false, mentionnable: true, permissions: [] },
@@ -90,6 +89,11 @@ export const PALIERS_XP: { seuil: number; nom: string; couleur: number; avantage
 
 export const ROLE_BENEVOLE_DU_MOIS = { nom: "Bénévole du Mois", couleur: 0xff3f34 };
 
+// Rôle-barrière posé sur chaque arrivant : il masque tout le serveur sauf le
+// salon des règles. Il est retiré à la réaction 🎪 — c'est ce geste, et lui seul,
+// qui ouvre le serveur. Sans permission propre : il ne fait qu'interdire.
+export const ROLE_PORTE = { nom: "👋 Nouvel arrivant", couleur: 0x4f545c };
+
 // Rôle posé par l'onboarding natif Discord sur TOUTE nouvelle candidature.
 // Le bot le surveille : dès qu'un membre le reçoit, une demande part dans #validation-demandes.
 export const ROLE_ATTENTE = { nom: "⏳ En attente de validation" };
@@ -102,7 +106,6 @@ export const CANDIDATURES: { marqueur: string; profil: string; emoji: string; ro
   { marqueur: "Candidat Référent", profil: "Référent", emoji: "🧭", roleKey: "referent" },
   { marqueur: "Candidat Artiste", profil: "Artiste programmé", emoji: "🎤", roleKey: "artiste" },
   { marqueur: "Candidat Artiste Communauté", profil: "Artiste (communauté)", emoji: "🎧", roleKey: "artisteCommunaute" },
-  { marqueur: "Candidat Partenaire", profil: "Partenaire", emoji: "🤝", roleKey: "partenaire" },
 ];
 
 // Profil grand public : accès direct sans validation
@@ -173,6 +176,7 @@ export const SALONS = {
   backstage: "🎤・backstage",
   demos: "🎧・demos-et-promos",
   staffGeneral: "🔒・staff-general",
+  guideStaff: "📕・guide-staff",
   validation: "📋・validation-demandes",
   logs: "🤖・logs-bot",
   alertes: "🚨・alertes-moderation",
@@ -279,6 +283,7 @@ export const STRUCTURE: CategorieDef[] = [
     nom: "🔒 STAFF",
     acces: ["staff"],
     salons: [
+      { cle: "guideStaff", type: "texte", lectureSeule: true, sujet: "Mode d'emploi du bot : commandes et procédures" },
       { cle: "staffGeneral", type: "texte", sujet: "QG du staff" },
       { cle: "validation", type: "texte", sujet: "Candidatures à valider : boutons sur chaque demande" },
       { cle: "logs", type: "texte", lectureSeule: true, sujet: "Logs automatiques du bot" },
@@ -315,7 +320,6 @@ export const QUESTIONNAIRE = {
     { label: "Référent", value: "referent", emoji: "🧭", roleKey: "referent" },
     { label: "Artiste programmé", value: "artiste_programme", emoji: "🎤", roleKey: "artiste" },
     { label: "Artiste (communauté)", value: "artiste_communaute", emoji: "🎧", roleKey: "artisteCommunaute" },
-    { label: "Partenaire", value: "partenaire", emoji: "🤝", roleKey: "partenaire" },
     { label: "Curieux - Public", value: "curieux", emoji: "👀", roleKey: null },
   ] as { label: string; value: string; emoji: string; roleKey: keyof typeof ROLES | null }[],
   maxSoumissions: 2, // 1 soumission + 1 seule nouvelle tentative après refus
@@ -332,7 +336,7 @@ export const TEXTES = {
     "━━━━━ 🧭 **COMMENT MARCHE CE SERVEUR** ━━━━━",
     "",
     "🎪 **Pour entrer : réagis avec 🎪 sous ce message.** C'est ta façon de dire que tu as lu les règles ci-dessous — le serveur s'ouvre à toi dans la seconde.",
-    "🙌 **Bénévole, artiste ou partenaire ?** Tu l'as indiqué dans le questionnaire d'arrivée : le Staff valide ta demande et tes salons dédiés s'ajoutent ensuite.",
+    "🙌 **Bénévole ou artiste ?** Tu l'as indiqué dans le questionnaire d'arrivée : le Staff valide ta demande et tes salons dédiés s'ajoutent ensuite.",
     "📣 **Les infos officielles** (line-up, billetterie…) tombent dans le salon annonces. Le reste, c'est à toi de le faire vivre dans le général !",
     "⭐ **Plus tu participes** (messages, réactions, vocaux), plus tu gagnes d'XP et montes de niveau : salons secrets, billetterie en avance, giveaways… Détails épinglés dans le général.",
     "🎫 **Une question, un souci ?** Ouvre un ticket dans le salon billetterie : c'est privé, seul le Staff le voit.",
@@ -367,10 +371,16 @@ export const TEXTES = {
 
   // DM et confirmations onboarding
   dmBienvenue: (serveur: string) =>
-    `Salut ! 👋 Bienvenue sur **${serveur}**.\nTon profil choisi à l'arrivée débloque tes accès. Si tu as coché bénévole, artiste ou partenaire, le Staff confirme ton rôle très vite. En attendant, viens dire bonjour dans le général ! 🎪`,
+    `Salut ! 👋 Bienvenue sur **${serveur}**.\n\n**Une seule chose à faire pour entrer :** va dans le salon 👋・bienvenue et clique sur la réaction 🎪 sous le message des règles. Le serveur s'ouvre aussitôt.\n\nSi tu as coché bénévole ou artiste dans le questionnaire, le Staff confirme ton rôle très vite — pas besoin d'attendre pour venir dire bonjour ! 🎪`,
   soumissionRecue: "🎉 C'est envoyé ! Le Staff regarde ta demande très vite : tu recevras un message privé dès que c'est validé.",
+  nouvelleCandidature: (userId: string, staffRoleId?: string) =>
+    `${staffRoleId ? `<@&${staffRoleId}> ` : ""}📥 **Nouvelle candidature** de <@${userId}> — à valider ci-dessous :`,
   soumissionDejaEnCours: "Tu as déjà une demande en cours d'examen : le Staff s'en occupe, encore un peu de patience ! 🙏",
   soumissionEpuisee: "Tu as déjà utilisé ta seconde chance après un refus. Contacte directement un membre du Staff si tu penses qu'il y a une erreur.",
+  // Ajouté au DM de validation tant que les règles ne sont pas acceptées :
+  // le profil est accordé, mais l'accès aux salons passe par la réaction 🎪.
+  rappelRegles:
+    "\n\n⚠️ **Il te reste une étape :** passe dans le salon 👋・bienvenue et clique sur la réaction 🎪 sous le message des règles. C'est ce qui t'ouvre les salons de la communauté — sans ça tu ne pourras pas écrire.",
   dmApprouve: (roles: string) =>
     `🎉 **C'est bon, tu es de la famille !** Ta demande a été validée.\nTes rôles : ${roles}\nViens te présenter dans le salon présentations et dire bonjour dans le général. À très vite ! 🎪`,
   dmRefuse: (motif: string) =>
@@ -451,7 +461,7 @@ export const TEXTES = {
   ].join("\n"),
   guideServeurTitre: "🎪 Ce serveur, mode d'emploi",
   guideServeurCorps: [
-    "**🚪 Ton arrivée.** Le questionnaire d'entrée te demande ton profil : les festivalier·e·s entrent directement, les profils bénévole/artiste/partenaire sont validés par le Staff (en général très vite). Pense à réagir 🎪 au message de bienvenue pour montrer que tu as lu les règles !",
+    "**🚪 Ton arrivée.** Le questionnaire d'entrée te demande ton profil : les profils bénévole/référent/artiste sont validés par le Staff (en général très vite). Dans tous les cas, c'est la réaction 🎪 sur le message de bienvenue qui t'ouvre le serveur : sans elle, tu ne vois rien.",
     "",
     "**⭐ Les niveaux.** Participer (messages, réactions, vocaux) fait gagner de l'XP : Nouveau → Habitué → Fêtard → Pilier de la Java → Légende de la Java, avec de vrais avantages à chaque palier (salons secrets, billetterie en avance, giveaways…). Le détail est épinglé dans le général. Tape `/mon-profil` pour voir où tu en es, `/classement` pour le top 20.",
     "",
@@ -459,9 +469,92 @@ export const TEXTES = {
     "",
     "**🎂 Les anniversaires.** C'est un rituel réservé à l'équipe : si tu es bénévole, référent ou staff, un bouton dans le salon bénévoles te permet de renseigner le tien.",
     "",
-    "**🙌 Bénévoles, artistes, partenaires.** Une fois validé·e, tu as tes salons dédiés (planning, entraide, backstage, démos…). Tout ce qui te concerne y passe.",
+    "**🙌 Bénévoles et artistes.** Une fois validé·e, tu as tes salons dédiés (planning, entraide, backstage, démos…). Tout ce qui te concerne y passe.",
     "",
     "**🆘 Besoin d'aide ?** Ticket dans la billetterie, ou DM direct à un membre du **Staff** (en rouge dans la liste des membres). On ne mord pas.",
+  ].join("\n"),
+
+  // ---------- Guide interne du Staff (salon 📕・guide-staff) ----------
+  guideStaffTitre: "📕 Mode d'emploi du bot — 1/3 : le quotidien",
+  guideStaffCorps: [
+    "Ce salon est visible du Staff uniquement. Tout ce qui suit est à jour du fonctionnement réel du bot.",
+    "",
+    "━━━━━ 🚪 **COMMENT QUELQU'UN ENTRE** ━━━━━",
+    "",
+    "**1. Il arrive** et reçoit aussitôt le rôle `👋 Nouvel arrivant`. Ce rôle **cache tout le serveur sauf le salon des règles**. C'est volontaire : personne ne circule sans avoir vu les règles.",
+    "**2. Il remplit le questionnaire** d'arrivée de Discord. S'il demande un profil (bénévole, référent, artiste), une fiche tombe dans le salon des validations avec un ping `@Staff`.",
+    "**3. Tu valides** avec le bouton vert. Le rôle demandé est **mis en réserve** : il ne sera posé que lorsqu'il aura accepté les règles. La fiche te le rappelle.",
+    "**4. Il réagit 🎪** sous le message de bienvenue → `👋 Nouvel arrivant` disparaît, le rôle `Membre` arrive, son profil réservé est posé, le serveur s'ouvre.",
+    "",
+    "⚠️ **Les étapes 3 et 4 sont indépendantes.** Il peut réagir 🎪 avant que tu valides : c'est même le cas normal. Il discute dans le général pendant que tu prends ton temps.",
+    "",
+    "━━━━━ ✅ **LES BOUTONS DE VALIDATION** ━━━━━",
+    "",
+    "**✅ Approuver « profil »** — accorde le profil demandé, en un clic. C'est celui que tu utiliseras 9 fois sur 10.",
+    "**🎭 Autres rôles** — si le profil demandé ne correspond pas : tu choisis toi-même le ou les rôles.",
+    "**❌ Refuser** — demande un motif, envoyé au membre en message privé. Il a droit à **une** seconde tentative.",
+    "**❓ Plus d'infos** — pose une question au membre en privé sans trancher. La fiche reste ouverte.",
+    "",
+    "Une fiche traitée perd ses boutons et affiche qui a décidé. Si deux personnes cliquent en même temps, le bot ne traite la demande qu'une fois.",
+    "",
+    "━━━━━ 🎫 **LES TICKETS** ━━━━━",
+    "",
+    "Un membre ouvre un ticket depuis le salon billetterie : un salon privé se crée, le Staff est prévenu. Pour le clore, tape `/fermer-ticket` **dedans** : le transcript part dans les logs avant suppression.",
+  ].join("\n"),
+
+  guideStaffCommandesTitre: "📕 Mode d'emploi du bot — 2/3 : les commandes",
+  guideStaffCommandesCorps: [
+    "Les commandes marquées **(Staff)** sont refusées aux autres membres, où qu'elles soient tapées.",
+    "",
+    "━━━━━ 👥 **COMMUNAUTÉ** ━━━━━",
+    "",
+    "`/stats` **(Staff)** — tableau de bord : arrivées, taux de validation, sources, croissance, rétention.",
+    "`/shoutout` **(Staff)** — met un bénévole à l'honneur : annonce publique + rôle *Bénévole du Mois* pendant 30 jours.",
+    "`/sondage` — crée un sondage à réactions (2 à 10 options, séparées par des `;`).",
+    "`/sondage-resultats` — affiche le dépouillement du dernier sondage du salon.",
+    "`/classement` · `/mon-profil` — accessibles à tous, l'XP et les paliers.",
+    "",
+    "━━━━━ ⭐ **XP ET BADGES** ━━━━━",
+    "",
+    "`/xp-add` **(Staff)** — ajoute des points, avec un motif. Sert surtout à récompenser un shift bénévole.",
+    "`/attribuer-badge` **(Staff)** — pose un badge d'édition passée (`Java 2024`…) sur quelqu'un qui y était. **2 badges cumulés font passer *Bénévole Vétéran* automatiquement.**",
+    "",
+    "L'XP se gagne seul : messages (+15 à 40, une fois par minute), réactions (+25, une fois par 5 min), vocal (+10 par tranche de 10 min). Le salon AFK et le casque coupé ne rapportent rien.",
+    "",
+    "━━━━━ 🎂 **ANNIVERSAIRES** ━━━━━",
+    "",
+    "`/anniversaires-liste` **(Staff)** — les anniversaires des 7 prochains jours.",
+    "Le rituel est réservé à l'équipe : le bouton d'enregistrement est dans le salon bénévoles, et l'annonce y tombe aussi. Seuls le jour et le mois sont conservés, jamais l'année.",
+    "",
+    "━━━━━ 🔐 **DONNÉES ET RGPD** ━━━━━",
+    "",
+    "`/export-onboarding` **(Staff)** — exporte toutes les candidatures en CSV.",
+    "`/oublier-membre` **(Staff)** — **irréversible** : efface toutes les données d'un membre (candidature, XP, anniversaire). À utiliser sur demande explicite de la personne.",
+  ].join("\n"),
+
+  guideStaffAdminTitre: "📕 Mode d'emploi du bot — 3/3 : administration",
+  guideStaffAdminCorps: [
+    "━━━━━ 🛠 **STRUCTURE DU SERVEUR** ━━━━━",
+    "",
+    "`/setup-serveur` — crée ou complète rôles, catégories, salons et messages d'accueil. **Sans danger, relançable autant de fois que voulu** : ce qui existe est conservé, seules les permissions sont réappliquées. À relancer après toute modification de la configuration du bot.",
+    "`/ouvrir-salon` — révèle un salon masqué (les photos par exemple) en lui appliquant les permissions normales de sa catégorie.",
+    "",
+    "⚠️ Le bot ne supprime jamais un rôle ni un salon. Retirer quelque chose de la configuration l'empêche d'être recréé, mais le nettoyage se fait à la main.",
+    "",
+    "━━━━━ 🚨 **URGENCE : RAID** ━━━━━",
+    "",
+    "`/lockdown on` **(Staff)** — suspend toutes les validations. Le bot le déclenche **tout seul** au-delà de 10 arrivées en 60 secondes, et prévient dans les alertes.",
+    "`/lockdown off` — retour à la normale, une fois les comptes suspects vérifiés.",
+    "",
+    "Le bot supprime déjà seul les invitations Discord tierces et les liens suspects postés par les non-Staff, et trace tout dans les alertes.",
+    "",
+    "━━━━━ 🗄 **FIN D'ÉDITION** ━━━━━",
+    "",
+    "`/archiver-edition` **(Staff)** — la commande de passage d'une année à l'autre. Elle bascule tous les `Bénévole {annee}` en `Bénévole` (alumni), passe la catégorie de l'édition en archives lecture seule, et prépare le rôle et le badge de l'année suivante.",
+    "",
+    "⚠️ **L'ordre compte.** Lance `/archiver-edition` **d'abord**, change l'année dans la configuration du bot **ensuite**, puis relance `/setup-serveur`. Dans l'autre sens, la commande chercherait un rôle que personne ne porte encore et ne basculerait personne.",
+    "",
+    "Les badges d'édition ne sont jamais retirés : ils sont la mémoire de qui était là, année après année.",
   ].join("\n"),
 
   billetterieTitre: "🎫 Billetterie La Java",

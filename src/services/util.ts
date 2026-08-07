@@ -14,7 +14,7 @@ import {
   type GuildBasedChannel,
   type MessageCreateOptions,
 } from "discord.js";
-import { ROLES, SALONS } from "../config/config.js";
+import { ROLE_PORTE, ROLES, SALONS } from "../config/config.js";
 
 export function assertEnv(nom: string): string {
   const v = process.env[nom];
@@ -46,6 +46,30 @@ export function salonTexte(guild: Guild, cle: keyof typeof SALONS): TextChannel 
 export function estStaff(membre: GuildMember): boolean {
   const r = role(membre.guild, "staff");
   return (r !== undefined && membre.roles.cache.has(r.id)) || membre.permissions.has("Administrator");
+}
+
+/**
+ * Pose la barrière : le membre ne voit plus que le salon des règles, jusqu'à
+ * la réaction 🎪. Sans effet sur qui a déjà accepté, sur le Staff et sur les
+ * bots — on ne se coupe jamais l'accès à soi-même.
+ */
+export async function poserBarriere(membre: GuildMember): Promise<void> {
+  if (membre.user.bot || estStaff(membre)) return;
+  const membreRole = role(membre.guild, "membre");
+  if (membreRole && membre.roles.cache.has(membreRole.id)) return;
+
+  const porte = roleParNom(membre.guild, ROLE_PORTE.nom);
+  if (porte && !membre.roles.cache.has(porte.id)) {
+    await membre.roles.add(porte.id, "Règles pas encore acceptées").catch(() => {});
+  }
+}
+
+/** Lève la barrière : le serveur devient visible, selon les rôles du membre. */
+export async function leverBarriere(membre: GuildMember): Promise<void> {
+  const porte = roleParNom(membre.guild, ROLE_PORTE.nom);
+  if (porte && membre.roles.cache.has(porte.id)) {
+    await membre.roles.remove(porte.id, "Règles acceptées (réaction 🎪)").catch(() => {});
+  }
 }
 
 /**

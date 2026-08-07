@@ -339,7 +339,6 @@ const PROFILS = [
   { titre: "Référent", emoji: "🧭", valider: true },
   { titre: "Artiste programmé", emoji: "🎤", valider: true },
   { titre: "Artiste (communauté)", emoji: "🎧", valider: true },
-  { titre: "Partenaire", emoji: "🤝", valider: true },
   { titre: "Curieux - Public", emoji: "👀", valider: false },
 ];
 const SOURCES = [
