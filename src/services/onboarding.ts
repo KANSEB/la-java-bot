@@ -19,7 +19,7 @@ import {
   TextInputBuilder,
   TextInputStyle,
 } from "discord.js";
-import { db, kvDel, kvGet, kvSet, type OnboardingRow } from "../db/database.js";
+import { db, kvGet, kvSet, type OnboardingRow } from "../db/database.js";
 import {
   CANDIDATURES, COULEURS, DELAIS, EDITION, QUESTIONNAIRE, ROLE_ATTENTE, ROLES, SALONS, SEUIL_COMPTE_RECENT_JOURS, TEXTES,
 } from "../config/config.js";
@@ -174,9 +174,6 @@ export async function nettoyerCandidature(membre: GuildMember): Promise<void> {
       await membre.roles.remove(r.id, "Candidature traitée").catch(() => {});
     }
   }
-  // Dossier clos : le verrou anti-doublon doit sauter, sinon une seconde
-  // candidature (après un refus) ne serait jamais signalée au Staff.
-  kvDel(`attente_notifie:${membre.id}`);
 }
 
 /**
@@ -185,7 +182,12 @@ export async function nettoyerCandidature(membre: GuildMember): Promise<void> {
  */
 export async function signalerDemandeValidation(membre: GuildMember): Promise<void> {
   const guild = membre.guild;
-  if (kvGet(`attente_notifie:${membre.id}`) === "1") return;
+  // Verrou anti-doublon. Il saute si le dossier a été clos entre-temps : le membre
+  // repostule après un refus, c'est une nouvelle candidature à signaler.
+  const dossier = db.prepare("SELECT statut FROM onboarding WHERE userId = ?").get(membre.id) as Pick<OnboardingRow, "statut"> | undefined;
+  const dossierClos = dossier?.statut === "approuve" || dossier?.statut === "refuse";
+  if (kvGet(`attente_notifie:${membre.id}`) === "1" && !dossierClos) return;
+
   // Repli sur staff-general si le salon de validation a été renommé ou supprimé :
   // une candidature ne doit jamais disparaître en silence.
   const canal = salonTexte(guild, "validation") ?? salonTexte(guild, "staffGeneral");

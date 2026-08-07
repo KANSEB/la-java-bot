@@ -12,8 +12,9 @@ import { db, kvGet, kvSet } from "../db/database.js";
 import { surveillerArrivee } from "../services/antiraid.js";
 import { log, logErreur } from "../services/logs.js";
 import {
-  approuverProfilDemande, boutonApprouver, boutonPlusInfos, boutonRefuser, modalPlusInfos, modalRefus,
-  nettoyerCandidature, ouvrirQuestionnaire, selectionRoles, signalerDemandeValidation, soumettreQuestionnaire,
+  approuverProfilDemande, boutonApprouver, boutonPlusInfos, boutonRefuser, candidatureDe, modalPlusInfos,
+  modalRefus, nettoyerCandidature, ouvrirQuestionnaire, selectionRoles, signalerDemandeValidation,
+  soumettreQuestionnaire,
 } from "../services/onboarding.js";
 import { enregistrerAnniversaire, ouvrirModalAnniversaire } from "../services/anniversaire.js";
 import { ouvrirTicket } from "../services/tickets.js";
@@ -36,6 +37,14 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       await dmSur(membre, TEXTES.dmBienvenue(membre.guild.name));
 
       await log(membre.guild, "📥 Arrivée", `<@${membre.id}> (${membre.user.username}) a rejoint le serveur. Compte créé <t:${Math.floor(membre.user.createdTimestamp / 1000)}:R>.`);
+
+      // Le questionnaire natif est rempli PENDANT l'arrivée : les rôles peuvent déjà
+      // être posés ici, sans qu'aucun guildMemberUpdate ne suive. Sans ce contrôle la
+      // candidature n'était signalée qu'au redémarrage suivant, via le rattrapage.
+      const attente = roleParNom(membre.guild, ROLE_ATTENTE.nom);
+      if (attente && membre.roles.cache.has(attente.id)) {
+        await signalerDemandeValidation(membre);
+      }
     } catch (err) {
       await logErreur(membre.guild, "guildMemberAdd", err);
     }
@@ -95,16 +104,26 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
         }
       }
 
-      // Festivalier : Membre reçu directement via le questionnaire (sans candidature)
-      // → message de bienvenue public. Les parcours validés (attente_notifie) sont gérés à l'approbation.
+      // Bienvenue publique du grand public. Les parcours validés au bouton
+      // (attente_notifie) sont annoncés à l'approbation, avec leur vrai profil.
       if (
         ajoutes.some((r) => r.name === ROLES.membre.nom) &&
         kvGet(`attente_notifie:${apres.id}`) !== "1" &&
         kvGet(`bienvenue:${apres.id}`) !== "1"
       ) {
-        kvSet(`bienvenue:${apres.id}`, "1");
-        const general = salonTexte(apres.guild, "general");
-        if (general) await general.send(TEXTES.bienvenueGeneral(apres.id, PROFIL_DIRECT.titre)).catch(() => {});
+        // Candidature encore en cours : on se tait, l'annonce viendra à la validation.
+        const attenteRole = roleParNom(apres.guild, ROLE_ATTENTE.nom);
+        const enCandidature =
+          (attenteRole !== undefined && apres.roles.cache.has(attenteRole.id)) ||
+          candidatureDe(apres) !== undefined;
+        if (!enCandidature) {
+          // Un bénévole/artiste dont le rôle a été posé à la main n'est pas un
+          // festivalier : on l'annonce avec le rôle qu'il a réellement.
+          const roleFonctionnel = apres.roles.cache.find((r) => fonctionnels.has(r.name));
+          kvSet(`bienvenue:${apres.id}`, "1");
+          const general = salonTexte(apres.guild, "general");
+          if (general) await general.send(TEXTES.bienvenueGeneral(apres.id, roleFonctionnel?.name ?? PROFIL_DIRECT.titre)).catch(() => {});
+        }
       }
     } catch (err) {
       console.error("guildMemberUpdate :", err);
