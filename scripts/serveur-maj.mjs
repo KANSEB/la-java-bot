@@ -14,7 +14,7 @@
 //          npm run build && node scripts/serveur-maj.mjs --apply   → applique
 // ============================================================
 import "dotenv/config";
-import { COULEURS, PALIERS_XP, SALONS, TEXTES } from "../dist/config/config.js";
+import { CANDIDATURES, COULEURS, PALIERS_XP, SALONS, TEXTES } from "../dist/config/config.js";
 
 const TOKEN = process.env.DISCORD_TOKEN;
 const GUILD = process.env.GUILD_ID;
@@ -351,9 +351,27 @@ const SOURCES = [
   { titre: "La newsletter", emoji: "📬" },
   { titre: "Autre", emoji: "✨" },
 ];
-const membre = roleParNom("Membre"), attente = roleParNom(ATTENTE);
+const attente = roleParNom(ATTENTE);
+
+// Marqueurs de candidature : c'est ce que le bot lit pour savoir QUEL profil est
+// demandé. Sans eux, la fiche de validation affiche « profil inconnu » et le
+// bouton d'approbation n'a aucun rôle à attribuer.
+for (const c of CANDIDATURES) {
+  if (!roleParNom(c.marqueur)) {
+    const cree = await act(`Crée le rôle marqueur "${c.marqueur}"`, () =>
+      api(`/guilds/${GUILD}/roles`, { method: "POST", body: JSON.stringify({ name: c.marqueur, color: 0x95a5a6, permissions: "0" }) }));
+    if (cree) roles.push(cree);
+  }
+}
+const marqueurDe = (titre) => roleParNom(CANDIDATURES.find((c) => c.profil === titre)?.marqueur ?? "");
+
+// Les options doivent accorder au moins un rôle ou un salon. On pointe vers le
+// salon des règles : déjà visible de tous et seul salon non masqué par la
+// barrière, donc l'exception de salon que Discord pose n'ouvre rien de plus.
+// (Viser le général percerait la barrière : une exception au niveau du membre
+// l'emporte sur l'interdiction portée par un rôle.)
+const salonNeutre = salonParNom(SALONS.bienvenue);
 const publics = [...LECTURE_SEULE, ...OUVERTS].map((n) => salonParNom(n)).filter(Boolean);
-const generalPublic = salonParNom(SALONS.general);
 console.log(`Salons par défaut : ${publics.length} (minimum 7) — profils validés à la main : ${PROFILS.filter((p) => p.valider).map((p) => p.titre).join(", ")}`);
 await act("Active le questionnaire d'arrivée (2 questions : profil + source)", () =>
   api(`/guilds/${GUILD}/onboarding`, {
@@ -364,27 +382,31 @@ await act("Active le questionnaire d'arrivée (2 questions : profil + source)", 
           id: "0", // id fictif exigé par l'API (remplacé par Discord à la création)
           type: 0, single_select: true, required: true, in_onboarding: true,
           title: "Quel est ton profil à La Java ? 🎪",
-          options: PROFILS.map((p, i) => ({
-            id: String(i + 1),
-            title: p.titre,
-            emoji: { name: p.emoji },
-            // Profils sensibles → rôle "En attente", le Staff attribue le vrai rôle ensuite
-            role_ids: [p.valider ? attente.id : membre.id],
-            channel_ids: [],
-          })),
+          options: PROFILS.map((p, i) => {
+            // Profil à valider → "En attente" + son marqueur, pour que le Staff
+            // voie lequel est demandé et l'accorde en un clic. Le grand public
+            // n'obtient aucun rôle : l'accès vient de la réaction 🎪, jamais du
+            // questionnaire — sinon la barrière ne masquerait plus rien.
+            const marqueur = p.valider ? marqueurDe(p.titre) : null;
+            return {
+              id: String(i + 1),
+              title: p.titre,
+              emoji: { name: p.emoji },
+              role_ids: p.valider ? [attente.id, ...(marqueur ? [marqueur.id] : [])] : [],
+              channel_ids: p.valider ? [] : [salonNeutre.id],
+            };
+          }),
         },
         {
           id: "100",
           type: 0, single_select: true, required: true, in_onboarding: true,
           title: "Où as-tu connu La Java ? 👀",
-          // Chaque option doit donner accès à au moins un salon ou rôle :
-          // on pointe vers le général, déjà public, donc aucun effet de bord
           options: SOURCES.map((so, i) => ({
             id: String(101 + i),
             title: so.titre,
             emoji: { name: so.emoji },
             role_ids: [],
-            channel_ids: [generalPublic.id],
+            channel_ids: [salonNeutre.id],
           })),
         },
       ],
