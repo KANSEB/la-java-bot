@@ -156,6 +156,7 @@ export const SALONS = {
   general: "💬・general",
   presentations: "🙋・presentations",
   billetterie: "🎫・billetterie",
+  infosPratiques: "📍・infos-pratiques",
   covoiturage: "🚗・covoiturage",
   photos: "📸・vos-photos-videos",
   benevoles: `🙌・benevoles-${EDITION.annee}`,
@@ -226,6 +227,11 @@ export const STRUCTURE: CategorieDef[] = [
     salons: [
       { cle: "general", type: "texte", visiblePublic: true, sujet: "Le bar principal de la communauté : parle de tout ici" },
       { cle: "billetterie", type: "texte", lectureSeule: true, visiblePublic: true, sujet: "Questions billetterie : ouvre un ticket avec le bouton" },
+      {
+        cle: "infosPratiques", type: "forum",
+        sujet: "Tout ce qu'il faut savoir pour venir : un sujet par question. Cherche avant de poster, la réponse y est peut-être déjà !",
+        tags: ["Accès & lieu", "Billetterie", "Camping & hébergement", "Horaires", "Accessibilité", "Sur place", "Répondu"],
+      },
       { cle: "covoiturage", type: "texte", sujet: "Propose ou cherche un covoit' pour La Java : précise ta ville de départ !" },
       { cle: "photos", type: "texte", cache: true, sujet: "Vos plus beaux souvenirs en photo et vidéo" },
     ],
@@ -450,6 +456,51 @@ export const TEXTES = {
     "",
     "*Ce message est mis à jour au fil de la préparation — garde-le sous le coude !*",
   ].join("\n"),
+
+  // Sujets créés d'office dans le forum infos pratiques. Volontairement
+  // incomplets là où l'info n'est pas connue : au Staff de compléter.
+  infosPratiquesSujets: [
+    {
+      titre: "📍 Quand et où ?",
+      tag: "Accès & lieu",
+      corps: [
+        `🗓 **${EDITION.nom}** aura lieu le **${new Date(EDITION.dateEvenement + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}**.`,
+        "📍 À **Quimper**.",
+        "",
+        "*L'adresse exacte, le plan d'accès et les parkings seront précisés ici dès que c'est calé : ce sujet sera mis à jour.*",
+      ].join("\n"),
+    },
+    {
+      titre: "🎫 Prendre sa place",
+      tag: "Billetterie",
+      corps: [
+        `La billetterie officielle, et la seule : ${EDITION.lienBilletterie}`,
+        "",
+        "⚠️ **Aucune revente hors canaux officiels.** Les annonces sauvages sont supprimées : c'est le meilleur moyen de se faire arnaquer.",
+        "Un souci avec ta commande ? Ouvre un ticket dans le salon billetterie, c'est privé.",
+      ].join("\n"),
+    },
+    {
+      titre: "⛺ Dormir sur place",
+      tag: "Camping & hébergement",
+      corps: [
+        "*Les infos camping et hébergement arrivent ici dès qu'elles sont figées.*",
+        "",
+        "En attendant, si tu cherches à partager une tente, un logement ou une voiture, le salon covoiturage est là pour ça 🚗",
+      ].join("\n"),
+    },
+    {
+      titre: "♿ Accessibilité",
+      tag: "Accessibilité",
+      corps: [
+        "On veut que tout le monde puisse venir dans de bonnes conditions.",
+        "",
+        "Un besoin particulier (mobilité, sensoriel, accompagnement, régime alimentaire) ? **Ouvre un ticket dans le salon billetterie** : on en discute en privé et on s'organise avec toi.",
+        "",
+        "Rien n'est trop petit pour être demandé.",
+      ].join("\n"),
+    },
+  ] as { titre: string; tag: string; corps: string }[],
 
   // Guide Discord (salon 📖・guide-discord, deux embeds épinglés)
   guideDiscordTitre: "📖 Discord pour les débutants",

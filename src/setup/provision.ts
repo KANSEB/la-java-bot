@@ -238,17 +238,6 @@ async function posterMessages(guild: Guild): Promise<void> {
     await message.pin().catch(() => {});
   }
 
-  // #general : infos pratiques épinglées, la première chose que voit un festivalier
-  const general = salonTexte(guild, "general");
-  if (general && !(await dejaPoste(general.id, guild))) {
-    const embed = new EmbedBuilder()
-      .setTitle(TEXTES.infosPratiquesTitre)
-      .setDescription(TEXTES.infosPratiquesCorps)
-      .setColor(COULEURS.primaire);
-    const message = await general.send({ embeds: [embed] });
-    await message.pin().catch(() => {});
-  }
-
   // #guide-discord : tuto Discord + mode d'emploi du serveur (2 embeds épinglés)
   const guide = salonTexte(guild, "guide");
   if (guide && !(await dejaPoste(guide.id, guild))) {
