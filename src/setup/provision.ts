@@ -115,6 +115,24 @@ export function overwritesPour(
     return ow;
   }
 
+  // Salon réservé à un palier XP et aux suivants. Les rôles de palier se
+  // remplacent l'un l'autre : il faut donc autoriser explicitement chacun des
+  // paliers à partir du seuil, sinon monter de niveau ferait perdre l'accès.
+  if (salonDef.palierMin) {
+    const depuis = PALIERS_XP.findIndex((p) => p.nom === salonDef.palierMin);
+    ow.push({ id: everyone, deny: [VOIR] });
+    if (depuis !== -1) {
+      for (const palier of PALIERS_XP.slice(depuis)) {
+        const r = roleParNom(guild, palier.nom);
+        if (r) ow.push({ id: r.id, allow: [VOIR, ...ECRIRE, ...VOCAL] });
+      }
+    }
+    const porteBarriere = roleParNom(guild, ROLE_PORTE.nom);
+    if (porteBarriere) ow.push({ id: porteBarriere.id, deny: [VOIR] });
+    if (staff) ow.push({ id: staff.id, allow: [VOIR, ...ECRIRE, ...VOCAL] });
+    return ow;
+  }
+
   const lectureSeule = salonDef.lectureSeule === true;
 
   if (cat.acces === "accueil" || salonDef.visiblePublic) {

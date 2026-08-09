@@ -70,19 +70,19 @@ export const PALIERS_XP: { seuil: number; nom: string; couleur: number; avantage
   { seuil: 0, nom: "Nouveau", couleur: 0xbdc3c7, avantages: [] },
   {
     seuil: 150, nom: "Habitué", couleur: 0x74b9ff,
-    avantages: ["Participation aux sondages communautaires", "Annonces et line-up en avant-première (48h avant les réseaux)"],
+    avantages: ["Droit de vote sur les décisions de la communauté", "Accès au vocal Afters"],
   },
   {
     seuil: 500, nom: "Fêtard", couleur: 0xa29bfe,
-    avantages: ["Accès au vocal Afters"],
+    avantages: ["Création de fils de discussion"],
   },
   {
     seuil: 1500, nom: "Pilier de la Java", couleur: 0xe67e22,
-    avantages: ["Billetterie en avance (48h)", "Giveaways merch", "Création de fils de discussion"],
+    avantages: ["Giveaways merch", "Priorité sur les candidatures bénévoles"],
   },
   {
     seuil: 4000, nom: "Légende de la Java", couleur: 0xffd32a,
-    avantages: ["Tarif préférentiel sur nos autres événements", "Ton nom au panthéon du serveur"],
+    avantages: ["Tarif préférentiel sur la billetterie", "Ton nom au panthéon"],
   },
 ];
 
@@ -113,11 +113,11 @@ export const XP = {
   parMessageMin: 15,
   parMessageMax: 40,
   cooldownMessageMs: 60_000,
-  parReaction: 25,
+  parReaction: 10,
   cooldownReactionMs: 300_000,
   vocalPointsParTranche: 10,
   vocalTrancheMinutes: 10,
-  shiftBenevole: 50,
+  shiftBenevole: 500,
   tailleClassement: 20,
 };
 
@@ -160,6 +160,7 @@ export const SALONS = {
   covoiturage: "🚗・covoiturage",
   photos: "📸・vos-photos-videos",
   niveaux: "⭐・niveaux",
+  votes: "🗳・votes-communaute",
   benevoles: "🙌・blabla-benevoles",
   planning: "📅・planning-shifts",
   covoitBenevoles: "🚐・covoit-benevoles",
@@ -193,7 +194,8 @@ export interface SalonDef {
   type: TypeSalon;
   lectureSeule?: boolean;   // écriture Staff/Référent uniquement
   cache?: boolean;          // créé masqué, révélable via /ouvrir-salon
-  visiblePublic?: boolean;  // visible par les non-validés (salons par défaut de l'onboarding natif, min 7)
+  visiblePublic?: boolean;
+  palierMin?: string;       // réservé à ce palier XP et aux suivants
   sujet?: string;
   tags?: string[];          // forums uniquement
 }
@@ -237,6 +239,7 @@ export const STRUCTURE: CategorieDef[] = [
       },
       { cle: "covoiturage", type: "texte", sujet: "Propose ou cherche un covoit' pour La Java : précise ta ville de départ !" },
       { cle: "photos", type: "texte", sujet: "Vos plus beaux souvenirs en photo et vidéo — balancez tout !" },
+      { cle: "votes", type: "texte", palierMin: "Habitué", sujet: "Les décisions qu'on prend ensemble : line-up, merch, afters..." },
     ],
   },
   {
@@ -549,6 +552,12 @@ export const TEXTES = {
     "",
     "*Les avantages « billetterie en avance » et « giveaways » sont gérés à la main par le Staff : on vient te chercher, tu n'as rien à demander.*",
   ].join("\n"),
+
+  pantheonTitre: "🏛 Le panthéon de La Java",
+  pantheonCorps: (noms: string[]) =>
+    noms.length
+      ? `Celles et ceux qui ont atteint **Légende de la Java** :\n\n${noms.map((n) => `🏛 ${n}`).join("\n")}`
+      : "Personne n'y est encore. La place est libre — et elle porte ton nom si tu la veux 👀",
 
   // Guide Discord (salon 📖・guide-discord, deux embeds épinglés)
   guideDiscordTitre: "📖 Discord pour les débutants",

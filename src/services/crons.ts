@@ -9,7 +9,7 @@
 import { ChannelType, Client, Guild } from "discord.js";
 import cron from "node-cron";
 import { db, kvGet, kvSet } from "../db/database.js";
-import { ANNIVERSAIRES, DELAIS, EDITION, FUSEAU, ROLES, SALONS, TEXTES, XP } from "../config/config.js";
+import { ANNIVERSAIRES, DELAIS, EDITION, FUSEAU, PALIERS_XP, ROLES, SALONS, TEXTES, XP } from "../config/config.js";
 import { dmSur, joursAvant, roleParNom, salonTexte } from "./util.js";
 import { log, logErreur } from "./logs.js";
 import { tickVocal } from "./xp.js";
@@ -94,6 +94,30 @@ async function rappelerAnniversaires(guild: Guild): Promise<void> {
   }
 }
 
+// ---------- Panthéon : la liste des Légendes, tenue à jour toute seule ----------
+async function majPantheon(guild: Guild): Promise<void> {
+  const salon = salonTexte(guild, "niveaux");
+  if (!salon) return;
+  const dernier = PALIERS_XP[PALIERS_XP.length - 1];
+  const role = roleParNom(guild, dernier.nom);
+  const noms = role ? [...role.members.values()].map((m) => `<@${m.id}>`) : [];
+
+  const texte = TEXTES.pantheonCorps(noms);
+  const messageId = kvGet("pantheon");
+  if (messageId) {
+    const message = await salon.messages.fetch(messageId).catch(() => null);
+    if (message) {
+      await message.edit({ embeds: [{ title: TEXTES.pantheonTitre, description: texte, color: dernier.couleur }] }).catch(() => {});
+      return;
+    }
+  }
+  const message = await salon.send({ embeds: [{ title: TEXTES.pantheonTitre, description: texte, color: dernier.couleur }] }).catch(() => null);
+  if (message) {
+    await message.pin().catch(() => {});
+    kvSet("pantheon", message.id);
+  }
+}
+
 // ---------- Séquence DM bénévoles (J+0 / J+1 / J+2) ----------
 async function envoyerSequencesDm(guild: Guild): Promise<void> {
   const dus = db.prepare("SELECT userId, etape FROM dm_sequences WHERE prochainEnvoi <= ? AND etape < 3")
@@ -142,6 +166,7 @@ export function demarrerCrons(client: Client): void {
     if (!guild) return;
     try {
       await majCountdown(guild);
+      await majPantheon(guild);
       await archiverCovoitSiFini(guild);
     } catch (err) {
       await logErreur(guild, "cron 9h", err);
