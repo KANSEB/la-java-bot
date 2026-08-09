@@ -13,6 +13,7 @@ import { ANNIVERSAIRES, DELAIS, EDITION, FUSEAU, ROLE_BENEVOLE_DU_MOIS, SALONS, 
 import { dmSur, joursAvant, roleParNom, salonTexte } from "./util.js";
 import { log, logErreur } from "./logs.js";
 import { tickVocal } from "./xp.js";
+import { verifierCandidaturesEnAttente } from "./onboarding.js";
 
 function guildPrincipale(client: Client): Guild | undefined {
   const id = process.env.GUILD_ID;
@@ -164,6 +165,19 @@ export function demarrerCrons(client: Client): void {
       await envoyerSequencesDm(guild);
     } catch (err) {
       await logErreur(guild, "cron horaire", err);
+    }
+  }, OPTIONS);
+
+  // Toutes les 5 minutes — filet de sécurité sur les candidatures :
+  // un événement Discord manqué ne doit pas laisser quelqu'un à la porte
+  cron.schedule("*/5 * * * *", async () => {
+    const guild = guildPrincipale(client);
+    if (!guild) return;
+    try {
+      const signalees = await verifierCandidaturesEnAttente(guild);
+      if (signalees > 0) console.log(`[onboarding] filet de sécurité : ${signalees} candidature(s) récupérée(s)`);
+    } catch (err) {
+      await logErreur(guild, "cron candidatures", err);
     }
   }, OPTIONS);
 

@@ -618,4 +618,27 @@ export async function rattraperReactionsAcces(guild: import("discord.js").Guild)
   return ajoutes;
 }
 
+// ---------- 3c. Filet de sécurité périodique ----------
+/**
+ * Balaie les porteurs du rôle d'attente et signale ceux dont la demande n'a
+ * jamais atteint le Staff. Le signalement repose sur un événement temps réel :
+ * s'il est manqué (coupure réseau, redémarrage pile au mauvais moment), plus
+ * rien ne rattrape avant le prochain démarrage. Ce balayage borne l'attente
+ * à quelques minutes au lieu de « jusqu'au prochain redémarrage ».
+ */
+export async function verifierCandidaturesEnAttente(guild: import("discord.js").Guild): Promise<number> {
+  const attente = roleParNom(guild, ROLE_ATTENTE.nom);
+  if (!attente) return 0;
+
+  await guild.members.fetch().catch(() => {}); // le cache peut être incomplet
+  let signalees = 0;
+  for (const membre of attente.members.values()) {
+    if (membre.user.bot) continue;
+    if (kvGet(`attente_notifie:${membre.id}`) === "1") continue;
+    await signalerDemandeValidation(membre); // dédupliqué en interne
+    signalees++;
+  }
+  return signalees;
+}
+
 // ---------- 4. Rappels et kick automatique des Non vérifiés ----------
