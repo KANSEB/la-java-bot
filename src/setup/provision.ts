@@ -19,7 +19,7 @@ import {
   type OverwriteResolvable,
 } from "discord.js";
 import {
-  ANNIVERSAIRES, BADGES, COULEURS, EDITION, nomBadge, PALIERS_XP, ROLE_BENEVOLE_DU_MOIS,
+  ANNIVERSAIRES, BADGES, COULEURS, EDITION, nomBadge, PALIERS_XP,
   ROLE_PORTE, ROLES, SALONS, STRUCTURE, TEXTES, type CategorieDef, type SalonDef,
 } from "../config/config.js";
 import { roleParNom } from "../services/util.js";
@@ -74,7 +74,6 @@ async function creerRoles(guild: Guild, rapport: RapportSetup): Promise<Map<stri
   const cosmetiques: { nom: string; couleur: number }[] = [
     ...Object.entries(BADGES).map(([annee, b]) => ({ nom: nomBadge(Number(annee)), couleur: b.couleur })),
     ...PALIERS_XP.map((p) => ({ nom: p.nom, couleur: p.couleur })),
-    ROLE_BENEVOLE_DU_MOIS,
   ];
   for (const c of cosmetiques) {
     if (!roleParNom(guild, c.nom)) {
@@ -236,6 +235,17 @@ async function posterMessages(guild: Guild): Promise<void> {
       new ButtonBuilder().setCustomId("btn_anniversaire").setLabel(TEXTES.boutonAnniversaire).setEmoji("🎂").setStyle(ButtonStyle.Secondary)
     );
     const message = await salonAnniv.send({ embeds: [embed], components: [row] });
+    await message.pin().catch(() => {});
+  }
+
+  // #general : infos pratiques épinglées, la première chose que voit un festivalier
+  const general = salonTexte(guild, "general");
+  if (general && !(await dejaPoste(general.id, guild))) {
+    const embed = new EmbedBuilder()
+      .setTitle(TEXTES.infosPratiquesTitre)
+      .setDescription(TEXTES.infosPratiquesCorps)
+      .setColor(COULEURS.primaire);
+    const message = await general.send({ embeds: [embed] });
     await message.pin().catch(() => {});
   }
 

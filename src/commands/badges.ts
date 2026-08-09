@@ -27,7 +27,7 @@ export const commandes: Commande[] = [
         return;
       }
       const badge = await attribuerBadge(membre, annee);
-      await interaction.editReply(`🏅 Badge **${badge}** attribué à <@${user.id}> (Vétéran vérifié automatiquement à partir de 2 badges).`);
+      await interaction.editReply(`🏅 Badge **${badge}** attribué à <@${user.id}> — les badges sont cumulables.`);
     },
   },
   {

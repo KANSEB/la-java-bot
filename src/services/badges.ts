@@ -26,15 +26,6 @@ export async function attribuerBadge(membre: GuildMember, annee: number): Promis
     await membre.roles.add(badge.id, `Badge édition ${annee}`);
   }
 
-  // Vétéran automatique à partir de 2 badges d'édition cumulés
-  const nbBadges = membre.roles.cache.filter((r) => /^Java \d{4}$/.test(r.name)).size;
-  if (nbBadges >= 2) {
-    const veteran = role(guild, "benevoleVeteran");
-    if (veteran && !membre.roles.cache.has(veteran.id)) {
-      await membre.roles.add(veteran.id, "2 éditions cumulées");
-      await log(guild, "🏅 Bénévole Vétéran", `<@${membre.id}> passe **Bénévole Vétéran** (${nbBadges} éditions) !`, "succes");
-    }
-  }
   return nom;
 }
 

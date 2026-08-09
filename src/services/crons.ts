@@ -9,7 +9,7 @@
 import { ChannelType, Client, Guild } from "discord.js";
 import cron from "node-cron";
 import { db, kvGet, kvSet } from "../db/database.js";
-import { ANNIVERSAIRES, DELAIS, EDITION, FUSEAU, ROLE_BENEVOLE_DU_MOIS, SALONS, TEXTES, XP } from "../config/config.js";
+import { ANNIVERSAIRES, DELAIS, EDITION, FUSEAU, SALONS, TEXTES, XP } from "../config/config.js";
 import { dmSur, joursAvant, roleParNom, salonTexte } from "./util.js";
 import { log, logErreur } from "./logs.js";
 import { tickVocal } from "./xp.js";
@@ -70,24 +70,6 @@ async function annoncerAnniversaires(guild: Guild): Promise<void> {
     const messages = TEXTES.messagesAnniversaire;
     const message = messages[Math.floor(Math.random() * messages.length)];
     await salon.send(message(userId)).catch(() => {});
-  }
-}
-
-// ---------- Expiration Bénévole du Mois (30 jours) ----------
-async function expirerShoutouts(guild: Guild): Promise<void> {
-  const expires = db.prepare("SELECT userId FROM shoutouts WHERE expireA <= ?").all(Date.now()) as { userId: string }[];
-  if (expires.length === 0) return;
-  const roleBdm = roleParNom(guild, ROLE_BENEVOLE_DU_MOIS.nom);
-
-  for (const { userId } of expires) {
-    if (roleBdm) {
-      const membre = await guild.members.fetch(userId).catch(() => null);
-      if (membre?.roles.cache.has(roleBdm.id)) {
-        await membre.roles.remove(roleBdm.id, "Fin des 30 jours Bénévole du Mois").catch(() => {});
-      }
-    }
-    db.prepare("DELETE FROM shoutouts WHERE userId = ?").run(userId);
-    await log(guild, "🌟 Fin Bénévole du Mois", `Le rôle de <@${userId}> a expiré (30 jours).`);
   }
 }
 
@@ -161,7 +143,6 @@ export function demarrerCrons(client: Client): void {
     const guild = guildPrincipale(client);
     if (!guild) return;
     try {
-      await expirerShoutouts(guild);
       await envoyerSequencesDm(guild);
     } catch (err) {
       await logErreur(guild, "cron horaire", err);

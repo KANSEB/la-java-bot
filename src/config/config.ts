@@ -48,18 +48,17 @@ export const ROLES: Record<string, RoleConfig> = {
   artiste: { nom: "Artiste", couleur: 0x9b59b6, hoist: true, mentionnable: true, permissions: [] },
   artisteCommunaute: { nom: "Artiste Communauté", couleur: 0xb388eb, hoist: false, mentionnable: true, permissions: [] },
   benevoleEdition: { nom: `Bénévole ${EDITION.annee}`, couleur: 0x2ecc71, hoist: true, mentionnable: true, permissions: [] },
-  benevole: { nom: "Bénévole", couleur: 0x27ae60, hoist: false, mentionnable: true, permissions: [] },
-  benevoleVeteran: { nom: "Bénévole Vétéran", couleur: 0xf1c40f, hoist: false, mentionnable: true, permissions: [] },
+  benevole: { nom: "Ancien bénévole", couleur: 0x27ae60, hoist: false, mentionnable: true, permissions: [] },
   membre: { nom: "Membre", couleur: 0x3498db, hoist: false, mentionnable: false, permissions: [] },
 };
 
 // ---------- Rôles cosmétiques ----------
 // Badges d'édition, cumulables. `nomBadge(annee)` sert aussi pour les années passées/futures.
 export const nomBadge = (annee: number): string => `Java ${annee}`;
+// Seule l'édition en cours est pré-créée : `/attribuer-badge` fabrique le rôle
+// d'une année passée au moment où on en a besoin, inutile de les empiler d'avance.
 export const BADGES: Record<number, { couleur: number }> = {
   2026: { couleur: 0xff6b9d },
-  2025: { couleur: 0x54c6eb },
-  2024: { couleur: 0xffc75f },
 };
 
 // Paliers XP (seuil croissant). Le rôle du palier atteint remplace le précédent.
@@ -87,7 +86,6 @@ export const PALIERS_XP: { seuil: number; nom: string; couleur: number; avantage
   },
 ];
 
-export const ROLE_BENEVOLE_DU_MOIS = { nom: "Bénévole du Mois", couleur: 0xff3f34 };
 
 // Rôle-barrière posé sur chaque arrivant : il masque tout le serveur sauf le
 // salon des règles. Il est retiré à la réaction 🎪 — c'est ce geste, et lui seul,
@@ -126,7 +124,6 @@ export const XP = {
 // ---------- Délais (heures/jours) ----------
 export const DELAIS = {
   dmSequenceHeures: 24,
-  benevoleDuMoisJours: 30,
   archivageCovoitJoursApresEvent: 7,
 };
 
@@ -136,7 +133,7 @@ export const DELAIS = {
 // à tout déplacer (par ex. vers "general" pour ouvrir à tout le monde).
 export const ANNIVERSAIRES = {
   salonAnnonce: "benevoles" as const,
-  rolesAutorises: ["benevoleEdition", "benevole", "benevoleVeteran", "referent", "staff"] as (keyof typeof ROLES)[],
+  rolesAutorises: ["benevoleEdition", "benevole", "referent", "staff"] as (keyof typeof ROLES)[],
 };
 
 // Fuseau horaire des tâches planifiées : les serveurs d'hébergement tournent
@@ -228,7 +225,6 @@ export const STRUCTURE: CategorieDef[] = [
     acces: "public",
     salons: [
       { cle: "general", type: "texte", visiblePublic: true, sujet: "Le bar principal de la communauté : parle de tout ici" },
-      { cle: "presentations", type: "texte", visiblePublic: true, sujet: "Présente-toi : qui tu es, d'où tu viens, ce que tu écoutes" },
       { cle: "billetterie", type: "texte", lectureSeule: true, visiblePublic: true, sujet: "Questions billetterie : ouvre un ticket avec le bouton" },
       { cle: "covoiturage", type: "texte", sujet: "Propose ou cherche un covoit' pour La Java : précise ta ville de départ !" },
       { cle: "photos", type: "texte", cache: true, sujet: "Vos plus beaux souvenirs en photo et vidéo" },
@@ -239,6 +235,7 @@ export const STRUCTURE: CategorieDef[] = [
     acces: ["benevoleEdition", "referent", "staff"],
     salons: [
       { cle: "benevoles", type: "texte", sujet: "Annonces internes bénévoles" },
+      { cle: "presentations", type: "texte", sujet: "Présente-toi à l'équipe : qui tu es, ton poste, ce que tu écoutes" },
       { cle: "planning", type: "texte", lectureSeule: true, sujet: "Plannings et shifts : messages épinglés" },
       { cle: "covoitBenevoles", type: "texte", sujet: "Covoiturage entre bénévoles" },
       { cle: "hebergementBenevoles", type: "texte", sujet: "Logement des bénévoles : camping, canapés, qui dort où" },
@@ -411,9 +408,6 @@ export const TEXTES = {
         ? `🎉 **C'EST AUJOURD'HUI !** ${EDITION.nom}, on y est ! 🎪🔊`
         : `💜 ${EDITION.nom}, c'était il y a ${-jours} jour(s). Merci à toutes et tous : à l'année prochaine !`,
 
-  // Bénévole du mois
-  shoutout: (userId: string, texte: string) =>
-    `🌟 **Bénévole du Mois** 🌟\nBravo <@${userId}> ! ${texte}\nLe rôle ✨ est à toi pour 30 jours : porte-le fièrement !`,
 
   // Tickets
   // Accès débloqué par la réaction 🎪 sur le post de bienvenue
@@ -438,6 +432,24 @@ export const TEXTES = {
     `🎪 Bienvenue à La Java, <@${userId}> ! Tu as accepté les règles, le serveur est grand ouvert. Pense à te présenter et à renseigner ton anniversaire avec le bouton dans le salon de bienvenue 🎂`,
   accesRetire:
     "Tu as retiré ta réaction 🎪 sur le message de bienvenue : ton accès au serveur est suspendu. Remets la réaction quand tu veux pour le retrouver !",
+
+  // Infos pratiques épinglées dans le général (grand public)
+  infosPratiquesTitre: "📍 La Java 2026 — les infos pratiques",
+  infosPratiquesCorps: [
+    `🗓 **Quand ?** Le **${new Date(EDITION.dateEvenement + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}**`,
+    "📍 **Où ?** À Quimper — l'adresse exacte et le plan d'accès arrivent dans les annonces.",
+    `🎫 **Billetterie officielle** → ${EDITION.lienBilletterie}`,
+    "",
+    "**Sur place**",
+    "🚗 Besoin d'un covoit' ? Le salon covoiturage est fait pour ça : précise ta ville de départ.",
+    "⛺ Camping, hébergement, accès : les infos tombent dans les annonces au fur et à mesure.",
+    "♿ Un besoin d'accessibilité particulier ? Ouvre un ticket dans la billetterie, on s'organise.",
+    "",
+    "**Une question ?**",
+    "Pose-la ici, quelqu'un te répondra. Pour tout ce qui touche à ta commande ou à un sujet perso, ouvre plutôt un ticket dans le salon billetterie : c'est privé.",
+    "",
+    "*Ce message est mis à jour au fil de la préparation — garde-le sous le coude !*",
+  ].join("\n"),
 
   // Guide Discord (salon 📖・guide-discord, deux embeds épinglés)
   guideDiscordTitre: "📖 Discord pour les débutants",
@@ -509,7 +521,6 @@ export const TEXTES = {
     "",
     "`/suivi` **(Staff)** — **qui** attend quoi, nommément. Trois files : les candidatures à valider, les profils validés qui attendent encore la réaction 🎪 du membre, et ceux restés bloqués à la porte. Seule la première demande une action de ta part.",
     "`/stats` **(Staff)** — tableau de bord chiffré : arrivées, taux de validation, sources, croissance, rétention.",
-    "`/shoutout` **(Staff)** — met un bénévole à l'honneur : annonce publique + rôle *Bénévole du Mois* pendant 30 jours.",
     "`/sondage` — crée un sondage à réactions (2 à 10 options, séparées par des `;`).",
     "`/sondage-resultats` — affiche le dépouillement du dernier sondage du salon.",
     "`/classement` · `/mon-profil` — accessibles à tous, l'XP et les paliers.",
@@ -517,7 +528,7 @@ export const TEXTES = {
     "━━━━━ ⭐ **XP ET BADGES** ━━━━━",
     "",
     "`/xp-add` **(Staff)** — ajoute des points, avec un motif. Sert surtout à récompenser un shift bénévole.",
-    "`/attribuer-badge` **(Staff)** — pose un badge d'édition passée (`Java 2024`…) sur quelqu'un qui y était. **2 badges cumulés font passer *Bénévole Vétéran* automatiquement.**",
+    "`/attribuer-badge` **(Staff)** — pose un badge d'édition passée (`Java 2024`…) sur quelqu'un qui y était. Les badges sont cumulables.",
     "",
     "L'XP se gagne seul : messages (+15 à 40, une fois par minute), réactions (+25, une fois par 5 min), vocal (+10 par tranche de 10 min). Le salon AFK et le casque coupé ne rapportent rien.",
     "",
