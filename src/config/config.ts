@@ -159,6 +159,7 @@ export const SALONS = {
   infosPratiques: "📍・infos-pratiques",
   covoiturage: "🚗・covoiturage",
   photos: "📸・vos-photos-videos",
+  niveaux: "⭐・niveaux",
   benevoles: "🙌・blabla-benevoles",
   planning: "📅・planning-shifts",
   covoitBenevoles: "🚐・covoit-benevoles",
@@ -211,6 +212,7 @@ export const STRUCTURE: CategorieDef[] = [
     salons: [
       { cle: "bienvenue", type: "texte", lectureSeule: true, sujet: "Règles, présentation et RGPD : commence ici !" },
       { cle: "guide", type: "texte", lectureSeule: true, visiblePublic: true, sujet: "Nouveau sur Discord ou sur ce serveur ? Le tuto est ici" },
+      { cle: "niveaux", type: "texte", lectureSeule: true, visiblePublic: true, sujet: "Comment gagner de l'XP et ce que ça débloque" },
     ],
   },
   {
@@ -525,6 +527,28 @@ export const TEXTES = {
   // Rappel doux aux membres de l'équipe qui n'ont pas renseigné leur anniversaire
   rappelAnniversaire: (salon: string) =>
     `🎂 Petit rappel de La Java : on souhaite les anniversaires entre nous, et le tien nous manque !\nUn message épinglé dans **${salon}** te propose un bouton — deux cases à remplir, jour et mois, et c'est réglé. On ne demande jamais ton année 😉\n\n*Pas envie ? Ignore ce message, on ne te relancera pas.*`,
+
+  // Salon ⭐・niveaux : généré depuis PALIERS_XP et XP, donc toujours exact
+  niveauxTitre: "⭐ Les niveaux de La Java",
+  niveauxCorps: [
+    "Plus tu fais vivre le serveur, plus tu montes — et plus tu débloques. Rien à faire pour s'inscrire : ça compte tout seul.",
+    "",
+    "**Comment on gagne de l'XP**",
+    `💬 **${XP.parMessageMin} à ${XP.parMessageMax} XP** par message *(une fois par minute maximum, inutile de spammer)*`,
+    `❤️ **${XP.parReaction} XP** par réaction *(une fois toutes les ${XP.cooldownReactionMs / 60000} minutes)*`,
+    `🎙 **${XP.vocalPointsParTranche} XP** par tranche de ${XP.vocalTrancheMinutes} minutes en vocal`,
+    `🙌 **${XP.shiftBenevole} XP** par shift bénévole validé par le Staff`,
+    "",
+    "**Les paliers**",
+    ...PALIERS_XP.filter((p) => p.seuil > 0).map((p) =>
+      `**${p.seuil} XP · ${p.nom}**\n→ ${p.avantages.join(" • ")}`),
+    "",
+    "**Tes commandes**",
+    "`/mon-profil` — ton XP, ton rang, ton prochain palier",
+    "`/classement` — le top 20 du serveur",
+    "",
+    "*Les avantages « billetterie en avance » et « giveaways » sont gérés à la main par le Staff : on vient te chercher, tu n'as rien à demander.*",
+  ].join("\n"),
 
   // Guide Discord (salon 📖・guide-discord, deux embeds épinglés)
   guideDiscordTitre: "📖 Discord pour les débutants",

@@ -249,6 +249,17 @@ async function posterMessages(guild: Guild): Promise<void> {
     await message.pin().catch(() => {});
   }
 
+  // #niveaux : le mode d'emploi de l'XP, généré depuis la config (jamais périmé)
+  const niveaux = salonTexte(guild, "niveaux");
+  if (niveaux && !(await dejaPoste(niveaux.id, guild))) {
+    const embed = new EmbedBuilder()
+      .setTitle(TEXTES.niveauxTitre)
+      .setDescription(TEXTES.niveauxCorps)
+      .setColor(0xffd32a);
+    const message = await niveaux.send({ embeds: [embed] });
+    await message.pin().catch(() => {});
+  }
+
   // #guide-discord : tuto Discord + mode d'emploi du serveur (2 embeds épinglés)
   const guide = salonTexte(guild, "guide");
   if (guide && !(await dejaPoste(guide.id, guild))) {
