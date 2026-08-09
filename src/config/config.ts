@@ -345,6 +345,8 @@ export const QUESTIONNAIRE = {
 };
 
 // ---------- Tous les textes visibles par les utilisateurs ----------
+const SAUT = String.fromCharCode(10);
+
 export const TEXTES = {
   // Accueil / règles
   emojiDeblocage: "🎪", // réaction sur le post de bienvenue qui débloque les salons Membre
@@ -525,20 +527,19 @@ export const TEXTES = {
     "On va passer du temps ensemble, autant se connaître un peu ! Copie le modèle ci-dessous et remplis-le à ta sauce : tout est facultatif, réponds à ce qui te parle.",
     "",
     "```",
-    "**🏷 Prénom (ou comment on t'appelle) :**",
-    "**📍 Tu viens d'où :**",
-    "**🙌 Ce qui t'a donné envie de filer un coup de main :**",
-    "**💬 Deux-trois mots sur toi :**",
-    "**🎧 Ce que tu écoutes en boucle en ce moment :**",
-    "**✨ Un truc que tu sais faire et qui peut servir :**",
-    "*(conduire un utilitaire, cuisiner pour 30, bricoler, rassurer les gens à 4h du mat...)*",
-    "**☕ Café, bière ou tisane pour tenir la nuit :**",
+    "🏷  Prénom (ou comment on t'appelle) :",
+    "📍  Tu viens d'où :",
+    "🙌  Ce qui t'a donné envie de filer un coup de main :",
+    "💬  Deux-trois mots sur toi :",
+    "🎧  Ce que tu écoutes en boucle en ce moment :",
+    "✨  Un truc que tu sais faire et qui peut servir :",
+    "    (conduire un utilitaire, cuisiner pour 30, bricoler,",
+    "     rassurer les gens à 4h du mat...)",
+    "☕  Café, bière ou tisane pour tenir la nuit :",
     "```",
     "",
-    "*Les questions apparaîtront en gras une fois ton message posté, tes réponses en texte normal : c'est bien plus lisible pour tout le monde.*",
-    "",
     "Et prends trente secondes pour souhaiter la bienvenue à celles et ceux qui se présentent après toi 💬",
-  ].join("\n"),
+  ].join(SAUT),
 
   // Rappel doux aux membres de l'équipe qui n'ont pas renseigné leur anniversaire
   rappelAnniversaire: (salon: string) =>
