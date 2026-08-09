@@ -293,7 +293,6 @@ const levelingCorps = [
 ].join("\n");
 
 await epingler(SALONS.bienvenue, { title: TEXTES.bienvenueTitre, description: TEXTES.bienvenueCorps, color: COULEURS.primaire });
-await epingler(SALONS.general, { title: "⭐ Le leveling de La Java : comment ça marche ?", description: levelingCorps, color: 0xffd32a });
 await epingler(SALONS.billetterie, {
   title: "🎟 Billetterie : mode d'emploi",
   description: "Les liens officiels de billetterie sont postés ici par l'équipe.\n\n**Une question, un souci de commande ?** Ouvre un ticket avec le bouton ci-dessous ou tape `/ticket` : un fil privé s'ouvre avec le Staff, personne d'autre ne voit vos échanges.\n\n⚠️ **Aucune revente hors canaux officiels** : les annonces de revente sauvage sont supprimées.",

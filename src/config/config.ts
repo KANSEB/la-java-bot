@@ -238,7 +238,7 @@ export const STRUCTURE: CategorieDef[] = [
         tags: ["Accès & lieu", "Billetterie", "Camping & hébergement", "Horaires", "Accessibilité", "Sur place", "Répondu"],
       },
       { cle: "covoiturage", type: "texte", sujet: "Propose ou cherche un covoit' pour La Java : précise ta ville de départ !" },
-      { cle: "photos", type: "texte", sujet: "Vos plus beaux souvenirs en photo et vidéo — balancez tout !" },
+      { cle: "photos", type: "texte", sujet: "Vos plus beaux souvenirs en photo et vidéo, balancez tout !" },
       { cle: "votes", type: "texte", palierMin: "Habitué", sujet: "Les décisions qu'on prend ensemble : line-up, merch, afters..." },
     ],
   },
@@ -344,7 +344,7 @@ export const TEXTES = {
     "",
     "━━━━━ 🧭 **COMMENT MARCHE CE SERVEUR** ━━━━━",
     "",
-    "🎪 **Pour entrer : réagis avec 🎪 sous ce message.** C'est ta façon de dire que tu as lu les règles ci-dessous — le serveur s'ouvre à toi dans la seconde.",
+    "🎪 **Pour entrer : réagis avec 🎪 sous ce message.** C'est ta façon de dire que tu as lu les règles ci-dessous : le serveur s'ouvre à toi dans la seconde.",
     "🙌 **Bénévole ou artiste ?** Tu l'as indiqué dans le questionnaire d'arrivée : le Staff valide ta demande et tes salons dédiés s'ajoutent ensuite.",
     "📣 **Les infos officielles** (line-up, billetterie…) tombent dans le salon annonces. Le reste, c'est à toi de le faire vivre dans le général !",
     "⭐ **Plus tu participes** (messages, réactions, vocaux), plus tu gagnes d'XP et montes de niveau : salons secrets, billetterie en avance, giveaways… Détails épinglés dans le général.",
@@ -352,7 +352,7 @@ export const TEXTES = {
     "",
     "━━━━━ 🌈 **LES RÈGLES DU SERVEUR** ━━━━━",
     "",
-    "**1. Bienveillance d'abord.** Tout le monde est le/la bienvenu·e. Zéro tolérance pour le harcèlement, les discriminations (racisme, sexisme, LGBTQIA+phobies, validisme…) et les comportements toxiques — ici comme sur le site du festival.",
+    "**1. Bienveillance d'abord.** Tout le monde est le/la bienvenu·e. Zéro tolérance pour le harcèlement, les discriminations (racisme, sexisme, LGBTQIA+phobies, validisme…) et les comportements toxiques, ici comme sur le site du festival.",
     "",
     "**2. Consentement et droit à l'image.** Pas de partage de photos ou vidéos où quelqu'un est reconnaissable sans son accord, ni ici ni ailleurs. Un non est un non.",
     "",
@@ -383,13 +383,13 @@ export const TEXTES = {
     `Salut ! 👋 Bienvenue sur **${serveur}**.\n\n**Une seule chose à faire pour entrer :** va dans le salon 👋・bienvenue et clique sur la réaction 🎪 sous le message des règles. Le serveur s'ouvre aussitôt.\n\nSi tu as coché bénévole ou artiste dans le questionnaire, le Staff confirme ton rôle très vite — pas besoin d'attendre pour venir dire bonjour ! 🎪`,
   soumissionRecue: "🎉 C'est envoyé ! Le Staff regarde ta demande très vite : tu recevras un message privé dès que c'est validé.",
   nouvelleCandidature: (userId: string, staffRoleId?: string) =>
-    `${staffRoleId ? `<@&${staffRoleId}> ` : ""}📥 **Nouvelle candidature** de <@${userId}> — à valider ci-dessous :`,
+    `${staffRoleId ? `<@&${staffRoleId}> ` : ""}📥 **Nouvelle candidature** de <@${userId}>, à valider ci-dessous :`,
   soumissionDejaEnCours: "Tu as déjà une demande en cours d'examen : le Staff s'en occupe, encore un peu de patience ! 🙏",
   soumissionEpuisee: "Tu as déjà utilisé ta seconde chance après un refus. Contacte directement un membre du Staff si tu penses qu'il y a une erreur.",
   // Ajouté au DM de validation tant que les règles ne sont pas acceptées :
   // le profil est accordé, mais l'accès aux salons passe par la réaction 🎪.
   rappelRegles:
-    "\n\n⚠️ **Il te reste une étape :** passe dans le salon 👋・bienvenue et clique sur la réaction 🎪 sous le message des règles. C'est ce qui t'ouvre les salons de la communauté — sans ça tu ne pourras pas écrire.",
+    "\n\n⚠️ **Il te reste une étape :** passe dans le salon 👋・bienvenue et clique sur la réaction 🎪 sous le message des règles. C'est ce qui t'ouvre les salons de la communauté : sans ça, tu ne pourras pas écrire.",
   dmApprouve: (roles: string) =>
     `🎉 **C'est bon, tu es de la famille !** Ta demande a été validée.\nTes rôles : ${roles}\nViens te présenter dans le salon présentations et dire bonjour dans le général. À très vite ! 🎪`,
   dmRefuse: (motif: string) =>
@@ -401,7 +401,7 @@ export const TEXTES = {
 
   // Séquence bénévole (J+0 / J+1 / J+2)
   dmSequenceBenevole: [
-    "🙌 **Bienvenue dans l'équipe bénévoles de La Java !**\nTu as maintenant accès à la catégorie BÉNÉVOLES : les annonces internes, le planning et le covoit' bénévoles. Le salon des annonces bénévoles est ton point de repère : tout ce qui est important y passe.\n\n🎂 **Un dernier truc** : dans ce même salon, un message épinglé te propose de renseigner ton anniversaire — deux cases à remplir, jour et mois. C'est notre petit rituel d'équipe, on ne voudrait pas rater le tien !",
+    "🙌 **Bienvenue dans l'équipe bénévoles de La Java !**\nTu as maintenant accès à la catégorie BÉNÉVOLES : les annonces internes, le planning et le covoit' bénévoles. Le salon des annonces bénévoles est ton point de repère : tout ce qui est important y passe.\n\n🎂 **Un dernier truc** : dans ce même salon, un message épinglé te propose de renseigner ton anniversaire : deux cases à remplir, jour et mois. C'est notre petit rituel d'équipe, on ne voudrait pas rater le tien !",
     "📅 **Les shifts, comment ça marche ?**\nLe planning est publié dans le salon planning-shifts (messages épinglés). Tu y trouveras tes créneaux, ton poste et ton référent. Une question ? Pose-la dans le salon bénévoles : quelqu'un te répond vite.",
     "🙋 **Dernière étape : viens te présenter !**\nPasse dans le salon présentations raconter qui tu es, d'où tu viens et pourquoi tu donnes un coup de main. C'est le meilleur moyen de rencontrer l'équipe avant le jour J. À très vite ! 🎪",
   ],
@@ -430,11 +430,11 @@ export const TEXTES = {
   anniversaireLabelMois: "Mois (1 à 12)",
   anniversaireEnregistre: (jour: number, mois: number) =>
     `🎂 C'est noté : le **${jour}/${String(mois).padStart(2, "0")}** ! On te souhaitera ton anniversaire dans le général le jour J.\nOn ne demande jamais ton année de naissance, et tu peux demander la suppression au Staff quand tu veux.`,
-  anniversaireInvalide: "⚠️ Cette date n'existe pas — vérifie le jour et le mois (chiffres uniquement, par exemple 15 et 3 pour le 15 mars).",
-  anniversaireReserve: "🎂 Les anniversaires sont réservés à l'équipe (bénévoles, référents, staff) — c'est notre petit rituel interne 😉",
+  anniversaireInvalide: "⚠️ Cette date n'existe pas : vérifie le jour et le mois (chiffres uniquement, par exemple 15 et 3 pour le 15 mars).",
+  anniversaireReserve: "🎂 Les anniversaires sont réservés à l'équipe (bénévoles, référents, staff), c'est notre petit rituel interne 😉",
   anniversaireTitreSalon: "🎂 Les anniversaires de l'équipe",
   anniversaireCorpsSalon: [
-    "On aime souhaiter les anniversaires entre nous — clique sur le bouton pour renseigner le tien.",
+    "On aime souhaiter les anniversaires entre nous, clique sur le bouton pour renseigner le tien.",
     "",
     "Deux cases à remplir (jour et mois), et c'est tout : **on ne demande jamais ton année de naissance**.",
     "Le jour J, un message part ici pour te souhaiter la fête 🎉",
@@ -447,10 +447,10 @@ export const TEXTES = {
     "Tu as retiré ta réaction 🎪 sur le message de bienvenue : ton accès au serveur est suspendu. Remets la réaction quand tu veux pour le retrouver !",
 
   // Infos pratiques épinglées dans le général (grand public)
-  infosPratiquesTitre: "📍 La Java 2026 — les infos pratiques",
+  infosPratiquesTitre: "📍 La Java 2026 : les infos pratiques",
   infosPratiquesCorps: [
     `🗓 **Quand ?** Le **${new Date(EDITION.dateEvenement + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}**`,
-    "📍 **Où ?** À Quimper — l'adresse exacte et le plan d'accès arrivent dans les annonces.",
+    "📍 **Où ?** À Quimper. L'adresse exacte et le plan d'accès arrivent dans les annonces.",
     `🎫 **Billetterie officielle** → ${EDITION.lienBilletterie}`,
     "",
     "**Sur place**",
@@ -461,7 +461,7 @@ export const TEXTES = {
     "**Une question ?**",
     "Pose-la ici, quelqu'un te répondra. Pour tout ce qui touche à ta commande ou à un sujet perso, ouvre plutôt un ticket dans le salon billetterie : c'est privé.",
     "",
-    "*Ce message est mis à jour au fil de la préparation — garde-le sous le coude !*",
+    "*Ce message est mis à jour au fil de la préparation, garde-le sous le coude !*",
   ].join("\n"),
 
   // Sujets créés d'office dans le forum infos pratiques. Volontairement
@@ -512,7 +512,7 @@ export const TEXTES = {
   // Modèle épinglé dans #presentations : sans trame, personne n'ose commencer
   presentationTitre: "🙋 Présente-toi à l'équipe",
   presentationCorps: [
-    "On va passer du temps ensemble, autant se connaître un peu ! Copie le modèle ci-dessous et remplis-le à ta sauce — tout est facultatif, réponds à ce qui te parle.",
+    "On va passer du temps ensemble, autant se connaître un peu ! Copie le modèle ci-dessous et remplis-le à ta sauce : tout est facultatif, réponds à ce qui te parle.",
     "",
     "```",
     "🏷  Prénom (ou comment on t'appelle) :",
@@ -534,7 +534,7 @@ export const TEXTES = {
   // Salon ⭐・niveaux : généré depuis PALIERS_XP et XP, donc toujours exact
   niveauxTitre: "⭐ Les niveaux de La Java",
   niveauxCorps: [
-    "Plus tu fais vivre le serveur, plus tu montes — et plus tu débloques. Rien à faire pour s'inscrire : ça compte tout seul.",
+    "Plus tu fais vivre le serveur, plus tu montes, et plus tu débloques. Rien à faire pour s'inscrire : ça compte tout seul.",
     "",
     "**Comment on gagne de l'XP**",
     `💬 **${XP.parMessageMin} à ${XP.parMessageMax} XP** par message *(une fois par minute maximum, inutile de spammer)*`,
@@ -547,8 +547,8 @@ export const TEXTES = {
       `**${p.seuil} XP · ${p.nom}**\n→ ${p.avantages.join(" • ")}`),
     "",
     "**Tes commandes**",
-    "`/mon-profil` — ton XP, ton rang, ton prochain palier",
-    "`/classement` — le top 20 du serveur",
+    "`/mon-profil` : ton XP, ton rang, ton prochain palier",
+    "`/classement` : le top 20 du serveur",
     "",
     "*Les avantages « billetterie en avance » et « giveaways » sont gérés à la main par le Staff : on vient te chercher, tu n'as rien à demander.*",
   ].join("\n"),
@@ -557,7 +557,7 @@ export const TEXTES = {
   pantheonCorps: (noms: string[]) =>
     noms.length
       ? `Celles et ceux qui ont atteint **Légende de la Java** :\n\n${noms.map((n) => `🏛 ${n}`).join("\n")}`
-      : "Personne n'y est encore. La place est libre — et elle porte ton nom si tu la veux 👀",
+      : "Personne n'y est encore. La place est libre, et elle porte ton nom si tu la veux 👀",
 
   // Guide Discord (salon 📖・guide-discord, deux embeds épinglés)
   guideDiscordTitre: "📖 Discord pour les débutants",
@@ -594,7 +594,7 @@ export const TEXTES = {
   ].join("\n"),
 
   // ---------- Guide interne du Staff (salon 📕・guide-staff) ----------
-  guideStaffTitre: "📕 Mode d'emploi du bot — 1/3 : le quotidien",
+  guideStaffTitre: "📕 Mode d'emploi du bot (1/3) : le quotidien",
   guideStaffCorps: [
     "Ce salon est visible du Staff uniquement. Tout ce qui suit est à jour du fonctionnement réel du bot.",
     "",
@@ -609,10 +609,10 @@ export const TEXTES = {
     "",
     "━━━━━ ✅ **LES BOUTONS DE VALIDATION** ━━━━━",
     "",
-    "**✅ Approuver « profil »** — accorde le profil demandé, en un clic. C'est celui que tu utiliseras 9 fois sur 10.",
-    "**🎭 Autres rôles** — si le profil demandé ne correspond pas : tu choisis toi-même le ou les rôles.",
-    "**❌ Refuser** — demande un motif, envoyé au membre en message privé. Il a droit à **une** seconde tentative.",
-    "**❓ Plus d'infos** — pose une question au membre en privé sans trancher. La fiche reste ouverte.",
+    "**✅ Approuver « profil »** : accorde le profil demandé, en un clic. C'est celui que tu utiliseras 9 fois sur 10.",
+    "**🎭 Autres rôles** : si le profil demandé ne correspond pas : tu choisis toi-même le ou les rôles.",
+    "**❌ Refuser** : demande un motif, envoyé au membre en message privé. Il a droit à **une** seconde tentative.",
+    "**❓ Plus d'infos** : pose une question au membre en privé sans trancher. La fiche reste ouverte.",
     "",
     "Une fiche traitée perd ses boutons et affiche qui a décidé. Si deux personnes cliquent en même temps, le bot ne traite la demande qu'une fois.",
     "",
@@ -621,55 +621,55 @@ export const TEXTES = {
     "Un membre ouvre un ticket depuis le salon billetterie : un salon privé se crée, le Staff est prévenu. Pour le clore, tape `/fermer-ticket` **dedans** : le transcript part dans les logs avant suppression.",
   ].join("\n"),
 
-  guideStaffCommandesTitre: "📕 Mode d'emploi du bot — 2/3 : les commandes",
+  guideStaffCommandesTitre: "📕 Mode d'emploi du bot (2/3) : les commandes",
   guideStaffCommandesCorps: [
     "Les commandes marquées **(Staff)** sont refusées aux autres membres, où qu'elles soient tapées.",
     "",
     "━━━━━ 👥 **COMMUNAUTÉ** ━━━━━",
     "",
-    "`/suivi` **(Staff)** — **qui** attend quoi, nommément. Trois files : les candidatures à valider, les profils validés qui attendent encore la réaction 🎪 du membre, et ceux restés bloqués à la porte. Seule la première demande une action de ta part.",
-    "`/stats` **(Staff)** — tableau de bord chiffré : arrivées, taux de validation, sources, croissance, rétention.",
-    "`/sondage` — crée un sondage à réactions (2 à 10 options, séparées par des `;`).",
-    "`/sondage-resultats` — affiche le dépouillement du dernier sondage du salon.",
-    "`/classement` · `/mon-profil` — accessibles à tous, l'XP et les paliers.",
+    "`/suivi` **(Staff)** : **qui** attend quoi, nommément. Trois files : les candidatures à valider, les profils validés qui attendent encore la réaction 🎪 du membre, et ceux restés bloqués à la porte. Seule la première demande une action de ta part.",
+    "`/stats` **(Staff)** : tableau de bord chiffré : arrivées, taux de validation, sources, croissance, rétention.",
+    "`/sondage` : crée un sondage à réactions (2 à 10 options, séparées par des `;`).",
+    "`/sondage-resultats` : affiche le dépouillement du dernier sondage du salon.",
+    "`/classement` · `/mon-profil` : accessibles à tous, l'XP et les paliers.",
     "",
     "━━━━━ ⭐ **XP ET BADGES** ━━━━━",
     "",
-    "`/xp-add` **(Staff)** — ajoute des points, avec un motif. Sert surtout à récompenser un shift bénévole.",
-    "`/attribuer-badge` **(Staff)** — pose un badge d'édition passée (`Java 2024`…) sur quelqu'un qui y était. Les badges sont cumulables.",
+    "`/xp-add` **(Staff)** : ajoute des points, avec un motif. Sert surtout à récompenser un shift bénévole.",
+    "`/attribuer-badge` **(Staff)** : pose un badge d'édition passée (`Java 2024`…) sur quelqu'un qui y était. Les badges sont cumulables.",
     "",
     "L'XP se gagne seul : messages (+15 à 40, une fois par minute), réactions (+25, une fois par 5 min), vocal (+10 par tranche de 10 min). Le salon AFK et le casque coupé ne rapportent rien.",
     "",
     "━━━━━ 🎂 **ANNIVERSAIRES** ━━━━━",
     "",
-    "`/anniversaires-liste` **(Staff)** — les anniversaires des 7 prochains jours.",
+    "`/anniversaires-liste` **(Staff)** : les anniversaires des 7 prochains jours.",
     "Le rituel est réservé à l'équipe : le bouton d'enregistrement est dans le salon bénévoles, et l'annonce y tombe aussi. Seuls le jour et le mois sont conservés, jamais l'année.",
     "",
     "━━━━━ 🔐 **DONNÉES ET RGPD** ━━━━━",
     "",
-    "`/export-onboarding` **(Staff)** — exporte toutes les candidatures en CSV.",
-    "`/oublier-membre` **(Staff)** — **irréversible** : efface toutes les données d'un membre (candidature, XP, anniversaire). À utiliser sur demande explicite de la personne.",
+    "`/export-onboarding` **(Staff)** : exporte toutes les candidatures en CSV.",
+    "`/oublier-membre` **(Staff)** : **irréversible** : efface toutes les données d'un membre (candidature, XP, anniversaire). À utiliser sur demande explicite de la personne.",
   ].join("\n"),
 
-  guideStaffAdminTitre: "📕 Mode d'emploi du bot — 3/3 : administration",
+  guideStaffAdminTitre: "📕 Mode d'emploi du bot (3/3) : administration",
   guideStaffAdminCorps: [
     "━━━━━ 🛠 **STRUCTURE DU SERVEUR** ━━━━━",
     "",
-    "`/setup-serveur` — crée ou complète rôles, catégories, salons et messages d'accueil. **Sans danger, relançable autant de fois que voulu** : ce qui existe est conservé, seules les permissions sont réappliquées. À relancer après toute modification de la configuration du bot.",
-    "`/ouvrir-salon` — révèle un salon masqué (les photos par exemple) en lui appliquant les permissions normales de sa catégorie.",
+    "`/setup-serveur` : crée ou complète rôles, catégories, salons et messages d'accueil. **Sans danger, relançable autant de fois que voulu** : ce qui existe est conservé, seules les permissions sont réappliquées. À relancer après toute modification de la configuration du bot.",
+    "`/ouvrir-salon` : révèle un salon masqué (les photos par exemple) en lui appliquant les permissions normales de sa catégorie.",
     "",
     "⚠️ Le bot ne supprime jamais un rôle ni un salon. Retirer quelque chose de la configuration l'empêche d'être recréé, mais le nettoyage se fait à la main.",
     "",
     "━━━━━ 🚨 **URGENCE : RAID** ━━━━━",
     "",
-    "`/lockdown on` **(Staff)** — suspend toutes les validations. Le bot le déclenche **tout seul** au-delà de 10 arrivées en 60 secondes, et prévient dans les alertes.",
-    "`/lockdown off` — retour à la normale, une fois les comptes suspects vérifiés.",
+    "`/lockdown on` **(Staff)** : suspend toutes les validations. Le bot le déclenche **tout seul** au-delà de 10 arrivées en 60 secondes, et prévient dans les alertes.",
+    "`/lockdown off` : retour à la normale, une fois les comptes suspects vérifiés.",
     "",
     "Le bot supprime déjà seul les invitations Discord tierces et les liens suspects postés par les non-Staff, et trace tout dans les alertes.",
     "",
     "━━━━━ 🗄 **FIN D'ÉDITION** ━━━━━",
     "",
-    "`/archiver-edition` **(Staff)** — la commande de passage d'une année à l'autre. Elle bascule tous les `Bénévole {annee}` en `Bénévole` (alumni), passe la catégorie de l'édition en archives lecture seule, et prépare le rôle et le badge de l'année suivante.",
+    "`/archiver-edition` **(Staff)** : la commande de passage d'une année à l'autre. Elle bascule tous les `Bénévole {annee}` en `Bénévole` (alumni), passe la catégorie de l'édition en archives lecture seule, et prépare le rôle et le badge de l'année suivante.",
     "",
     "⚠️ **L'ordre compte.** Lance `/archiver-edition` **d'abord**, change l'année dans la configuration du bot **ensuite**, puis relance `/setup-serveur`. Dans l'autre sens, la commande chercherait un rôle que personne ne porte encore et ne basculerait personne.",
     "",
