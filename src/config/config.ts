@@ -315,7 +315,7 @@ export const STRUCTURE: CategorieDef[] = [
     salons: [
       { cle: "vocalBar", type: "vocal" },
       { cle: "vocalTerrasse", type: "vocal" },
-      { cle: "vocalAfters", type: "vocal", cache: true },
+      { cle: "vocalAfters", type: "vocal", palierMin: "Habitué" },
       { cle: "stageLive", type: "stage", cache: true },
     ],
   },
@@ -564,7 +564,7 @@ export const TEXTES = {
     "`/mon-profil` : ton XP, ton rang, ton prochain palier",
     "`/classement` : le top 20 du serveur",
     "",
-    "*Les avantages « billetterie en avance » et « giveaways » sont gérés à la main par le Staff : on vient te chercher, tu n'as rien à demander.*",
+    "*Les giveaways et le tarif préférentiel sont gérés à la main par le Staff : on vient te chercher, tu n'as rien à demander.*",
   ].join("\n"),
 
   pantheonTitre: "🏛 Le panthéon de La Java",

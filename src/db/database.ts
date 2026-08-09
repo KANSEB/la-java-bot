@@ -148,5 +148,8 @@ export function purgerMembre(userId: string): number {
   for (const table of ["onboarding", "xp", "anniversaires", "shoutouts", "dm_sequences", "rappels_verif"]) {
     total += db.prepare(`DELETE FROM ${table} WHERE userId = ?`).run(userId).changes;
   }
+  // Les clés kv nominatives (règles acceptées, bienvenue envoyée, rappels...)
+  // sont aussi des données personnelles : la purge doit les couvrir.
+  total += db.prepare("DELETE FROM kv WHERE cle LIKE ?").run(`%:${userId}`).changes;
   return total;
 }

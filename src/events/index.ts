@@ -241,7 +241,8 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
         kvGet(`${cleBadge}:clos`) !== "1"
       ) {
         const badge = roleParNom(guild, nomBadge(EDITION.annee));
-        if (badge && !membre.roles.cache.has(badge.id)) {
+        // attribuerBadge recrée le rôle s'il a été supprimé entre-temps
+        if (!badge || !membre.roles.cache.has(badge.id)) {
           await attribuerBadge(membre, EDITION.annee).catch(() => {});
           await dmSur(membre, TEXTES.badgeObtenu(EDITION.annee, XP.badgeEdition));
           await log(guild, "🏅 Badge réclamé", `<@${membre.id}> a réclamé le badge Java ${EDITION.annee}.`);

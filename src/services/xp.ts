@@ -8,6 +8,7 @@ import { Client, Guild, GuildMember } from "discord.js";
 import { db, type XpRow } from "../db/database.js";
 import { PALIERS_XP, XP } from "../config/config.js";
 import { roleParNom } from "./util.js";
+import { ROLE_PORTE } from "../config/config.js";
 import { log } from "./logs.js";
 
 export function getXp(userId: string): number {
@@ -39,6 +40,11 @@ export function palierPour(points: number): (typeof PALIERS_XP)[number] {
  * Retourne le nouveau palier si un seuil vient d'être franchi.
  */
 export async function ajouterXp(membre: GuildMember, points: number, motif?: string): Promise<string | null> {
+  // Pas d'XP tant que les règles ne sont pas acceptées : un rôle de palier
+  // porte des autorisations de salon qui perceraient la barrière d'entrée.
+  const porte = roleParNom(membre.guild, ROLE_PORTE.nom);
+  if (porte && membre.roles.cache.has(porte.id)) return null;
+
   const avant = getXp(membre.id);
   db.prepare(`
     INSERT INTO xp (userId, points, dernierMessage) VALUES (?, ?, 0)
