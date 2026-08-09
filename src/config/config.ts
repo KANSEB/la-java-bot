@@ -74,7 +74,7 @@ export const PALIERS_XP: { seuil: number; nom: string; couleur: number; avantage
   },
   {
     seuil: 500, nom: "Fêtard", couleur: 0xa29bfe,
-    avantages: ["Accès au vocal Afters", "Accès au salon vos-photos-videos"],
+    avantages: ["Accès au vocal Afters"],
   },
   {
     seuil: 1500, nom: "Pilier de la Java", couleur: 0xe67e22,
@@ -159,7 +159,7 @@ export const SALONS = {
   infosPratiques: "📍・infos-pratiques",
   covoiturage: "🚗・covoiturage",
   photos: "📸・vos-photos-videos",
-  benevoles: `🙌・benevoles-${EDITION.annee}`,
+  benevoles: "🙌・blabla-benevoles",
   planning: "📅・planning-shifts",
   covoitBenevoles: "🚐・covoit-benevoles",
   hebergementBenevoles: "⛺・hebergement-benevoles",
@@ -167,7 +167,8 @@ export const SALONS = {
   vocalPause: "Pause",
   coordination: "🧭・coordination-referents",
   important: "📌・important",
-  remontees: "📡・remontees-terrain",
+  remontees: "💬・blabla-referents",
+  backstageOff: "👀・backstage-off",
   vocalRegie: "Régie Référents",
   infosArtistes: "🎹・infos-artistes",
   backstage: "🎤・backstage",
@@ -233,14 +234,14 @@ export const STRUCTURE: CategorieDef[] = [
         tags: ["Accès & lieu", "Billetterie", "Camping & hébergement", "Horaires", "Accessibilité", "Sur place", "Répondu"],
       },
       { cle: "covoiturage", type: "texte", sujet: "Propose ou cherche un covoit' pour La Java : précise ta ville de départ !" },
-      { cle: "photos", type: "texte", cache: true, sujet: "Vos plus beaux souvenirs en photo et vidéo" },
+      { cle: "photos", type: "texte", sujet: "Vos plus beaux souvenirs en photo et vidéo — balancez tout !" },
     ],
   },
   {
     nom: "🙌 BÉNÉVOLES",
     acces: ["benevoleEdition", "referent", "staff"],
     salons: [
-      { cle: "benevoles", type: "texte", sujet: "Annonces internes bénévoles" },
+      { cle: "benevoles", type: "texte", sujet: "Le QG de l'équipe : annonces internes, questions, blabla" },
       { cle: "presentations", type: "texte", sujet: "Présente-toi à l'équipe : qui tu es, ton poste, ce que tu écoutes" },
       { cle: "planning", type: "texte", lectureSeule: true, sujet: "Plannings et shifts : messages épinglés" },
       { cle: "covoitBenevoles", type: "texte", sujet: "Covoiturage entre bénévoles" },
@@ -259,7 +260,8 @@ export const STRUCTURE: CategorieDef[] = [
       },
       // Écriture réservée au fondateur (overwrite posé par scripts/serveur-maj.mjs)
       { cle: "important", type: "texte", lectureSeule: true, sujet: "Les infos essentielles : lecture obligatoire" },
-      { cle: "remontees", type: "texte", sujet: "Remontées du terrain pendant l'événement" },
+      { cle: "remontees", type: "texte", sujet: "Le bar des référents : tout et surtout n'importe quoi" },
+      { cle: "backstageOff", type: "texte", sujet: "Les photos et moments backstage qu'on ne montrera à personne d'autre 👀" },
       { cle: "vocalRegie", type: "vocal" },
     ],
   },
@@ -501,6 +503,27 @@ export const TEXTES = {
       ].join("\n"),
     },
   ] as { titre: string; tag: string; corps: string }[],
+
+  // Modèle épinglé dans #presentations : sans trame, personne n'ose commencer
+  presentationTitre: "🙋 Présente-toi à l'équipe",
+  presentationCorps: [
+    "On va bosser ensemble, autant se connaître un peu ! Copie ce modèle et remplis-le à ta sauce — rien n'est obligatoire.",
+    "",
+    "```",
+    "🏷  Prénom (ou comment on t'appelle) :",
+    "📍  Tu viens d'où :",
+    "🙌  Ton poste / ce que tu viens filer comme coup de main :",
+    "🎧  Ce que tu écoutes en boucle en ce moment :",
+    "🎪  Ta plus belle anecdote de festival :",
+    "☕  Café, bière ou tisane pour tenir la nuit :",
+    "```",
+    "",
+    "Et pense à mettre un mot de bienvenue à ceux qui se présentent après toi 💬",
+  ].join("\n"),
+
+  // Rappel doux aux membres de l'équipe qui n'ont pas renseigné leur anniversaire
+  rappelAnniversaire: (salon: string) =>
+    `🎂 Petit rappel de La Java : on souhaite les anniversaires entre nous, et le tien nous manque !\nUn message épinglé dans **${salon}** te propose un bouton — deux cases à remplir, jour et mois, et c'est réglé. On ne demande jamais ton année 😉\n\n*Pas envie ? Ignore ce message, on ne te relancera pas.*`,
 
   // Guide Discord (salon 📖・guide-discord, deux embeds épinglés)
   guideDiscordTitre: "📖 Discord pour les débutants",

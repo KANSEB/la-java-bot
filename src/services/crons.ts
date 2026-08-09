@@ -9,7 +9,7 @@
 import { ChannelType, Client, Guild } from "discord.js";
 import cron from "node-cron";
 import { db, kvGet, kvSet } from "../db/database.js";
-import { ANNIVERSAIRES, DELAIS, EDITION, FUSEAU, SALONS, TEXTES, XP } from "../config/config.js";
+import { ANNIVERSAIRES, DELAIS, EDITION, FUSEAU, ROLES, SALONS, TEXTES, XP } from "../config/config.js";
 import { dmSur, joursAvant, roleParNom, salonTexte } from "./util.js";
 import { log, logErreur } from "./logs.js";
 import { tickVocal } from "./xp.js";
@@ -70,6 +70,27 @@ async function annoncerAnniversaires(guild: Guild): Promise<void> {
     const messages = TEXTES.messagesAnniversaire;
     const message = messages[Math.floor(Math.random() * messages.length)];
     await salon.send(message(userId)).catch(() => {});
+  }
+}
+
+// ---------- Rappel anniversaire (une seule fois par personne) ----------
+async function rappelerAnniversaires(guild: Guild): Promise<void> {
+  const salon = salonTexte(guild, ANNIVERSAIRES.salonAnnonce);
+  if (!salon) return;
+
+  const idsAutorises = ANNIVERSAIRES.rolesAutorises
+    .map((cle) => roleParNom(guild, ROLES[cle].nom)?.id)
+    .filter((id): id is string => id !== undefined);
+
+  for (const membre of guild.members.cache.values()) {
+    if (membre.user.bot) continue;
+    if (!membre.roles.cache.hasAny(...idsAutorises)) continue;
+    if (kvGet(`anniv_rappel:${membre.id}`) === "1") continue; // on ne relance jamais deux fois
+    const deja = db.prepare("SELECT 1 FROM anniversaires WHERE userId = ?").get(membre.id);
+    if (deja) continue;
+
+    kvSet(`anniv_rappel:${membre.id}`, "1");
+    await dmSur(membre, TEXTES.rappelAnniversaire(salon.name));
   }
 }
 
@@ -135,6 +156,17 @@ export function demarrerCrons(client: Client): void {
       await annoncerAnniversaires(guild);
     } catch (err) {
       await logErreur(guild, "cron anniversaires", err);
+    }
+  }, OPTIONS);
+
+  // Lundi 11h — rappel anniversaire aux membres de l'équipe qui n'ont rien saisi
+  cron.schedule("0 11 * * 1", async () => {
+    const guild = guildPrincipale(client);
+    if (!guild) return;
+    try {
+      await rappelerAnniversaires(guild);
+    } catch (err) {
+      await logErreur(guild, "cron rappel anniversaires", err);
     }
   }, OPTIONS);
 

@@ -238,6 +238,17 @@ async function posterMessages(guild: Guild): Promise<void> {
     await message.pin().catch(() => {});
   }
 
+  // #presentations : modèle épinglé, sinon personne n'ose ouvrir le bal
+  const presentations = salonTexte(guild, "presentations");
+  if (presentations && !(await dejaPoste(presentations.id, guild))) {
+    const embed = new EmbedBuilder()
+      .setTitle(TEXTES.presentationTitre)
+      .setDescription(TEXTES.presentationCorps)
+      .setColor(COULEURS.info);
+    const message = await presentations.send({ embeds: [embed] });
+    await message.pin().catch(() => {});
+  }
+
   // #guide-discord : tuto Discord + mode d'emploi du serveur (2 embeds épinglés)
   const guide = salonTexte(guild, "guide");
   if (guide && !(await dejaPoste(guide.id, guild))) {
