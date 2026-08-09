@@ -630,7 +630,11 @@ export async function verifierCandidaturesEnAttente(guild: import("discord.js").
   const attente = roleParNom(guild, ROLE_ATTENTE.nom);
   if (!attente) return 0;
 
-  await guild.members.fetch().catch(() => {}); // le cache peut être incomplet
+  // Ne recharger la liste que si le cache est réellement incomplet : sans ce
+  // test, un balayage à la minute rappellerait tous les membres à chaque fois.
+  if (guild.members.cache.size < guild.memberCount) {
+    await guild.members.fetch().catch(() => {});
+  }
   let signalees = 0;
   for (const membre of attente.members.values()) {
     if (membre.user.bot) continue;

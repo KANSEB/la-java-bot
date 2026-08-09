@@ -149,9 +149,10 @@ export function demarrerCrons(client: Client): void {
     }
   }, OPTIONS);
 
-  // Toutes les 5 minutes — filet de sécurité sur les candidatures :
-  // un événement Discord manqué ne doit pas laisser quelqu'un à la porte
-  cron.schedule("*/5 * * * *", async () => {
+  // Chaque minute — filet de sécurité sur les candidatures : un événement
+  // Discord manqué ne doit pas laisser quelqu'un à la porte. Le balayage ne
+  // touche au réseau que si le cache des membres est incomplet.
+  cron.schedule("* * * * *", async () => {
     const guild = guildPrincipale(client);
     if (!guild) return;
     try {
