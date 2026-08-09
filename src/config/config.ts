@@ -507,18 +507,19 @@ export const TEXTES = {
   // Modèle épinglé dans #presentations : sans trame, personne n'ose commencer
   presentationTitre: "🙋 Présente-toi à l'équipe",
   presentationCorps: [
-    "On va bosser ensemble, autant se connaître un peu ! Copie ce modèle et remplis-le à ta sauce — rien n'est obligatoire.",
+    "On va passer du temps ensemble, autant se connaître un peu ! Copie le modèle ci-dessous et remplis-le à ta sauce — tout est facultatif, réponds à ce qui te parle.",
     "",
     "```",
     "🏷  Prénom (ou comment on t'appelle) :",
     "📍  Tu viens d'où :",
-    "🙌  Ton poste / ce que tu viens filer comme coup de main :",
+    "🙌  Ce qui t'a donné envie de filer un coup de main :",
+    "💬  Deux-trois mots sur toi :",
     "🎧  Ce que tu écoutes en boucle en ce moment :",
-    "🎪  Ta plus belle anecdote de festival :",
+    "✨  Un truc que tu sais faire et qui peut servir (conduire un utilitaire, cuisiner pour 30, bricoler, rassurer les gens à 4h du mat...) :",
     "☕  Café, bière ou tisane pour tenir la nuit :",
     "```",
     "",
-    "Et pense à mettre un mot de bienvenue à ceux qui se présentent après toi 💬",
+    "Et prends trente secondes pour souhaiter la bienvenue à celles et ceux qui se présentent après toi 💬",
   ].join("\n"),
 
   // Rappel doux aux membres de l'équipe qui n'ont pas renseigné leur anniversaire
