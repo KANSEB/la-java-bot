@@ -9,7 +9,7 @@
 import { ChannelType, Client, Guild } from "discord.js";
 import cron from "node-cron";
 import { db, kvGet, kvSet } from "../db/database.js";
-import { ANNIVERSAIRES, DELAIS, EDITION, FUSEAU, PALIERS_XP, ROLES, SALONS, TEXTES, XP } from "../config/config.js";
+import { ANNIVERSAIRES, COULEURS, DELAIS, EDITION, FUSEAU, PALIERS_XP, RECLAMATION_BADGE, ROLES, SALONS, TEXTES, XP } from "../config/config.js";
 import { dmSur, joursAvant, roleParNom, salonTexte } from "./util.js";
 import { log, logErreur } from "./logs.js";
 import { tickVocal } from "./xp.js";
@@ -118,6 +118,51 @@ async function majPantheon(guild: Guild): Promise<void> {
   }
 }
 
+// ---------- Réclamation du badge d'édition ----------
+/**
+ * Impossible de savoir qui était sur place : on ouvre une fenêtre déclarative
+ * le lendemain du festival, et elle se referme seule un mois plus tard.
+ */
+async function gererReclamationBadge(guild: Guild): Promise<void> {
+  const ecoules = -joursAvant(EDITION.dateEvenement);
+  const { ouvertureJoursApresEvent: ouverture, dureeJours } = RECLAMATION_BADGE;
+  const cle = `badge_reclamation:${EDITION.annee}`;
+  const messageId = kvGet(cle);
+  const annonces = salonTexte(guild, "annonces");
+  if (!annonces) return;
+
+  // Fermeture : le message reste, mais il annonce que c'est terminé
+  if (ecoules >= ouverture + dureeJours) {
+    if (messageId && kvGet(`${cle}:clos`) !== "1") {
+      const message = await annonces.messages.fetch(messageId).catch(() => null);
+      await message?.edit({
+        embeds: [{ title: TEXTES.badgeReclamationTitre(EDITION.annee), description: TEXTES.badgeReclamationClos(EDITION.annee), color: COULEURS.neutre }],
+      }).catch(() => {});
+      kvSet(`${cle}:clos`, "1");
+      await log(guild, "🏅 Réclamation close", `Les badges Java ${EDITION.annee} ne sont plus réclamables.`);
+    }
+    return;
+  }
+
+  // Ouverture, une seule fois
+  if (ecoules >= ouverture && !messageId) {
+    const fin = new Date(Date.now() + (ouverture + dureeJours - ecoules) * 86_400_000)
+      .toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+    const message = await annonces.send({
+      embeds: [{
+        title: TEXTES.badgeReclamationTitre(EDITION.annee),
+        description: TEXTES.badgeReclamationCorps(EDITION.annee, TEXTES.emojiDeblocage, XP.badgeEdition, fin),
+        color: COULEURS.primaire,
+      }],
+    }).catch(() => null);
+    if (message) {
+      await message.react(TEXTES.emojiDeblocage).catch(() => {});
+      kvSet(cle, message.id);
+      await log(guild, "🏅 Réclamation ouverte", `Les badges Java ${EDITION.annee} sont réclamables jusqu'au ${fin}.`, "succes");
+    }
+  }
+}
+
 // ---------- Séquence DM bénévoles (J+0 / J+1 / J+2) ----------
 async function envoyerSequencesDm(guild: Guild): Promise<void> {
   const dus = db.prepare("SELECT userId, etape FROM dm_sequences WHERE prochainEnvoi <= ? AND etape < 3")
@@ -167,6 +212,7 @@ export function demarrerCrons(client: Client): void {
     try {
       await majCountdown(guild);
       await majPantheon(guild);
+      await gererReclamationBadge(guild);
       await archiverCovoitSiFini(guild);
     } catch (err) {
       await logErreur(guild, "cron 9h", err);

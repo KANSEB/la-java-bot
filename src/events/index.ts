@@ -7,7 +7,7 @@ import {
   AuditLogEvent, Client, EmbedBuilder, Events, Message, MessageReaction, PartialMessage,
   PartialMessageReaction, PartialUser, User,
 } from "discord.js";
-import { COULEURS, DOMAINES_SUSPECTS, PROFIL_DIRECT, ROLE_ATTENTE, ROLES, SALONS, TEXTES } from "../config/config.js";
+import { COULEURS, DOMAINES_SUSPECTS, EDITION, nomBadge, PROFIL_DIRECT, ROLE_ATTENTE, ROLES, SALONS, TEXTES, XP } from "../config/config.js";
 import { db, kvGet, kvSet } from "../db/database.js";
 import { surveillerArrivee } from "../services/antiraid.js";
 import { log, logErreur } from "../services/logs.js";
@@ -17,6 +17,7 @@ import {
   signalerDemandeValidation, soumettreQuestionnaire,
 } from "../services/onboarding.js";
 import { enregistrerAnniversaire, ouvrirModalAnniversaire } from "../services/anniversaire.js";
+import { attribuerBadge } from "../services/badges.js";
 import { ouvrirTicket } from "../services/tickets.js";
 import { xpMessage, xpReaction } from "../services/xp.js";
 import { dmSur, estStaff, leverBarriere, poserBarriere, role, roleParNom, salonTexte } from "../services/util.js";
@@ -228,6 +229,22 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
           await dmSur(membre, TEXTES.accesDebloque(membre.id));
           await log(guild, "🎪 Accès débloqué",
             `<@${membre.id}> a accepté les règles : serveur ouvert.${reserves.length > 0 ? ` Profil en attente appliqué : ${reserves.join(", ")}.` : ""}`, "succes");
+        }
+      }
+
+      // Réclamation du badge d'édition : la fenêtre est gérée par le cron,
+      // ici on se contente d'honorer la réaction tant qu'elle est ouverte.
+      const cleBadge = `badge_reclamation:${EDITION.annee}`;
+      if (
+        reaction.emoji.name === TEXTES.emojiDeblocage &&
+        reaction.message.id === kvGet(cleBadge) &&
+        kvGet(`${cleBadge}:clos`) !== "1"
+      ) {
+        const badge = roleParNom(guild, nomBadge(EDITION.annee));
+        if (badge && !membre.roles.cache.has(badge.id)) {
+          await attribuerBadge(membre, EDITION.annee).catch(() => {});
+          await dmSur(membre, TEXTES.badgeObtenu(EDITION.annee, XP.badgeEdition));
+          await log(guild, "🏅 Badge réclamé", `<@${membre.id}> a réclamé le badge Java ${EDITION.annee}.`);
         }
       }
 

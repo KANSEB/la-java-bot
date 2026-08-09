@@ -3,7 +3,8 @@
 // ============================================================
 
 import { ChannelType, Guild, GuildMember, PermissionFlagsBits as P } from "discord.js";
-import { BADGES, EDITION, nomBadge, ROLES } from "../config/config.js";
+import { BADGES, EDITION, nomBadge, ROLES, XP } from "../config/config.js";
+import { ajouterXp } from "./xp.js";
 import { role, roleParNom } from "./util.js";
 import { log } from "./logs.js";
 
@@ -22,8 +23,11 @@ export async function attribuerBadge(membre: GuildMember, annee: number): Promis
       reason: `Badge d'édition ${annee}`,
     });
   }
+  // L'XP n'est accordée qu'à la première pose : avoir fait une édition compte
+  // une fois, qu'on repasse par le bouton ou par la commande Staff.
   if (!membre.roles.cache.has(badge.id)) {
     await membre.roles.add(badge.id, `Badge édition ${annee}`);
+    await ajouterXp(membre, XP.badgeEdition, `Badge ${nom}`).catch(() => {});
   }
 
   return nom;

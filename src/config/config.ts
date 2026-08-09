@@ -118,6 +118,7 @@ export const XP = {
   vocalPointsParTranche: 10,
   vocalTrancheMinutes: 10,
   shiftBenevole: 500,
+  badgeEdition: 500,   // avoir fait l'édition vaut autant qu'un shift
   tailleClassement: 20,
 };
 
@@ -125,6 +126,15 @@ export const XP = {
 export const DELAIS = {
   dmSequenceHeures: 24,
   archivageCovoitJoursApresEvent: 7,
+};
+
+// ---------- Réclamation du badge d'édition ----------
+// Impossible de savoir qui était sur place : chacun se déclare. Un badge sans
+// permission ni valeur marchande ne se triche pas, et la fenêtre se ferme
+// toute seule un mois après l'événement.
+export const RECLAMATION_BADGE = {
+  ouvertureJoursApresEvent: 1,
+  dureeJours: 30,
 };
 
 // ---------- Anniversaires ----------
@@ -558,6 +568,22 @@ export const TEXTES = {
     noms.length
       ? `Celles et ceux qui ont atteint **Légende de la Java** :\n\n${noms.map((n) => `🏛 ${n}`).join("\n")}`
       : "Personne n'y est encore. La place est libre, et elle porte ton nom si tu la veux 👀",
+
+  // Réclamation du badge d'édition, ouverte un mois après le festival
+  badgeReclamationTitre: (annee: number) => `🏅 Tu étais à La Java ${annee} ?`,
+  badgeReclamationCorps: (annee: number, emoji: string, xp: number, fin: string) => [
+    "Le festival est passé, et on aimerait garder une trace de qui y était.",
+    "",
+    `**Réagis avec ${emoji} sous ce message** et le badge **Java ${annee}** est à toi, avec **${xp} XP** au passage.`,
+    "",
+    "On ne vérifie rien : c'est déclaratif, on te fait confiance. Le badge n'ouvre aucun salon, il dit simplement que tu en étais.",
+    "",
+    `⏳ *À réclamer jusqu'au ${fin}. Après, la page se tourne et on prépare l'édition suivante.*`,
+  ].join("\n"),
+  badgeReclamationClos: (annee: number) =>
+    `🏅 **Les badges Java ${annee} ne sont plus réclamables.** Merci à toutes et tous, rendez-vous à la prochaine 🎪`,
+  badgeObtenu: (annee: number, xp: number) =>
+    `🏅 Badge **Java ${annee}** débloqué, et **${xp} XP** ajoutés ! Merci d'avoir fait partie de l'aventure 🎪`,
 
   // Guide Discord (salon 📖・guide-discord, deux embeds épinglés)
   guideDiscordTitre: "📖 Discord pour les débutants",
