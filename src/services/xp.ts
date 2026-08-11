@@ -1,14 +1,13 @@
 // ============================================================
-// Système XP : messages (+15 à 40, cooldown 60s), réactions (+25,
-// cooldown 5 min), vocal (+10 / 10 min), shifts bénévoles (+50 via
-// /xp-add). Paliers → rôles + avantages (voir PALIERS_XP).
+// Système XP : messages, réactions, vocal, shifts bénévoles et badge
+// d'édition. Toutes les valeurs vivent dans XP et PALIERS_XP (config) :
+// rien n'est chiffré ici, pour que ce fichier ne puisse pas mentir.
 // ============================================================
 
 import { Client, Guild, GuildMember } from "discord.js";
 import { db, type XpRow } from "../db/database.js";
-import { PALIERS_XP, XP } from "../config/config.js";
+import { PALIERS_XP, ROLE_PORTE, XP } from "../config/config.js";
 import { roleParNom } from "./util.js";
-import { ROLE_PORTE } from "../config/config.js";
 import { log } from "./logs.js";
 
 export function getXp(userId: string): number {
@@ -72,6 +71,34 @@ export async function ajouterXp(membre: GuildMember, points: number, motif?: str
     return palierApres.nom;
   }
   return null;
+}
+
+/**
+ * Recale le rôle de palier de tous les membres sur leur XP réel. Indispensable
+ * après un changement de seuils : sans ça, chacun conserve le rôle obtenu sous
+ * l'ancienne échelle jusqu'à son prochain gain de points.
+ */
+export async function resynchroniserPaliers(guild: Guild): Promise<number> {
+  const lignes = db.prepare("SELECT userId, points FROM xp").all() as { userId: string; points: number }[];
+  let corriges = 0;
+
+  for (const { userId, points } of lignes) {
+    const membre = await guild.members.fetch(userId).catch(() => null);
+    if (!membre || membre.user.bot) continue;
+
+    const attendu = palierPour(points).nom;
+    const aJour = membre.roles.cache.some((r) => r.name === attendu);
+    const enTrop = PALIERS_XP.filter((p) => p.nom !== attendu)
+      .map((p) => roleParNom(guild, p.nom))
+      .filter((r): r is NonNullable<typeof r> => r !== undefined && membre.roles.cache.has(r.id));
+    if (aJour && enTrop.length === 0) continue;
+
+    for (const r of enTrop) await membre.roles.remove(r.id, "Seuils XP mis à jour").catch(() => {});
+    const bon = roleParNom(guild, attendu);
+    if (bon && !membre.roles.cache.has(bon.id)) await membre.roles.add(bon.id, "Seuils XP mis à jour").catch(() => {});
+    corriges++;
+  }
+  return corriges;
 }
 
 /** XP de message avec cooldown anti-spam. */

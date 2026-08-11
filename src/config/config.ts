@@ -62,26 +62,29 @@ export const BADGES: Record<number, { couleur: number }> = {
 };
 
 // Paliers XP (seuil croissant). Le rôle du palier atteint remplace le précédent.
-// Paliers de leveling (inspirés du système Château Perché) : chaque palier
-// donne un rôle coloré + des avantages. Les avantages "salons" (Afters,
-// photos…) sont posés en overwrites par scripts/serveur-maj.mjs ; les
-// avantages "humains" (billetterie en avance, giveaways) sont gérés par le Staff.
+// Les seuils tiennent compte du rythme réel de gain : à 15-40 XP par message,
+// des paliers trop bas se franchissaient en une soirée et « Légende » se
+// décrochait en deux semaines. Un badge d'édition (500) ouvre désormais
+// « Habitué » sans téléporter au palier suivant.
+// Chaque palier donne un rôle coloré et ses avantages. Les accès aux salons
+// sont posés par le provisioning via `palierMin` ; les avantages humains
+// (giveaways, tarif préférentiel) sont tenus à la main par le Staff.
 export const PALIERS_XP: { seuil: number; nom: string; couleur: number; avantages: string[] }[] = [
   { seuil: 0, nom: "Nouveau", couleur: 0xbdc3c7, avantages: [] },
   {
-    seuil: 150, nom: "Habitué", couleur: 0x74b9ff,
+    seuil: 500, nom: "Habitué", couleur: 0x74b9ff,
     avantages: ["Droit de vote sur les décisions de la communauté", "Accès au vocal Afters"],
   },
   {
-    seuil: 500, nom: "Fêtard", couleur: 0xa29bfe,
+    seuil: 2000, nom: "Fêtard", couleur: 0xa29bfe,
     avantages: ["Création de fils de discussion"],
   },
   {
-    seuil: 1500, nom: "Pilier de la Java", couleur: 0xe67e22,
+    seuil: 6000, nom: "Pilier de la Java", couleur: 0xe67e22,
     avantages: ["Giveaways merch", "Priorité sur les candidatures bénévoles"],
   },
   {
-    seuil: 4000, nom: "Légende de la Java", couleur: 0xffd32a,
+    seuil: 20000, nom: "Légende de la Java", couleur: 0xffd32a,
     avantages: ["Tarif préférentiel sur la billetterie", "Ton nom au panthéon"],
   },
 ];

@@ -10,6 +10,7 @@ import { assertEnv } from "./services/util.js";
 import "./db/database.js"; // initialise la base + migrations au chargement
 import { demarrerCrons, majCountdown } from "./services/crons.js";
 import { rattraperReactionsAcces, signalerDemandeValidation } from "./services/onboarding.js";
+import { resynchroniserPaliers } from "./services/xp.js";
 import { poserBarriere, roleParNom } from "./services/util.js";
 import { ROLE_ATTENTE } from "./config/config.js";
 import { enregistrerEvenements } from "./events/index.js";
@@ -78,6 +79,10 @@ client.once("clientReady", async () => {
     // Réactions 🎪 posées pendant la coupure : Discord ne les rejoue pas
     const acces = await rattraperReactionsAcces(guild);
     console.log(`[acces] rattrapage : ${acces} membre(s) débloqué(s) via la réaction 🎪`);
+
+    // Les seuils XP peuvent avoir changé depuis le dernier démarrage
+    const paliers = await resynchroniserPaliers(guild);
+    console.log(`[xp] paliers resynchronisés : ${paliers} membre(s) corrigé(s)`);
 
     // Barrière : les arrivées survenues bot éteint n'ont pas été bloquées.
     // Après le rattrapage ci-dessus, pour ne jamais masquer le serveur à
