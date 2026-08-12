@@ -1,16 +1,19 @@
 // ============================================================
-// Tâches planifiées (node-cron) :
-// - 09h00 : compte à rebours + rappels/kicks Non vérifiés + archivage covoit
-// - 10h00 : anniversaires
-// - toutes les heures : expiration Bénévole du Mois + séquence DM bénévoles
+// Tâches planifiées (node-cron), toutes à l'heure de Paris :
+// - 09h00 : compte à rebours, panthéon, fenêtre du badge, archivage covoit
+// - 10h00 : annonces d'anniversaire
+// - 18h00 : relance des membres restés à la porte
+// - lundi 11h : rappel anniversaire à l'équipe
+// - chaque heure : séquence de DM aux nouveaux bénévoles
+// - chaque minute : filet de sécurité sur les candidatures
 // - toutes les 10 min : XP vocal
 // ============================================================
 
 import { ChannelType, Client, Guild } from "discord.js";
 import cron from "node-cron";
 import { db, kvGet, kvSet } from "../db/database.js";
-import { ANNIVERSAIRES, COULEURS, DELAIS, EDITION, FUSEAU, PALIERS_XP, RECLAMATION_BADGE, ROLES, SALONS, TEXTES, XP } from "../config/config.js";
-import { dmSur, joursAvant, roleParNom, salonTexte } from "./util.js";
+import { ANNIVERSAIRES, COULEURS, DELAIS, EDITION, FUSEAU, PALIERS_XP, RECLAMATION_BADGE, ROLE_PORTE, ROLES, SALONS, TEXTES, XP } from "../config/config.js";
+import { dmSur, estStaff, joursAvant, roleParNom, salonTexte } from "./util.js";
 import { log, logErreur } from "./logs.js";
 import { tickVocal } from "./xp.js";
 import { verifierCandidaturesEnAttente } from "./onboarding.js";
@@ -163,6 +166,37 @@ async function gererReclamationBadge(guild: Guild): Promise<void> {
   }
 }
 
+// ---------- Relance des membres restés à la porte ----------
+/**
+ * Un membre qui n'a pas réagi 🎪 ne voit rien et n'est relancé par personne.
+ * Une relance unique après 24 h, jamais deux fois : au-delà, c'est un choix.
+ * Au passage, la barrière est retirée au Staff, chez qui elle ne sert à rien.
+ */
+async function rappelerPorte(guild: Guild): Promise<void> {
+  const porte = roleParNom(guild, ROLE_PORTE.nom);
+  const bienvenue = salonTexte(guild, "bienvenue");
+  if (!porte || !bienvenue) return;
+
+  for (const membre of [...porte.members.values()]) {
+    if (membre.user.bot) continue;
+
+    if (estStaff(membre)) {
+      await membre.roles.remove(porte.id, "Le Staff n'est pas concerné par la barrière").catch(() => {});
+      continue;
+    }
+    const heures = membre.joinedTimestamp ? (Date.now() - membre.joinedTimestamp) / 3_600_000 : 0;
+    if (heures < 24) continue;
+    if (kvGet(`rappel_porte:${membre.id}`) === "1") continue;
+
+    kvSet(`rappel_porte:${membre.id}`, "1");
+    const ok = await dmSur(membre, TEXTES.rappelPorte(guild.name, bienvenue.name, TEXTES.emojiDeblocage));
+    if (!ok) {
+      await log(guild, "📪 Relance impossible",
+        `<@${membre.id}> est bloqué à la porte depuis ${Math.round(heures)} h et a ses messages privés fermés : il faudra l'attraper autrement.`, "alerte");
+    }
+  }
+}
+
 // ---------- Séquence DM bénévoles (J+0 / J+1 / J+2) ----------
 async function envoyerSequencesDm(guild: Guild): Promise<void> {
   const dus = db.prepare("SELECT userId, etape FROM dm_sequences WHERE prochainEnvoi <= ? AND etape < 3")
@@ -227,6 +261,17 @@ export function demarrerCrons(client: Client): void {
       await annoncerAnniversaires(guild);
     } catch (err) {
       await logErreur(guild, "cron anniversaires", err);
+    }
+  }, OPTIONS);
+
+  // 18h — relance des membres restés à la porte
+  cron.schedule("0 18 * * *", async () => {
+    const guild = guildPrincipale(client);
+    if (!guild) return;
+    try {
+      await rappelerPorte(guild);
+    } catch (err) {
+      await logErreur(guild, "cron rappel porte", err);
     }
   }, OPTIONS);
 

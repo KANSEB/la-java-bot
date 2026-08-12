@@ -592,6 +592,16 @@ export const TEXTES = {
   badgeObtenu: (annee: number, xp: number) =>
     `🏅 Badge **Java ${annee}** débloqué, et **${xp} XP** ajoutés ! Merci d'avoir fait partie de l'aventure 🎪`,
 
+  // Relance des membres restés à la porte : sans elle, ils y restent
+  // indéfiniment, personne ne s'en aperçoit.
+  rappelPorte: (serveur: string, salon: string, emoji: string) => [
+    `👋 Hey ! Tu as rejoint **${serveur}** il y a quelques jours, mais le serveur ne s'est pas encore ouvert pour toi.`,
+    "",
+    `Il ne manque qu'un geste : va dans **${salon}** et clique sur la réaction ${emoji} sous le message des règles. Tout apparaît dans la seconde.`,
+    "",
+    "*Un souci pour le trouver ? Réponds à ce message, quelqu'un de l'équipe te débloque.*",
+  ].join(SAUT),
+
   // Guide Discord (salon 📖・guide-discord, deux embeds épinglés)
   guideDiscordTitre: "📖 Discord pour les débutants",
   guideDiscordCorps: [
