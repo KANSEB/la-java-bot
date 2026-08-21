@@ -273,8 +273,8 @@ export const STRUCTURE: CategorieDef[] = [
     acces: ["referent", "staff"],
     salons: [
       {
-        cle: "coordination", type: "forum", sujet: "Coordination des référents : un sujet par poste/chantier",
-        tags: ["Bar", "Entrée", "Camping", "Technique", "Sécu", "Autre", "Résolu"],
+        cle: "coordination", type: "forum", sujet: "Un sujet par pôle : sa fiche bénévole et sa fiche référent en haut, les échanges du pôle en dessous.",
+        tags: ["Bar", "Billetterie / Accueil", "Cashless", "Déconsigne", "Gestion du site", "Loges", "Merch", "Runs", "Volant", "Résolu"],
       },
       // Écriture réservée au fondateur (overwrite posé par scripts/serveur-maj.mjs)
       { cle: "important", type: "texte", lectureSeule: true, sujet: "Les infos essentielles : lecture obligatoire" },
