@@ -275,7 +275,7 @@ export const STRUCTURE: CategorieDef[] = [
     salons: [
       {
         cle: "coordination", type: "forum", sujet: "Un sujet par pôle : sa fiche bénévole et sa fiche référent en haut, les échanges du pôle en dessous.",
-        tags: ["Bar", "Billetterie / Accueil", "Cashless", "Déconsigne", "Gestion du site", "Loges", "Merch", "Runs", "Volant", "Résolu"],
+        tags: ["Bar", "Billetterie / Accueil", "Cashless", "Déconsigne", "Gestion du site", "Loges", "Merch", "Prévention", "Runs", "Volant", "Résolu"],
       },
       // Écriture réservée au fondateur (overwrite posé par scripts/serveur-maj.mjs)
       { cle: "important", type: "texte", lectureSeule: true, sujet: "Les infos essentielles : lecture obligatoire" },
