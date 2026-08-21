@@ -7,7 +7,7 @@
 import "dotenv/config";
 import { Client, GatewayIntentBits, Partials } from "discord.js";
 import { assertEnv } from "./services/util.js";
-import "./db/database.js"; // initialise la base + migrations au chargement
+import { kvGet, kvSet } from "./db/database.js"; // initialise aussi la base + migrations
 import { demarrerCrons, majCountdown } from "./services/crons.js";
 import { rattraperReactionsAcces, signalerDemandeValidation } from "./services/onboarding.js";
 import { resynchroniserPaliers } from "./services/xp.js";
@@ -79,6 +79,18 @@ client.once("clientReady", async () => {
     // Réactions 🎪 posées pendant la coupure : Discord ne les rejoue pas
     const acces = await rattraperReactionsAcces(guild);
     console.log(`[acces] rattrapage : ${acces} membre(s) débloqué(s) via la réaction 🎪`);
+
+
+    // Migration unique (22/08/2026) : le badge Java 2026 était posé dès la
+    // validation d'un bénévole, avec ses 500 XP. Il a été retiré à tout le monde
+    // pour n'être réclamé qu'après le festival. Ces membres ont déjà touché l'XP :
+    // on le note pour que la réclamation ne la verse pas une seconde fois.
+    if (kvGet("migration:badge2026_xp") !== "1") {
+      const dejaPayes = ["1540342557282668594", "1538900413498265610", "1538486955162210364", "1537064723600777237", "1536845076288774196", "1536129442416566345", "1536011711373516851", "1535729809668178040", "1535290728043913226", "1535275868648243233", "1535272898489483345", "1421229584011100173", "1391356608977571900", "1341118729542565888", "1330100419384316058", "1324843445566705714", "776871429181800448", "698275303864139876", "695239350027288596", "455398081547075584", "453600923143503872", "432640162296627201", "420593594311639041", "347359961635880962"];
+      for (const id of dejaPayes) kvSet(`badge_xp:2026:${id}`, "1");
+      kvSet("migration:badge2026_xp", "1");
+      console.log(`[migration] XP du badge 2026 déjà versée pour ${dejaPayes.length} membre(s), notée`);
+    }
 
     // Les seuils XP peuvent avoir changé depuis le dernier démarrage
     const paliers = await resynchroniserPaliers(guild);

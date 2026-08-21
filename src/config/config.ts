@@ -47,9 +47,9 @@ export const ROLES: Record<string, RoleConfig> = {
   },
   artiste: { nom: "Artiste", couleur: 0x9b59b6, hoist: true, mentionnable: true, permissions: [] },
   artisteCommunaute: { nom: "Artiste Communauté", couleur: 0xb388eb, hoist: false, mentionnable: true, permissions: [] },
-  benevoleEdition: { nom: `Bénévole ${EDITION.annee}`, couleur: 0x2ecc71, hoist: true, mentionnable: true, permissions: [] },
+  benevoleEdition: { nom: "Bénévole", couleur: 0x2ecc71, hoist: true, mentionnable: true, permissions: [] },
   benevole: { nom: "Ancien bénévole", couleur: 0x27ae60, hoist: false, mentionnable: true, permissions: [] },
-  membre: { nom: "Membre", couleur: 0x3498db, hoist: false, mentionnable: false, permissions: [] },
+  membre: { nom: "Membre", couleur: 0x99aab5, hoist: false, mentionnable: false, permissions: [] },
 };
 
 // ---------- Rôles cosmétiques ----------
@@ -713,7 +713,7 @@ export const TEXTES = {
     "",
     "━━━━━ 🗄 **FIN D'ÉDITION** ━━━━━",
     "",
-    "`/archiver-edition` **(Staff)** : la commande de passage d'une année à l'autre. Elle bascule tous les `Bénévole {annee}` en `Bénévole` (alumni), passe la catégorie de l'édition en archives lecture seule, et prépare le rôle et le badge de l'année suivante.",
+    "`/archiver-edition` **(Staff)** : la commande de passage d'une année à l'autre. Elle bascule tous les `Bénévole` en `Ancien bénévole`, passe la catégorie de l'édition en archives lecture seule, et prépare le badge de l'année suivante.",
     "",
     "⚠️ **L'ordre compte.** Lance `/archiver-edition` **d'abord**, change l'année dans la configuration du bot **ensuite**, puis relance `/setup-serveur`. Dans l'autre sens, la commande chercherait un rôle que personne ne porte encore et ne basculerait personne.",
     "",

@@ -25,7 +25,6 @@ import {
 } from "../config/config.js";
 import { ageCompteJours, dmSur, estStaff, horodatage, leverBarriere, role, roleParNom, salonTexte } from "./util.js";
 import { log, logErreur } from "./logs.js";
-import { attribuerBadge } from "./badges.js";
 
 const STATUTS_AFFICHES: Record<OnboardingRow["statut"], string> = {
   en_attente: "🕐 En attente",
@@ -304,7 +303,6 @@ export async function approuverProfilDemande(interaction: ButtonInteraction<"cac
 
   const estBenevole = candidature?.roleKey === "benevoleEdition";
   const estArtiste = candidature?.roleKey === "artiste";
-  if (estBenevole || estArtiste) await attribuerBadge(membre, EDITION.annee).catch(() => {});
   if (estBenevole) {
     db.prepare("INSERT INTO dm_sequences (userId, etape, prochainEnvoi) VALUES (?, 0, ?) ON CONFLICT(userId) DO UPDATE SET etape = 0, prochainEnvoi = excluded.prochainEnvoi")
       .run(membre.id, Date.now());
@@ -455,10 +453,6 @@ export async function selectionRoles(interaction: StringSelectMenuInteraction<"c
     return;
   }
 
-  // Badge d'édition automatique pour bénévoles et artistes programmés
-  if (estBenevole || estArtiste) {
-    await attribuerBadge(membre, EDITION.annee).catch(() => {});
-  }
 
   // Séquence d'onboarding progressif bénévole (3 DM à 24h d'intervalle)
   if (estBenevole) {
