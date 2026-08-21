@@ -104,6 +104,7 @@ export const ROLE_ATTENTE = { nom: "⏳ En attente de validation" };
 // Le profil "Festivalier" n'est PAS ici : il reçoit directement le rôle Membre.
 export const CANDIDATURES: { marqueur: string; profil: string; emoji: string; roleKey: keyof typeof ROLES | null }[] = [
   { marqueur: "Candidat Bénévole", profil: "Bénévole", emoji: "🙌", roleKey: "benevoleEdition" },
+  { marqueur: "Candidat Référent", profil: "Référent", emoji: "🧭", roleKey: "referent" },
   { marqueur: "Candidat Artiste", profil: "Artiste programmé", emoji: "🎤", roleKey: "artiste" },
   { marqueur: "Candidat Artiste Communauté", profil: "Artiste (communauté)", emoji: "🎧", roleKey: "artisteCommunaute" },
 ];
