@@ -364,6 +364,29 @@ export async function appliquerProfilReserve(membre: GuildMember): Promise<strin
   return nomsDesRoles(membre.guild, cles);
 }
 
+/**
+ * La fiche de validation affiche « Règles : ⏳ Pas encore » au moment où elle est
+ * créée. Sans cette mise à jour, la ligne resterait figée à vie et le Staff
+ * croirait que le dossier traîne alors que le membre a réagi depuis longtemps.
+ */
+export async function marquerReglesAcceptees(membre: GuildMember): Promise<void> {
+  const canal = salonTexte(membre.guild, "validation");
+  if (!canal) return;
+  const messages = await canal.messages.fetch({ limit: 100 }).catch(() => null);
+  if (!messages) return;
+  const signature = `userId:${membre.id}`;
+  for (const message of messages.values()) {
+    const source = message.embeds[0];
+    if (!source || source.footer?.text !== signature) continue;
+    const champ = source.fields.find((f) => f.name === "Règles (réaction 🎪)");
+    if (!champ || champ.value.startsWith("✅")) continue;
+    const embed = EmbedBuilder.from(source).setFields(
+      ...source.fields.map((f) => (f.name === "Règles (réaction 🎪)" ? { ...f, value: "✅ Acceptées" } : f))
+    );
+    await message.edit({ embeds: [embed] }).catch(() => {});
+  }
+}
+
 /** Le membre n'a pas encore accepté les règles : son accès reste bloqué. */
 function aAccepteLesRegles(membre: GuildMember): boolean {
   const membreRole = role(membre.guild, "membre");
@@ -604,6 +627,7 @@ export async function rattraperReactionsAcces(guild: import("discord.js").Guild)
     await membre.roles.add(membreRole.id, "Rattrapage : réaction 🎪 posée hors ligne").catch(() => {});
     await leverBarriere(membre);
     await appliquerProfilReserve(membre);
+    await marquerReglesAcceptees(membre);
     ajoutes++;
   }
   if (ajoutes > 0) {
