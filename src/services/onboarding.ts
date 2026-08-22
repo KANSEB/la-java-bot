@@ -21,8 +21,7 @@ import {
 } from "discord.js";
 import { db, kvDel, kvGet, kvSet, type OnboardingRow } from "../db/database.js";
 import {
-  CANDIDATURES, COULEURS, DELAIS, EDITION, QUESTIONNAIRE, ROLE_ATTENTE, ROLES, SALONS, SEUIL_COMPTE_RECENT_JOURS, TEXTES,
-} from "../config/config.js";
+  CANDIDATURES, COULEURS, DELAIS, EDITION, QUESTIONNAIRE, ROLE_ATTENTE, ROLES, SALONS, SEUIL_COMPTE_RECENT_JOURS, TEXTES, PROFIL_DIRECT } from "../config/config.js";
 import { ageCompteJours, dmSur, estStaff, horodatage, leverBarriere, role, roleParNom, salonTexte } from "./util.js";
 import { log, logErreur } from "./logs.js";
 
@@ -326,8 +325,11 @@ export async function approuverProfilDemande(interaction: ButtonInteraction<"cac
 }
 
 /** Rôles attribués, ou mention explicite qu'il n'y en a aucun (candidature sans profil). */
+/** Valeur du menu Staff pour « accès simple » : ce n'est pas une clé de ROLES. */
+const FESTIVALIER = "festivalier";
+
 function listeRoles(noms: string[]): string {
-  return noms.length > 0 ? noms.join(", ") : "aucun rôle de profil";
+  return noms.length > 0 ? noms.join(", ") : PROFIL_DIRECT.titre;
 }
 
 function nomsDesRoles(guild: GuildMember["guild"], cles: string[]): string[] {
@@ -424,9 +426,15 @@ export async function boutonApprouver(interaction: ButtonInteraction<"cached">):
 
   // Rôles de profil attribuables. Membre n'y figure pas : ce n'est pas un profil
   // mais la clé d'accès, et elle ne s'obtient qu'en acceptant les règles.
-  const options = (Object.keys(ROLES) as (keyof typeof ROLES)[])
-    .filter((c) => c !== "nonVerifie" && c !== "membre")
-    .map((c) => ({ label: ROLES[c].nom, value: c }));
+  // « Festivalier » en tête : la réponse quand la personne a coché bénévole
+  // sans l'être vraiment. Elle est validée avec l'accès simple, sans rôle
+  // d'équipe, et le palier Festivalier se pose de lui-même à la réaction 🎪.
+  const options = [
+    { label: `${PROFIL_DIRECT.titre} (accès simple, sans rôle d'équipe)`, value: FESTIVALIER, emoji: PROFIL_DIRECT.emoji },
+    ...(Object.keys(ROLES) as (keyof typeof ROLES)[])
+      .filter((c) => c !== "nonVerifie" && c !== "membre")
+      .map((c) => ({ label: ROLES[c].nom, value: c })),
+  ];
 
   const select = new StringSelectMenuBuilder()
     .setCustomId(`ob_aps:${userId}:${interaction.message.id}`)
@@ -436,7 +444,7 @@ export async function boutonApprouver(interaction: ButtonInteraction<"cached">):
     .addOptions(options);
 
   await interaction.reply({
-    content: `Rôles à attribuer à <@${userId}> (le rôle **Membre** est ajouté automatiquement) :`,
+    content: `Rôles à attribuer à <@${userId}> (l'accès aux salons vient de la réaction 🎪, pas de ce menu) :`,
     components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select)],
     ephemeral: true,
   });
@@ -463,7 +471,8 @@ export async function selectionRoles(interaction: StringSelectMenuInteraction<"c
 
   // Attribution des seuls rôles choisis : l'accès aux salons (rôle Membre) ne
   // s'obtient qu'en acceptant les règles, jamais par une décision du Staff.
-  const clesProfil = interaction.values.filter((c) => c !== "membre"); // l'accès passe par la réaction 🎪
+  // Festivalier n'est pas un rôle à poser : c'est l'absence de rôle d'équipe.
+  const clesProfil = interaction.values.filter((c) => c !== "membre" && c !== FESTIVALIER);
   const nomsAttribues = nomsDesRoles(guild, clesProfil);
   const estBenevole = clesProfil.includes("benevoleEdition");
   const estArtiste = clesProfil.includes("artiste");
@@ -489,7 +498,7 @@ export async function selectionRoles(interaction: StringSelectMenuInteraction<"c
 
   // DM de confirmation + bienvenue publique (une seule fois, avec le vrai rôle attribué)
   const dmOk = await dmSur(membre, TEXTES.dmApprouve(listeRoles(nomsAttribues)) + rappelReglesSiBesoin(membre));
-  const profilLabel = nomsAttribues[0] ?? ROLES.membre.nom;
+  const profilLabel = nomsAttribues[0] ?? PROFIL_DIRECT.titre;
   const general = salonTexte(guild, "general");
   if (general && kvGet(`bienvenue:${userId}`) !== "1") {
     await general.send(TEXTES.bienvenueGeneral(userId, profilLabel)).catch(() => {});
