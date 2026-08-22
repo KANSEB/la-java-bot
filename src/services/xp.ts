@@ -7,7 +7,7 @@
 import { Client, Guild, GuildMember } from "discord.js";
 import { db, type XpRow } from "../db/database.js";
 import { PALIERS_XP, ROLE_PORTE, XP } from "../config/config.js";
-import { roleParNom } from "./util.js";
+import { role, roleParNom } from "./util.js";
 import { log } from "./logs.js";
 
 export function getXp(userId: string): number {
@@ -79,14 +79,20 @@ export async function ajouterXp(membre: GuildMember, points: number, motif?: str
  * l'ancienne échelle jusqu'à son prochain gain de points.
  */
 export async function resynchroniserPaliers(guild: Guild): Promise<number> {
-  const lignes = db.prepare("SELECT userId, points FROM xp").all() as { userId: string; points: number }[];
+  // Tous les Membres, pas seulement ceux qui ont une ligne XP : quelqu'un qui
+  // n'a jamais écrit n'en a pas, et resterait sans palier de départ.
+  const points = new Map(
+    (db.prepare("SELECT userId, points FROM xp").all() as { userId: string; points: number }[]).map((l) => [l.userId, l.points])
+  );
+  const membreRole = role(guild, "membre");
+  await guild.members.fetch().catch(() => {});
   let corriges = 0;
 
-  for (const { userId, points } of lignes) {
-    const membre = await guild.members.fetch(userId).catch(() => null);
-    if (!membre || membre.user.bot) continue;
+  for (const membre of guild.members.cache.values()) {
+    if (membre.user.bot) continue;
+    if (membreRole && !membre.roles.cache.has(membreRole.id) && !points.has(membre.id)) continue;
 
-    const attendu = palierPour(points).nom;
+    const attendu = palierPour(points.get(membre.id) ?? 0).nom;
     const aJour = membre.roles.cache.some((r) => r.name === attendu);
     const enTrop = PALIERS_XP.filter((p) => p.nom !== attendu)
       .map((p) => roleParNom(guild, p.nom))
