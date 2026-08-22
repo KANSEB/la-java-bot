@@ -408,6 +408,10 @@ export const TEXTES = {
     "\n\n⚠️ **Il te reste une étape :** passe dans le salon 👋・bienvenue et clique sur la réaction 🎪 sous le message des règles. C'est ce qui t'ouvre les salons de la communauté : sans ça, tu ne pourras pas écrire.",
   dmApprouve: (roles: string) =>
     `🎉 **C'est bon, tu es de la famille !** Ta demande a été validée.\nTes rôles : ${roles}\nViens te présenter dans le salon présentations et dire bonjour dans le général. À très vite ! 🎪`,
+  dmRolesModifies: (roles: string) =>
+    `🎭 **Tes rôles sur le Discord de La Java ont été mis à jour.**
+Tes rôles : ${roles}
+Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
   dmRefuse: (motif: string) =>
     `😕 Ta demande pour rejoindre La Java n'a pas été retenue.\n**Motif :** ${motif}\nTu as droit à **une** nouvelle tentative : reprends le questionnaire si tu veux réessayer.`,
   dmPlusInfos: (question: string) =>

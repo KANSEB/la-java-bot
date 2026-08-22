@@ -462,12 +462,10 @@ export async function selectionRoles(interaction: StringSelectMenuInteraction<"c
     return;
   }
 
-  // Garde anti-double traitement (deux Staff qui cliquent, vieil embed résiduel...)
+  // Dossier déjà clos : on est en train de corriger une décision (bouton
+  // « Modifier les rôles »), pas de la prendre. Le membre est prévenu autrement.
   const dossier = db.prepare("SELECT statut FROM onboarding WHERE userId = ?").get(userId) as { statut: string } | undefined;
-  if (dossier?.statut === "approuve") {
-    await interaction.editReply({ content: "✅ Cette candidature a déjà été approuvée.", components: [] });
-    return;
-  }
+  const correction = dossier?.statut === "approuve" || dossier?.statut === "refuse";
 
   // Attribution des seuls rôles choisis : l'accès aux salons (rôle Membre) ne
   // s'obtient qu'en acceptant les règles, jamais par une décision du Staff.
@@ -497,7 +495,10 @@ export async function selectionRoles(interaction: StringSelectMenuInteraction<"c
     .run(interaction.user.id, Date.now(), userId);
 
   // DM de confirmation + bienvenue publique (une seule fois, avec le vrai rôle attribué)
-  const dmOk = await dmSur(membre, TEXTES.dmApprouve(listeRoles(nomsAttribues)) + rappelReglesSiBesoin(membre));
+  const dmOk = await dmSur(
+    membre,
+    (correction ? TEXTES.dmRolesModifies(listeRoles(nomsAttribues)) : TEXTES.dmApprouve(listeRoles(nomsAttribues))) + rappelReglesSiBesoin(membre)
+  );
   const profilLabel = nomsAttribues[0] ?? PROFIL_DIRECT.titre;
   const general = salonTexte(guild, "general");
   if (general && kvGet(`bienvenue:${userId}`) !== "1") {
@@ -507,7 +508,7 @@ export async function selectionRoles(interaction: StringSelectMenuInteraction<"c
 
   await mettreAJourEmbed(interaction, messageId, "approuve", interaction.user.id);
   await interaction.editReply({
-    content: `✅ <@${userId}> approuvé avec : ${listeRoles(nomsAttribues)}.${accesEnAttente(membre)}${dmOk ? "" : "\n⚠️ DM impossible (messages privés fermés)."}`,
+    content: `✅ <@${userId}> ${correction ? "mis à jour" : "approuvé"} avec : ${listeRoles(nomsAttribues)}.${accesEnAttente(membre)}${dmOk ? "" : "\n⚠️ DM impossible (messages privés fermés)."}`,
     components: [],
   });
   await log(guild, "✅ Candidature approuvée", `<@${userId}> validé par <@${interaction.user.id}> — rôles : ${listeRoles(nomsAttribues)}`, "succes");
@@ -600,8 +601,13 @@ async function mettreAJourEmbed(
   );
   embed.setColor(statut === "approuve" ? COULEURS.succes : statut === "refuse" ? COULEURS.erreur : COULEURS.alerte);
 
-  // Demande traitée définitivement → on retire les boutons ; "infos" les conserve
-  const composants = statut === "approuve" || statut === "refuse" ? [] : message.components;
+  // Demande traitée définitivement → un seul bouton reste, pour corriger le tir
+  // (refus trop rapide, mauvais rôle coché) ; "infos" conserve les boutons d'origine.
+  const userId = message.embeds[0].footer?.text?.replace("userId:", "") ?? "";
+  const correction = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder().setCustomId(`ob_ap:${userId}`).setLabel("Modifier les rôles").setEmoji("🎭").setStyle(ButtonStyle.Secondary)
+  );
+  const composants = statut === "approuve" || statut === "refuse" ? [correction] : message.components;
   await message.edit({ embeds: [embed], components: composants as never }).catch(() => {});
 }
 
