@@ -70,7 +70,7 @@ export const BADGES: Record<number, { couleur: number }> = {
 // sont posés par le provisioning via `palierMin` ; les avantages humains
 // (giveaways, tarif préférentiel) sont tenus à la main par le Staff.
 export const PALIERS_XP: { seuil: number; nom: string; couleur: number; avantages: string[] }[] = [
-  { seuil: 0, nom: "Nouveau", couleur: 0xbdc3c7, avantages: [] },
+  { seuil: 0, nom: "Festivalier", couleur: 0xbdc3c7, avantages: [] },
   {
     seuil: 500, nom: "Habitué", couleur: 0x74b9ff,
     avantages: ["Droit de vote sur les décisions de la communauté", "Accès au vocal Afters"],
