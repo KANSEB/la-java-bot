@@ -12,7 +12,7 @@ import { db, kvGet, kvSet } from "../db/database.js";
 import { surveillerArrivee } from "../services/antiraid.js";
 import { log, logErreur } from "../services/logs.js";
 import {
-  appliquerProfilReserve, approuverProfilDemande, marquerReglesAcceptees, ouvrirAcces, boutonApprouver, boutonPlusInfos, boutonRefuser,
+  appliquerProfilReserve, approuverProfilDemande, ouvrirAcces, boutonApprouver, boutonPlusInfos, boutonRefuser,
   candidatureDe, modalPlusInfos, modalRefus, nettoyerCandidature, ouvrirQuestionnaire, selectionRoles,
   signalerDemandeValidation, soumettreQuestionnaire,
 } from "../services/onboarding.js";
@@ -105,7 +105,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
           .map((cle) => ROLES[cle].nom)
       );
       // Le rôle Membre n'est PAS ajouté ici : l'accès aux salons s'obtient
-      // uniquement en acceptant les règles (réaction 🎪), quel que soit le profil.
+      // uniquement en finissant son arrivée (charte d'entrée), quel que soit le profil.
       if (ajoutes.some((r) => fonctionnels.has(r.name))) {
         await nettoyerCandidature(apres); // retire ⏳ En attente + les marqueurs Candidat
 
@@ -117,12 +117,12 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
         const aAccepte = membreRole !== undefined && apres.roles.cache.has(membreRole.id);
         if (!aAccepte && !estStaff(apres)) {
           await log(apres.guild, "⚠️ Rôle posé avant les règles",
-            `<@${apres.id}> a reçu un rôle de profil sans avoir accepté les règles : il voit déjà sa catégorie. Le bouton **Approuver**, lui, met le rôle en réserve jusqu'à la réaction 🎪. Visible dans \`/suivi\`.`,
+            `<@${apres.id}> a reçu un rôle de profil avant d'avoir fini son arrivée : il voit déjà sa catégorie. Le bouton **Approuver**, lui, met le rôle en réserve jusque-là. Visible dans /suivi.`,
             "alerte");
         }
       }
 
-      // Membre obtenu autrement que par la réaction 🎪 — option du questionnaire
+      // Membre obtenu avant la fin de l'arrivée : option du questionnaire
       // natif, attribution à la main : la barrière serait percée, l'autorisation
       // portée par Membre l'emportant sur l'interdiction portée par la barrière.
       // On rétablit la règle plutôt que de la faire dépendre d'un réglage Discord.
@@ -136,7 +136,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
           await apres.roles.remove(membreRole.id, "Règles pas encore acceptées").catch(() => {});
           await poserBarriere(apres);
           await log(apres.guild, "🚪 Accès prématuré annulé",
-            `<@${apres.id}> a reçu **${ROLES.membre.nom}** sans avoir accepté les règles : rôle retiré. Si cela se répète, c'est qu'une option du questionnaire natif accorde ce rôle — elle doit accorder un rôle cosmétique à la place.`,
+            `<@${apres.id}> a reçu **${ROLES.membre.nom}** avant d'avoir fini son arrivée : rôle retiré. Si cela se répète, c'est qu'une option du questionnaire natif accorde ce rôle — elle doit accorder un rôle cosmétique à la place.`,
             "alerte");
         }
         return;
@@ -220,7 +220,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       if (!ctx) return;
       const { guild, membre, porteDacces } = ctx;
 
-      if (porteDacces) await ouvrirAcces(membre, "réaction 🎪 sur le post de bienvenue");
+      if (porteDacces) await ouvrirAcces(membre, "réaction sur le post de bienvenue");
 
       // Réclamation du badge d'édition : la fenêtre est gérée par le cron,
       // ici on se contente d'honorer la réaction tant qu'elle est ouverte.

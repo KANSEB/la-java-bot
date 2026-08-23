@@ -91,8 +91,8 @@ export const PALIERS_XP: { seuil: number; nom: string; couleur: number; avantage
 
 
 // Rôle-barrière posé sur chaque arrivant : il masque tout le serveur sauf le
-// salon des règles. Il est retiré à la réaction 🎪 — c'est ce geste, et lui seul,
-// qui ouvre le serveur. Sans permission propre : il ne fait qu'interdire.
+// salon des règles. Il est retiré dès que la charte de l'écran d'entrée est acceptée.
+// Sans permission propre : il ne fait qu'interdire.
 export const ROLE_PORTE = { nom: "👋 Nouvel arrivant", couleur: 0x4f545c };
 
 // Rôle posé par l'onboarding natif Discord sur TOUTE nouvelle candidature.
@@ -406,10 +406,6 @@ Si tu as coché bénévole, référent ou artiste dans le questionnaire, le Staf
     `${staffRoleId ? `<@&${staffRoleId}> ` : ""}📥 **Nouvelle candidature** de <@${userId}>, à valider ci-dessous :`,
   soumissionDejaEnCours: "Tu as déjà une demande en cours d'examen : le Staff s'en occupe, encore un peu de patience ! 🙏",
   soumissionEpuisee: "Tu as déjà utilisé ta seconde chance après un refus. Contacte directement un membre du Staff si tu penses qu'il y a une erreur.",
-  // Ajouté au DM de validation tant que les règles ne sont pas acceptées :
-  // le profil est accordé, mais l'accès aux salons passe par la charte d'entrée.
-  rappelRegles:
-    "\n\n⚠️ **Il te reste une étape :** termine ton arrivée sur le serveur en acceptant la charte dans l'écran d'entrée de Discord. Ton rôle se pose tout seul à ce moment-là.",
   dmApprouve: (roles: string) =>
     `🎉 **C'est bon, tu es de la famille !** Ta demande a été validée.\nTes rôles : ${roles}\nViens te présenter dans le salon présentations et dire bonjour dans le général. À très vite ! 🎪`,
   dmRolesModifies: (roles: string) =>
@@ -654,7 +650,7 @@ Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
     "",
     "**1. Il arrive** et reçoit aussitôt le rôle `👋 Nouvel arrivant`. Ce rôle **cache tout le serveur sauf le salon des règles**. C'est volontaire : personne ne circule sans avoir vu les règles.",
     "**2. Il remplit le questionnaire** d'arrivée de Discord. S'il demande un profil (bénévole, référent, artiste), une fiche tombe dans le salon des validations avec un ping `@Staff`.",
-    "**3. Tu valides** avec le bouton vert. Le rôle demandé est **mis en réserve** : il ne sera posé que lorsqu'il aura accepté les règles. La fiche te le rappelle.",
+    "**3. Tu valides** avec le bouton vert. Si le membre a fini son arrivée, le rôle est posé aussitôt ; sinon il est **mis en réserve** et posé dès qu'il l'aura finie. La fiche te le rappelle.",
     "**4. Il accepte la charte** dans l'écran d'entrée → `👋 Nouvel arrivant` disparaît, le rôle `Membre` arrive, son profil réservé est posé, le serveur s'ouvre. Tout est automatique.",
     "",
     "⚠️ **Les étapes 3 et 4 sont indépendantes.** Il entre avant que tu valides : c'est le cas normal. Il discute dans le général pendant que tu prends ton temps.",

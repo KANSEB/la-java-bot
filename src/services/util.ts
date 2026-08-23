@@ -50,7 +50,7 @@ export function estStaff(membre: GuildMember): boolean {
 
 /**
  * Pose la barrière : le membre ne voit plus que le salon des règles, jusqu'à
- * la réaction 🎪. Sans effet sur qui a déjà accepté, sur le Staff et sur les
+ * la charte d'entrée. Sans effet sur qui a déjà accepté, sur le Staff et sur les
  * bots — on ne se coupe jamais l'accès à soi-même.
  */
 export async function poserBarriere(membre: GuildMember): Promise<void> {
@@ -68,7 +68,7 @@ export async function poserBarriere(membre: GuildMember): Promise<void> {
 export async function leverBarriere(membre: GuildMember): Promise<void> {
   const porte = roleParNom(membre.guild, ROLE_PORTE.nom);
   if (porte && membre.roles.cache.has(porte.id)) {
-    await membre.roles.remove(porte.id, "Règles acceptées (réaction 🎪)").catch(() => {});
+    await membre.roles.remove(porte.id, "Arrivée terminée").catch(() => {});
   }
 }
 

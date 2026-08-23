@@ -38,7 +38,7 @@ export const commandes: Commande[] = [
         (o) => `• <@${o.userId}> — ${o.roleDemande || "profil inconnu"} — depuis ${horodatage(o.dateSubmission)}${o.statut === "infos" ? " *(infos demandées)*" : ""}`
       );
 
-      // 2. Profils validés mais pas encore posés : le membre n'a pas accepté les règles
+      // 2. Profils validés mais pas encore posés : le membre n'a pas fini son arrivée
       const enReserve = kvListe("profil_attente:").map(({ cle, valeur }) => {
         const userId = cle.slice("profil_attente:".length);
         const noms = valeur
@@ -48,7 +48,7 @@ export const commandes: Commande[] = [
         return `• <@${userId}> — **${noms}** en réserve`;
       });
 
-      // 3. Bloqués à la porte : arrivés, jamais passés par la réaction 🎪
+      // 3. Bloqués à la porte : arrivés, charte jamais acceptée
       const porte = roleParNom(guild, ROLE_PORTE.nom);
       const enAttenteDeDecision = new Set(ouvertes.map((o) => o.userId));
       const reserves = new Set(enReserve.map((l) => l.slice(l.indexOf("<@") + 2, l.indexOf(">"))));
@@ -73,7 +73,7 @@ export const commandes: Commande[] = [
             value: champ(aValider, `Rien en attente. Les fiches arrivent dans ${SALONS.validation}.`),
           },
           {
-            name: `⏳ Validés, en attente de leur réaction 🎪 — ${enReserve.length}`,
+            name: `⏳ Validés, arrivée pas terminée — ${enReserve.length}`,
             value: champ(enReserve, "Personne. Tous les profils validés ont été posés."),
           },
           {
@@ -81,7 +81,7 @@ export const commandes: Commande[] = [
             value: champ(bloques, "Personne n'attend devant la porte."),
           }
         )
-        .setFooter({ text: "Les deux dernières files se vident toutes seules quand le membre réagit 🎪." })
+        .setFooter({ text: "Les deux dernières files se vident toutes seules quand le membre accepte la charte." })
         .setTimestamp();
       await interaction.editReply({ embeds: [embed] });
     },

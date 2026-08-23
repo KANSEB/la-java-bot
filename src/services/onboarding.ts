@@ -211,7 +211,6 @@ async function signaler(membre: GuildMember): Promise<void> {
 
   const candidature = candidatureDe(membre);
   const age = ageCompteJours(membre.user);
-  const reglesLues = kvGet(`regles:${membre.id}`) === "1";
 
   // Trace en base pour /stats et /export-onboarding
   db.prepare(`
@@ -228,7 +227,6 @@ async function signaler(membre: GuildMember): Promise<void> {
     .addFields(
       { name: "Membre", value: `<@${membre.id}> (${membre.user.username})`, inline: true },
       { name: "Profil demandé", value: candidature ? `${candidature.emoji} ${candidature.profil}` : "❔ Inconnu", inline: true },
-      { name: "Règles (réaction 🎪)", value: reglesLues ? "✅ Acceptées" : "⏳ Pas encore", inline: true },
       { name: "Compte créé", value: `${horodatage(membre.user.createdTimestamp)}${age < SEUIL_COMPTE_RECENT_JOURS ? "\n⚠️ **Compte de moins de 7 jours**" : ""}`, inline: true },
       { name: "Arrivé sur le serveur", value: membre.joinedTimestamp ? horodatage(membre.joinedTimestamp) : "?", inline: true },
       { name: "Statut", value: STATUTS_AFFICHES.en_attente }
@@ -310,7 +308,7 @@ export async function approuverProfilDemande(interaction: ButtonInteraction<"cac
   db.prepare("UPDATE onboarding SET statut = 'approuve', validateurId = ?, dateValidation = ? WHERE userId = ?")
     .run(interaction.user.id, Date.now(), userId);
 
-  const dmOk = await dmSur(membre, TEXTES.dmApprouve(listeRoles(nomsAttribues)) + rappelReglesSiBesoin(membre));
+  const dmOk = await dmSur(membre, TEXTES.dmApprouve(listeRoles(nomsAttribues)));
   // Message de bienvenue : une seule fois par membre, avec le vrai profil attribué
   const profilAffiche = candidature?.profil ?? nomsAttribues[0] ?? "Membre";
   const general = salonTexte(guild, "general");
@@ -340,7 +338,7 @@ function nomsDesRoles(guild: GuildMember["guild"], cles: string[]): string[] {
  * Attribue les rôles de profil, ou les met en réserve si les règles ne sont pas
  * encore acceptées. Un rôle posé trop tôt ouvrirait sa catégorie malgré la
  * barrière : sous Discord, l'autorisation portée par un rôle l'emporte sur
- * l'interdiction portée par un autre. La réserve est vidée à la réaction 🎪.
+ * l'interdiction portée par un autre. La réserve est vidée à l'ouverture de l'accès.
  */
 async function poserOuReserverProfil(membre: GuildMember, cles: string[], motif: string): Promise<void> {
   if (cles.length === 0) return;
@@ -366,45 +364,18 @@ export async function appliquerProfilReserve(membre: GuildMember): Promise<strin
   return nomsDesRoles(membre.guild, cles);
 }
 
-/**
- * La fiche de validation affiche « Règles : ⏳ Pas encore » au moment où elle est
- * créée. Sans cette mise à jour, la ligne resterait figée à vie et le Staff
- * croirait que le dossier traîne alors que le membre a réagi depuis longtemps.
- */
-export async function marquerReglesAcceptees(membre: GuildMember): Promise<void> {
-  const canal = salonTexte(membre.guild, "validation");
-  if (!canal) return;
-  const messages = await canal.messages.fetch({ limit: 100 }).catch(() => null);
-  if (!messages) return;
-  const signature = `userId:${membre.id}`;
-  for (const message of messages.values()) {
-    const source = message.embeds[0];
-    if (!source || source.footer?.text !== signature) continue;
-    const champ = source.fields.find((f) => f.name === "Règles (réaction 🎪)");
-    if (!champ || champ.value.startsWith("✅")) continue;
-    const embed = EmbedBuilder.from(source).setFields(
-      ...source.fields.map((f) => (f.name === "Règles (réaction 🎪)" ? { ...f, value: "✅ Acceptées" } : f))
-    );
-    await message.edit({ embeds: [embed] }).catch(() => {});
-  }
-}
 
-/** Le membre n'a pas encore accepté les règles : son accès reste bloqué. */
+/** Le membre n'a pas encore fini son arrivée : son accès reste bloqué. */
 function aAccepteLesRegles(membre: GuildMember): boolean {
   const membreRole = role(membre.guild, "membre");
   return membreRole !== undefined && membre.roles.cache.has(membreRole.id);
-}
-
-/** Rappel ajouté au DM de validation tant que les règles ne sont pas acceptées. */
-function rappelReglesSiBesoin(membre: GuildMember): string {
-  return aAccepteLesRegles(membre) ? "" : TEXTES.rappelRegles;
 }
 
 /** Note pour le Staff : le profil est réservé tant que les règles ne sont pas acceptées. */
 function accesEnAttente(membre: GuildMember): string {
   return aAccepteLesRegles(membre)
     ? ""
-    : `\n⏳ Rôle mis en attente : il sera posé automatiquement dès qu'il aura accepté les règles (réaction 🎪 dans ${SALONS.bienvenue}).`;
+    : `\n⏳ Rôle mis en attente : il sera posé automatiquement dès qu'il aura fini son arrivée sur le serveur.`;
 }
 
 // ---------- 3. Boutons Staff ----------
@@ -428,7 +399,7 @@ export async function boutonApprouver(interaction: ButtonInteraction<"cached">):
   // mais la clé d'accès, et elle ne s'obtient qu'en acceptant les règles.
   // « Festivalier » en tête : la réponse quand la personne a coché bénévole
   // sans l'être vraiment. Elle est validée avec l'accès simple, sans rôle
-  // d'équipe, et le palier Festivalier se pose de lui-même à la réaction 🎪.
+  // d'équipe, et le palier Festivalier se pose de lui-même à l'ouverture de l'accès.
   const options = [
     { label: `${PROFIL_DIRECT.titre} (accès simple, sans rôle d'équipe)`, value: FESTIVALIER, emoji: PROFIL_DIRECT.emoji },
     ...(Object.keys(ROLES) as (keyof typeof ROLES)[])
@@ -444,7 +415,7 @@ export async function boutonApprouver(interaction: ButtonInteraction<"cached">):
     .addOptions(options);
 
   await interaction.reply({
-    content: `Rôles à attribuer à <@${userId}> (l'accès aux salons vient de la réaction 🎪, pas de ce menu) :`,
+    content: `Rôles à attribuer à <@${userId}> :`,
     components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select)],
     ephemeral: true,
   });
@@ -497,7 +468,7 @@ export async function selectionRoles(interaction: StringSelectMenuInteraction<"c
   // DM de confirmation + bienvenue publique (une seule fois, avec le vrai rôle attribué)
   const dmOk = await dmSur(
     membre,
-    (correction ? TEXTES.dmRolesModifies(listeRoles(nomsAttribues)) : TEXTES.dmApprouve(listeRoles(nomsAttribues))) + rappelReglesSiBesoin(membre)
+    correction ? TEXTES.dmRolesModifies(listeRoles(nomsAttribues)) : TEXTES.dmApprouve(listeRoles(nomsAttribues))
   );
   const profilLabel = nomsAttribues[0] ?? PROFIL_DIRECT.titre;
   const general = salonTexte(guild, "general");
@@ -636,7 +607,6 @@ export async function ouvrirAcces(membre: GuildMember, motif: string): Promise<b
   }
   await membre.roles.add(membreRole.id, motif).catch(() => {});
   const reserves = await appliquerProfilReserve(membre);
-  await marquerReglesAcceptees(membre);
   await dmSur(membre, TEXTES.accesDebloque(membre.id));
   await log(guild, "🎪 Accès ouvert",
     `<@${membre.id}> : ${motif}.${reserves.length > 0 ? ` Profil en attente appliqué : ${reserves.join(", ")}.` : ""}`, "succes");
@@ -683,7 +653,7 @@ export async function rattraperReactionsAcces(guild: import("discord.js").Guild)
     if (user.bot) continue;
     const membre = await guild.members.fetch(user.id).catch(() => null);
     if (!membre) continue;
-    if (await ouvrirAcces(membre, "réaction 🎪 posée pendant une coupure")) ajoutes++;
+    if (await ouvrirAcces(membre, "arrivée terminée pendant une coupure")) ajoutes++;
   }
   if (ajoutes > 0) {
     await log(guild, "🎪 Accès rattrapés", `${ajoutes} membre(s) avaient réagi pendant une coupure du bot : rôle Membre attribué.`, "succes");
