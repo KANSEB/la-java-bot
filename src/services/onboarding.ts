@@ -21,7 +21,7 @@ import {
 } from "discord.js";
 import { db, kvDel, kvGet, kvSet, type OnboardingRow } from "../db/database.js";
 import {
-  CANDIDATURES, COULEURS, DELAIS, EDITION, QUESTIONNAIRE, ROLE_ATTENTE, ROLES, SALONS, SEUIL_COMPTE_RECENT_JOURS, TEXTES, PROFIL_DIRECT } from "../config/config.js";
+  CANDIDATURES, COULEURS, DELAIS, EDITION, QUESTIONNAIRE, ROLE_ATTENTE, ROLE_PORTE, ROLES, SALONS, SEUIL_COMPTE_RECENT_JOURS, TEXTES, PROFIL_DIRECT } from "../config/config.js";
 import { ageCompteJours, dmSur, estStaff, horodatage, leverBarriere, role, roleParNom, salonTexte } from "./util.js";
 import { log, logErreur } from "./logs.js";
 
@@ -611,6 +611,53 @@ async function mettreAJourEmbed(
   await message.edit({ embeds: [embed], components: composants as never }).catch(() => {});
 }
 
+// ---------- 3a. Ouverture de l'accès ----------
+/**
+ * Ouvre le serveur à un membre : barrière levée, rôle Membre, profil réservé
+ * posé, fiche de validation mise à jour.
+ *
+ * Le déclencheur normal est l'acceptation de la charte dans l'écran d'entrée
+ * de Discord (le membre cesse d'être « pending »). La réaction 🎪 sur le post
+ * de bienvenue y mène aussi. Exiger les deux perdait un arrivant sur trois.
+ * Renvoie true si l'accès vient d'être ouvert.
+ */
+export async function ouvrirAcces(membre: GuildMember, motif: string): Promise<boolean> {
+  if (membre.user.bot) return false;
+  if (membre.pending) return false; // charte pas encore acceptée : Discord le retient lui-même
+  const guild = membre.guild;
+  kvSet(`regles:${membre.id}`, "1");
+  await leverBarriere(membre);
+
+  const membreRole = role(guild, "membre");
+  if (!membreRole || membre.roles.cache.has(membreRole.id)) {
+    // Déjà ouvert : on s'assure seulement qu'un profil validé entre-temps est posé
+    await appliquerProfilReserve(membre);
+    return false;
+  }
+  await membre.roles.add(membreRole.id, motif).catch(() => {});
+  const reserves = await appliquerProfilReserve(membre);
+  await marquerReglesAcceptees(membre);
+  await dmSur(membre, TEXTES.accesDebloque(membre.id));
+  await log(guild, "🎪 Accès ouvert",
+    `<@${membre.id}> : ${motif}.${reserves.length > 0 ? ` Profil en attente appliqué : ${reserves.join(", ")}.` : ""}`, "succes");
+  return true;
+}
+
+/**
+ * Balayage de sécurité : tout membre qui a accepté la charte mais porte encore
+ * la barrière (événement manqué, bot éteint, ancienne version) est ouvert.
+ */
+export async function debloquerCharteAcceptee(guild: import("discord.js").Guild): Promise<number> {
+  const porte = roleParNom(guild, ROLE_PORTE.nom);
+  if (!porte) return 0;
+  if (guild.members.cache.size < guild.memberCount) await guild.members.fetch().catch(() => {});
+  let ouverts = 0;
+  for (const membre of [...porte.members.values()]) {
+    if (await ouvrirAcces(membre, "charte acceptée à l'entrée")) ouverts++;
+  }
+  return ouverts;
+}
+
 // ---------- 3b. Rattrapage des réactions d'accès ----------
 /**
  * Discord ne rejoue pas les réactions posées pendant que le bot était hors ligne
@@ -635,15 +682,8 @@ export async function rattraperReactionsAcces(guild: import("discord.js").Guild)
   for (const user of utilisateurs.values()) {
     if (user.bot) continue;
     const membre = await guild.members.fetch(user.id).catch(() => null);
-    if (!membre || membre.roles.cache.has(membreRole.id)) continue;
-    // Marqué AVANT l'attribution : l'événement de changement de rôle annulerait
-    // sinon un accès pourtant légitime, la réaction n'étant pas encore enregistrée.
-    kvSet(`regles:${membre.id}`, "1");
-    await membre.roles.add(membreRole.id, "Rattrapage : réaction 🎪 posée hors ligne").catch(() => {});
-    await leverBarriere(membre);
-    await appliquerProfilReserve(membre);
-    await marquerReglesAcceptees(membre);
-    ajoutes++;
+    if (!membre) continue;
+    if (await ouvrirAcces(membre, "réaction 🎪 posée pendant une coupure")) ajoutes++;
   }
   if (ajoutes > 0) {
     await log(guild, "🎪 Accès rattrapés", `${ajoutes} membre(s) avaient réagi pendant une coupure du bot : rôle Membre attribué.`, "succes");

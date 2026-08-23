@@ -12,7 +12,7 @@ import { db, kvGet, kvSet } from "../db/database.js";
 import { surveillerArrivee } from "../services/antiraid.js";
 import { log, logErreur } from "../services/logs.js";
 import {
-  appliquerProfilReserve, approuverProfilDemande, marquerReglesAcceptees, boutonApprouver, boutonPlusInfos, boutonRefuser,
+  appliquerProfilReserve, approuverProfilDemande, marquerReglesAcceptees, ouvrirAcces, boutonApprouver, boutonPlusInfos, boutonRefuser,
   candidatureDe, modalPlusInfos, modalRefus, nettoyerCandidature, ouvrirQuestionnaire, selectionRoles,
   signalerDemandeValidation, soumettreQuestionnaire,
 } from "../services/onboarding.js";
@@ -76,6 +76,9 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       // du bot, membre inactif) : impossible de comparer les rôles. On ne peut pas
       // pour autant ignorer l'événement, sinon la candidature d'un membre non mis en
       // cache passe à la trappe jusqu'au prochain redémarrage. Repli sur l'état actuel.
+      // Charte acceptée dans l'écran d'entrée : c'est le vrai déclencheur de l'accès.
+      if (!apres.pending) await ouvrirAcces(apres, "charte acceptée à l'entrée");
+
       if (avant.partial) {
         const attente = roleParNom(apres.guild, ROLE_ATTENTE.nom);
         if (attente && apres.roles.cache.has(attente.id)) await signalerDemandeValidation(apres);
@@ -125,7 +128,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       // On rétablit la règle plutôt que de la faire dépendre d'un réglage Discord.
       if (
         ajoutes.some((r) => r.name === ROLES.membre.nom) &&
-        kvGet(`regles:${apres.id}`) !== "1" &&
+        apres.pending &&
         !estStaff(apres)
       ) {
         const membreRole = role(apres.guild, "membre");
@@ -217,21 +220,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       if (!ctx) return;
       const { guild, membre, porteDacces } = ctx;
 
-      if (porteDacces) {
-        kvSet(`regles:${membre.id}`, "1");
-        // Lever la barrière d'abord : c'est elle qui masque le serveur.
-        await leverBarriere(membre);
-        const membreRole = role(guild, "membre");
-        if (membreRole && !membre.roles.cache.has(membreRole.id)) {
-          await membre.roles.add(membreRole.id, "Règles acceptées (réaction 🎪)").catch(() => {});
-          // Profil validé pendant qu'il n'avait pas encore accepté : on le pose maintenant.
-          const reserves = await appliquerProfilReserve(membre);
-          await marquerReglesAcceptees(membre);
-          await dmSur(membre, TEXTES.accesDebloque(membre.id));
-          await log(guild, "🎪 Accès débloqué",
-            `<@${membre.id}> a accepté les règles : serveur ouvert.${reserves.length > 0 ? ` Profil en attente appliqué : ${reserves.join(", ")}.` : ""}`, "succes");
-        }
-      }
+      if (porteDacces) await ouvrirAcces(membre, "réaction 🎪 sur le post de bienvenue");
 
       // Réclamation du badge d'édition : la fenêtre est gérée par le cron,
       // ici on se contente d'honorer la réaction tant qu'elle est ouverte.
@@ -256,25 +245,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
     }
   });
 
-  // Réaction 🎪 retirée = accès suspendu (réversible : il suffit de re-réagir)
-  client.on(Events.MessageReactionRemove, async (reaction, user) => {
-    try {
-      const ctx = await contexteReaction(reaction, user);
-      if (!ctx?.porteDacces) return;
-      const { guild, membre } = ctx;
-
-      kvSet(`regles:${membre.id}`, "0");
-      const membreRole = role(guild, "membre");
-      if (membreRole && membre.roles.cache.has(membreRole.id)) {
-        await membre.roles.remove(membreRole.id, "Réaction 🎪 retirée").catch(() => {});
-        await poserBarriere(membre);
-        await dmSur(membre, TEXTES.accesRetire);
-        await log(guild, "🚪 Accès suspendu", `<@${membre.id}> a retiré sa réaction : serveur de nouveau masqué.`, "alerte");
-      }
-    } catch (err) {
-      await logErreur(reaction.message.guild ?? null, "messageReactionRemove", err);
-    }
-  });
+  // Retirer la réaction 🎪 ne ferme plus rien : les règles sont acceptées à l'entrée, une fois pour toutes.
 
   // ---------- Logs messages supprimés / édités ----------
   const resume = (m: Message | PartialMessage): string => m.content ? m.content.slice(0, 800) : "(contenu inconnu ou embed/fichier)";

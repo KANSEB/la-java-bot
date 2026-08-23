@@ -9,7 +9,7 @@ import { Client, GatewayIntentBits, Partials } from "discord.js";
 import { assertEnv } from "./services/util.js";
 import { kvGet, kvSet } from "./db/database.js"; // initialise aussi la base + migrations
 import { demarrerCrons, majCountdown } from "./services/crons.js";
-import { rattraperReactionsAcces, signalerDemandeValidation } from "./services/onboarding.js";
+import { debloquerCharteAcceptee, rattraperReactionsAcces, signalerDemandeValidation } from "./services/onboarding.js";
 import { resynchroniserPaliers } from "./services/xp.js";
 import { poserBarriere, roleParNom } from "./services/util.js";
 import { ROLE_ATTENTE } from "./config/config.js";
@@ -79,6 +79,8 @@ client.once("clientReady", async () => {
     // Réactions 🎪 posées pendant la coupure : Discord ne les rejoue pas
     const acces = await rattraperReactionsAcces(guild);
     console.log(`[acces] rattrapage : ${acces} membre(s) débloqué(s) via la réaction 🎪`);
+    const charte = await debloquerCharteAcceptee(guild);
+    console.log(`[acces] ${charte} membre(s) ouvert(s) : charte acceptée, barrière encore posée`);
 
 
     // Migration unique (22/08/2026) : le badge Java 2026 était posé dès la

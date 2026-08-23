@@ -16,7 +16,7 @@ import { ANNIVERSAIRES, COULEURS, DELAIS, EDITION, FUSEAU, PALIERS_XP, RECLAMATI
 import { dmSur, estStaff, joursAvant, roleParNom, salonTexte } from "./util.js";
 import { log, logErreur } from "./logs.js";
 import { tickVocal } from "./xp.js";
-import { verifierCandidaturesEnAttente } from "./onboarding.js";
+import { debloquerCharteAcceptee, verifierCandidaturesEnAttente } from "./onboarding.js";
 
 function guildPrincipale(client: Client): Guild | undefined {
   const id = process.env.GUILD_ID;
@@ -306,6 +306,8 @@ export function demarrerCrons(client: Client): void {
     try {
       const signalees = await verifierCandidaturesEnAttente(guild);
       if (signalees > 0) console.log(`[onboarding] filet de sécurité : ${signalees} candidature(s) récupérée(s)`);
+      const ouverts = await debloquerCharteAcceptee(guild);
+      if (ouverts > 0) console.log(`[acces] filet de sécurité : ${ouverts} membre(s) ouvert(s)`);
     } catch (err) {
       await logErreur(guild, "cron candidatures", err);
     }

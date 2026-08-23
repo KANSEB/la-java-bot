@@ -360,7 +360,7 @@ export const TEXTES = {
     "",
     "━━━━━ 🧭 **COMMENT MARCHE CE SERVEUR** ━━━━━",
     "",
-    "🎪 **Pour entrer : réagis avec 🎪 sous ce message.** C'est ta façon de dire que tu as lu les règles ci-dessous : le serveur s'ouvre à toi dans la seconde.",
+    "🎪 **Tu es entré, le serveur est à toi.** En acceptant la charte à l'arrivée, tu as accepté les règles ci-dessous. Prends une minute pour les lire, puis viens dire bonjour dans le général.",
     "🙌 **Bénévole ou artiste ?** Tu l'as indiqué dans le questionnaire d'arrivée : le Staff valide ta demande et tes salons dédiés s'ajoutent ensuite.",
     "📣 **Les infos officielles** (line-up, billetterie…) tombent dans le salon annonces. Le reste, c'est à toi de le faire vivre dans le général !",
     "⭐ **Plus tu participes** (messages, réactions, vocaux), plus tu gagnes d'XP et montes de niveau : salons secrets, billetterie en avance, giveaways… Détails épinglés dans le général.",
@@ -384,7 +384,7 @@ export const TEXTES = {
     "",
     "**RGPD :** en répondant au questionnaire, tu acceptes que tes réponses soient conservées par l'équipe pour gérer la communauté. Tu peux demander leur suppression à tout moment auprès du Staff.",
     "",
-    "👇 **Réagis avec 🎪 juste en dessous pour débloquer le serveur. Bonne Java !**",
+    "👇 **Un 🎪 en dessous pour dire que tu as lu, et bonne Java !**",
   ].join("\n"),
 
   // Modal
@@ -396,16 +396,20 @@ export const TEXTES = {
 
   // DM et confirmations onboarding
   dmBienvenue: (serveur: string) =>
-    `Salut ! 👋 Bienvenue sur **${serveur}**.\n\n**Une seule chose à faire pour entrer :** va dans le salon 👋・bienvenue et clique sur la réaction 🎪 sous le message des règles. Le serveur s'ouvre aussitôt.\n\nSi tu as coché bénévole ou artiste dans le questionnaire, le Staff confirme ton rôle très vite — pas besoin d'attendre pour venir dire bonjour ! 🎪`,
+    `Salut ! 👋 Bienvenue sur **${serveur}**, le serveur est ouvert pour toi.
+
+Premier réflexe : un tour dans le salon 👋・bienvenue pour lire les règles, puis un bonjour dans le général.
+
+Si tu as coché bénévole, référent ou artiste dans le questionnaire, le Staff confirme ton rôle très vite : pas besoin d'attendre pour venir discuter ! 🎪`,
   soumissionRecue: "🎉 C'est envoyé ! Le Staff regarde ta demande très vite : tu recevras un message privé dès que c'est validé.",
   nouvelleCandidature: (userId: string, staffRoleId?: string) =>
     `${staffRoleId ? `<@&${staffRoleId}> ` : ""}📥 **Nouvelle candidature** de <@${userId}>, à valider ci-dessous :`,
   soumissionDejaEnCours: "Tu as déjà une demande en cours d'examen : le Staff s'en occupe, encore un peu de patience ! 🙏",
   soumissionEpuisee: "Tu as déjà utilisé ta seconde chance après un refus. Contacte directement un membre du Staff si tu penses qu'il y a une erreur.",
   // Ajouté au DM de validation tant que les règles ne sont pas acceptées :
-  // le profil est accordé, mais l'accès aux salons passe par la réaction 🎪.
+  // le profil est accordé, mais l'accès aux salons passe par la charte d'entrée.
   rappelRegles:
-    "\n\n⚠️ **Il te reste une étape :** passe dans le salon 👋・bienvenue et clique sur la réaction 🎪 sous le message des règles. C'est ce qui t'ouvre les salons de la communauté : sans ça, tu ne pourras pas écrire.",
+    "\n\n⚠️ **Il te reste une étape :** termine ton arrivée sur le serveur en acceptant la charte dans l'écran d'entrée de Discord. Ton rôle se pose tout seul à ce moment-là.",
   dmApprouve: (roles: string) =>
     `🎉 **C'est bon, tu es de la famille !** Ta demande a été validée.\nTes rôles : ${roles}\nViens te présenter dans le salon présentations et dire bonjour dans le général. À très vite ! 🎪`,
   dmRolesModifies: (roles: string) =>
@@ -443,7 +447,7 @@ Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
 
 
   // Tickets
-  // Accès débloqué par la réaction 🎪 sur le post de bienvenue
+  // Accès ouvert (charte acceptée à l'entrée, ou réaction 🎪 sur le post de bienvenue)
   boutonAnniversaire: "Renseigner mon anniversaire",
   anniversaireTitre: "🎂 Ton anniversaire",
   anniversaireLabelJour: "Jour (1 à 31)",
@@ -462,9 +466,9 @@ Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
     "Tu peux changer ta date quand tu veux en recliquant, ou demander sa suppression au Staff.",
   ].join("\n"),
   accesDebloque: (userId: string) =>
-    `🎪 Bienvenue à La Java, <@${userId}> ! Tu as accepté les règles, le serveur est grand ouvert. Pense à te présenter et à renseigner ton anniversaire avec le bouton dans le salon de bienvenue 🎂`,
+    `🎪 Bienvenue à La Java, <@${userId}> ! Le serveur est grand ouvert. Les règles sont dans le salon 👋・bienvenue, et le général n'attend que toi.`,
   accesRetire:
-    "Tu as retiré ta réaction 🎪 sur le message de bienvenue : ton accès au serveur est suspendu. Remets la réaction quand tu veux pour le retrouver !",
+    "Ton accès au serveur est suspendu. Écris à un membre du Staff si tu penses que c'est une erreur.",
 
   // Infos pratiques épinglées dans le général (grand public)
   infosPratiquesTitre: "📍 La Java 2026 : les infos pratiques",
@@ -602,7 +606,7 @@ Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
   rappelPorte: (serveur: string, salon: string, emoji: string) => [
     `👋 Hey ! Tu as rejoint **${serveur}** il y a quelques jours, mais le serveur ne s'est pas encore ouvert pour toi.`,
     "",
-    `Il ne manque qu'un geste : va dans **${salon}** et clique sur la réaction ${emoji} sous le message des règles. Tout apparaît dans la seconde.`,
+    `Il ne manque qu'un geste : termine ton arrivée en acceptant la charte dans l'écran d'entrée de Discord (rouvre le serveur, elle s'affiche). Tout apparaît dans la seconde. Le salon **${salon}** t'attend ensuite ${emoji}`,
     "",
     "*Un souci pour le trouver ? Réponds à ce message, quelqu'un de l'équipe te débloque.*",
   ].join(SAUT),
@@ -628,7 +632,7 @@ Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
   ].join("\n"),
   guideServeurTitre: "🎪 Ce serveur, mode d'emploi",
   guideServeurCorps: [
-    "**🚪 Ton arrivée.** Le questionnaire d'entrée te demande ton profil : les profils bénévole/référent/artiste sont validés par le Staff (en général très vite). Dans tous les cas, c'est la réaction 🎪 sur le message de bienvenue qui t'ouvre le serveur : sans elle, tu ne vois rien.",
+    "**🚪 Ton arrivée.** L'écran d'entrée te fait accepter la charte et te demande ton profil : c'est la charte qui t'ouvre le serveur. Les profils bénévole/référent/artiste sont ensuite validés par le Staff, en général très vite.",
     "",
     "**⭐ Les niveaux.** Participer (messages, réactions, vocaux) fait gagner de l'XP : Nouveau → Habitué → Fêtard → Pilier de la Java → Légende de la Java, avec de vrais avantages à chaque palier (salons secrets, billetterie en avance, giveaways…). Le détail est épinglé dans le général. Tape `/mon-profil` pour voir où tu en es, `/classement` pour le top 20.",
     "",
@@ -651,9 +655,9 @@ Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
     "**1. Il arrive** et reçoit aussitôt le rôle `👋 Nouvel arrivant`. Ce rôle **cache tout le serveur sauf le salon des règles**. C'est volontaire : personne ne circule sans avoir vu les règles.",
     "**2. Il remplit le questionnaire** d'arrivée de Discord. S'il demande un profil (bénévole, référent, artiste), une fiche tombe dans le salon des validations avec un ping `@Staff`.",
     "**3. Tu valides** avec le bouton vert. Le rôle demandé est **mis en réserve** : il ne sera posé que lorsqu'il aura accepté les règles. La fiche te le rappelle.",
-    "**4. Il réagit 🎪** sous le message de bienvenue → `👋 Nouvel arrivant` disparaît, le rôle `Membre` arrive, son profil réservé est posé, le serveur s'ouvre.",
+    "**4. Il accepte la charte** dans l'écran d'entrée → `👋 Nouvel arrivant` disparaît, le rôle `Membre` arrive, son profil réservé est posé, le serveur s'ouvre. Tout est automatique.",
     "",
-    "⚠️ **Les étapes 3 et 4 sont indépendantes.** Il peut réagir 🎪 avant que tu valides : c'est même le cas normal. Il discute dans le général pendant que tu prends ton temps.",
+    "⚠️ **Les étapes 3 et 4 sont indépendantes.** Il entre avant que tu valides : c'est le cas normal. Il discute dans le général pendant que tu prends ton temps.",
     "",
     "━━━━━ ✅ **LES BOUTONS DE VALIDATION** ━━━━━",
     "",
@@ -675,7 +679,7 @@ Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
     "",
     "━━━━━ 👥 **COMMUNAUTÉ** ━━━━━",
     "",
-    "`/suivi` **(Staff)** : **qui** attend quoi, nommément. Trois files : les candidatures à valider, les profils validés qui attendent encore la réaction 🎪 du membre, et ceux restés bloqués à la porte. Seule la première demande une action de ta part.",
+    "`/suivi` **(Staff)** : **qui** attend quoi, nommément. Trois files : les candidatures à valider, les profils validés dont le membre n'a pas fini son arrivée, et ceux restés à la porte. Seule la première demande une action de ta part.",
     "`/stats` **(Staff)** : tableau de bord chiffré : arrivées, taux de validation, sources, croissance, rétention.",
     "`/sondage` : crée un sondage à réactions (2 à 10 options, séparées par des `;`).",
     "`/sondage-resultats` : affiche le dépouillement du dernier sondage du salon.",
