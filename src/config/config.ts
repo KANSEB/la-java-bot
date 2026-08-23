@@ -69,8 +69,10 @@ export const BADGES: Record<number, { couleur: number }> = {
 // Chaque palier donne un rôle coloré et ses avantages. Les accès aux salons
 // sont posés par le provisioning via `palierMin` ; les avantages humains
 // (giveaways, tarif préférentiel) sont tenus à la main par le Staff.
-export const PALIERS_XP: { seuil: number; nom: string; couleur: number; avantages: string[] }[] = [
-  { seuil: 0, nom: "Festivalier", couleur: 0xbdc3c7, avantages: [] },
+// Le palier de départ n'a pas de rôle Discord : être Membre sans palier
+// supérieur, c'est être Festivalier. Un rôle de moins sur chaque profil.
+export const PALIERS_XP: { seuil: number; nom: string; couleur: number; avantages: string[]; sansRole?: boolean }[] = [
+  { seuil: 0, nom: "Festivalier", couleur: 0xbdc3c7, avantages: [], sansRole: true },
   {
     seuil: 500, nom: "Habitué", couleur: 0x74b9ff,
     avantages: ["Droit de vote sur les décisions de la communauté", "Accès au vocal Afters"],

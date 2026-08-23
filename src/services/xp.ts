@@ -53,16 +53,18 @@ export async function ajouterXp(membre: GuildMember, points: number, motif?: str
 
   const palierAvant = palierPour(avant);
   const palierApres = palierPour(apres);
-  const roleApres = roleParNom(membre.guild, palierApres.nom);
 
-  // Synchronise le rôle dès qu'il manque (nouveau membre, rôle retiré à la main...),
-  // pas uniquement lors d'un franchissement de seuil.
-  if (roleApres && !membre.roles.cache.has(roleApres.id)) {
-    for (const p of PALIERS_XP) {
-      const r = roleParNom(membre.guild, p.nom);
-      if (!r) continue;
-      if (p.nom === palierApres.nom) await membre.roles.add(r.id, "Palier XP atteint").catch(() => {});
-      else if (membre.roles.cache.has(r.id)) await membre.roles.remove(r.id, "Palier XP remplacé").catch(() => {});
+  // Synchronise les rôles à chaque appel (nouveau membre, rôle retiré à la main...),
+  // pas uniquement lors d'un franchissement de seuil. Le palier de départ n'a pas
+  // de rôle : on se contente alors de retirer ceux des paliers supérieurs.
+  for (const p of PALIERS_XP) {
+    if (p.sansRole) continue;
+    const r = roleParNom(membre.guild, p.nom);
+    if (!r) continue;
+    if (p.nom === palierApres.nom) {
+      if (!membre.roles.cache.has(r.id)) await membre.roles.add(r.id, "Palier XP atteint").catch(() => {});
+    } else if (membre.roles.cache.has(r.id)) {
+      await membre.roles.remove(r.id, "Palier XP remplacé").catch(() => {});
     }
   }
 
@@ -92,15 +94,16 @@ export async function resynchroniserPaliers(guild: Guild): Promise<number> {
     if (membre.user.bot) continue;
     if (membreRole && !membre.roles.cache.has(membreRole.id) && !points.has(membre.id)) continue;
 
-    const attendu = palierPour(points.get(membre.id) ?? 0).nom;
-    const aJour = membre.roles.cache.some((r) => r.name === attendu);
+    const palier = palierPour(points.get(membre.id) ?? 0);
+    const attendu = palier.nom;
+    const aJour = palier.sansRole === true || membre.roles.cache.some((r) => r.name === attendu);
     const enTrop = PALIERS_XP.filter((p) => p.nom !== attendu)
       .map((p) => roleParNom(guild, p.nom))
       .filter((r): r is NonNullable<typeof r> => r !== undefined && membre.roles.cache.has(r.id));
     if (aJour && enTrop.length === 0) continue;
 
     for (const r of enTrop) await membre.roles.remove(r.id, "Seuils XP mis à jour").catch(() => {});
-    const bon = roleParNom(guild, attendu);
+    const bon = palier.sansRole ? undefined : roleParNom(guild, attendu);
     if (bon && !membre.roles.cache.has(bon.id)) await membre.roles.add(bon.id, "Seuils XP mis à jour").catch(() => {});
     corriges++;
   }

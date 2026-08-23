@@ -73,7 +73,7 @@ async function creerRoles(guild: Guild, rapport: RapportSetup): Promise<Map<stri
   // Rôles cosmétiques : badges d'édition, paliers XP, Bénévole du Mois — aucune permission
   const cosmetiques: { nom: string; couleur: number }[] = [
     ...Object.entries(BADGES).map(([annee, b]) => ({ nom: nomBadge(Number(annee)), couleur: b.couleur })),
-    ...PALIERS_XP.map((p) => ({ nom: p.nom, couleur: p.couleur })),
+    ...PALIERS_XP.filter((p) => !p.sansRole).map((p) => ({ nom: p.nom, couleur: p.couleur })),
   ];
   for (const c of cosmetiques) {
     if (!roleParNom(guild, c.nom)) {
