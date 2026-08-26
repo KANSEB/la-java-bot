@@ -4,6 +4,7 @@ import "dotenv/config";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { SALONS } from "../dist/config/config.js";
+import { POLES } from "./poles.mjs";
 
 const TOKEN = process.env.DISCORD_TOKEN;
 const GUILD = process.env.GUILD_ID;
@@ -18,28 +19,6 @@ const api = (path, options = {}) =>
     });
 const pause = (ms = 900) => new Promise((r) => setTimeout(r, ms));
 
-const POLES = [
-  { tag: "Bar", titre: "🍺 Bar", referents: "Malo, Matthieu, Mathilde", fichiers: ["Bar"],
-    texte: "Servir vite et bien, encaisser, tenir le stand propre. Verre témoin pour le vin, appli caisse pour les calculs." },
-  { tag: "Billetterie / Accueil", titre: "🎫 Billetterie / Accueil", referents: "Rémi, Oswald", fichiers: ["Billetterie-Accueil"],
-    texte: "Premier contact du public : scanner, poser le bracelet, orienter. Jamais seul au poste." },
-  { tag: "Cashless", titre: "🪙 Cashless", referents: "Mathieu, Nicolas", fichiers: ["Cashless"],
-    texte: "Vendre les tickets, tenir la caisse. Tickets valables sur tous les bars, jamais remboursés." },
-  { tag: "Déconsigne", titre: "♻️ Déconsigne", referents: "Natanaël", fichiers: ["Deconsigne"],
-    texte: "Récupérer les gobelets, rembourser sur preuve, réapprovisionner les bars. Trois gobelets max par personne." },
-  { tag: "Gestion du site", titre: "🧹 Gestion du site", referents: "Clément", fichiers: ["Gestion-Site"],
-    texte: "Tours réguliers, propreté, signalétique, sécurité. On signale, on ne manipule jamais seul le matériel technique." },
-  { tag: "Loges", titre: "🎤 Loges", referents: "Pauline", fichiers: ["Loges"],
-    texte: "Accueillir les artistes, catering, propreté, contrôle des accès. Pas de photos, pas d'autographes." },
-  { tag: "Merch", titre: "👕 Merch", referents: "Lucien, Angéline", fichiers: ["Merch"],
-    texte: "Vendre, conseiller, tenir le stock et la caisse. Appli merch pour valider chaque vente." },
-  { tag: "Prévention", titre: "💚 Prévention (RDR / VSS)", referents: "Sasha", fichiers: ["Prevention"],
-    texte: "Informer et accompagner sans juger, distribuer le matériel de prévention. Code radio pour les situations VSS, confidentialité totale." },
-  { tag: "Runs", titre: "🚗 Runs", referents: "Julien", fichiers: ["Runs"],
-    texte: "Transport des artistes : gare, hôtel, sites. Confirmer le point de RDV, garder de la marge, zéro alcool. Canal talkie 4." },
-  { tag: "Volant", titre: "🔁 Volant", referents: "Eloïse, Sasha", fichiers: ["Volant"], benevoleSeul: true,
-    texte: "Renfort mobile, envoyé là où il manque quelqu'un. Se place sous les consignes du référent du pôle rejoint." },
-];
 
 const chs = await api(`/guilds/${GUILD}/channels`);
 const forum = chs.find((c) => c.name === SALONS.coordination);
