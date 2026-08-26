@@ -147,7 +147,15 @@ export function overwritesPour(
     ow.push({ id: everyone, deny: [VOIR] });
     for (const cle of cat.acces) {
       const r = roles.get(cle);
-      if (r) ow.push({ id: r.id, allow: [VOIR, ...(lectureSeule ? [] : ECRIRE), ...VOCAL], deny: lectureSeule ? ECRIRE : [] });
+      if (!r) continue;
+      // Forum à sujets réservés : les référents tiennent les fiches, les autres
+      // répondent dedans. Sans ça, chacun ouvrirait son propre sujet de pôle ;
+      // avec lectureSeule, personne ne pourrait plus répondre du tout.
+      if (salonDef.postsReserves && cle !== "staff" && cle !== "referent") {
+        ow.push({ id: r.id, allow: [VOIR, P.SendMessagesInThreads], deny: [P.SendMessages, P.CreatePublicThreads] });
+        continue;
+      }
+      ow.push({ id: r.id, allow: [VOIR, ...(lectureSeule ? [] : ECRIRE), ...VOCAL], deny: lectureSeule ? ECRIRE : [] });
     }
   }
 

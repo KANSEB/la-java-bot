@@ -178,6 +178,7 @@ export const SALONS = {
   niveaux: "⭐・niveaux",
   votes: "🗳・votes-communaute",
   benevoles: "🙌・blabla-benevoles",
+  fichesMissions: "📋・fiches-missions",
   planning: "📅・planning-shifts",
   covoitBenevoles: "🚐・covoit-benevoles",
   hebergementBenevoles: "⛺・hebergement-benevoles",
@@ -209,6 +210,7 @@ export interface SalonDef {
   cle: keyof typeof SALONS;
   type: TypeSalon;
   lectureSeule?: boolean;   // écriture Staff/Référent uniquement
+  postsReserves?: boolean;  // forum : Staff/Référent ouvrent les sujets, les autres répondent dedans
   cache?: boolean;          // créé masqué, révélable via /ouvrir-salon
   visiblePublic?: boolean;
   palierMin?: string;       // réservé à ce palier XP et aux suivants
@@ -264,6 +266,14 @@ export const STRUCTURE: CategorieDef[] = [
     salons: [
       { cle: "benevoles", type: "texte", sujet: "Le QG de l'équipe : annonces internes, questions, blabla" },
       { cle: "presentations", type: "texte", sujet: "Présente-toi à l'équipe : qui tu es, ton poste, ce que tu écoutes" },
+      {
+        cle: "fichesMissions", type: "forum", postsReserves: true,
+        sujet: "Un sujet par pôle, avec sa fiche mission en tête : ce qu'on y fait, les horaires, le matériel, à qui s'adresser. Les fiches sont écrites par les référents, les questions se posent en réponse dans le sujet du pôle.",
+        tags: [
+          "Bar", "Billetterie / Accueil", "Cashless", "Déconsigne", "Gestion du site",
+          "Loges", "Merch", "Prévention", "Runs", "Volant",
+        ],
+      },
       { cle: "planning", type: "texte", lectureSeule: true, sujet: "Plannings et shifts : messages épinglés" },
       { cle: "covoitBenevoles", type: "texte", sujet: "Covoiturage entre bénévoles" },
       { cle: "hebergementBenevoles", type: "texte", sujet: "Logement des bénévoles : camping, canapés, qui dort où" },
@@ -665,6 +675,14 @@ Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
     "**❓ Plus d'infos** : pose une question au membre en privé sans trancher. La fiche reste ouverte.",
     "",
     "Une fiche traitée perd ses boutons et affiche qui a décidé. Si deux personnes cliquent en même temps, le bot ne traite la demande qu'une fois.",
+    "",
+    "━━━━━ 📋 **LES FICHES MISSIONS** ━━━━━",
+    "",
+    "Elles vivent à deux endroits, avec deux publics différents :",
+    "`🧭・coordination-referents` (catégorie RÉFÉRENTS) : la fiche bénévole **et** la fiche référent de chaque pôle, plus les échanges de coordination. Invisible des bénévoles.",
+    "`📋・fiches-missions` (catégorie BÉNÉVOLES) : un sujet par pôle, la fiche mission en tête, visible de toute l'équipe.",
+    "",
+    "**Seuls le Staff et les Référents ouvrent les sujets** du second : les bénévoles ne peuvent que répondre dedans, pour éviter que chacun crée sa propre fiche. Les tags se modifient dans les paramètres du salon, sans toucher au bot.",
     "",
     "━━━━━ 🎫 **LES TICKETS** ━━━━━",
     "",
