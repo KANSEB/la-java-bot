@@ -214,6 +214,8 @@ export interface SalonDef {
   palierMin?: string;       // réservé à ce palier XP et aux suivants
   sujet?: string;
   tags?: string[];          // forums uniquement
+  /** Rôles supplémentaires autorisés sur ce salon, en plus de l'accès de la catégorie. */
+  accesSupplement?: (keyof typeof ROLES)[];
 }
 
 export interface CategorieDef {
@@ -300,20 +302,13 @@ export const STRUCTURE: CategorieDef[] = [
     salons: [
       { cle: "infosArtistes", type: "texte", lectureSeule: true, sujet: "Technique, accès, timings, contacts" },
       { cle: "backstage", type: "texte", sujet: "Le backstage virtuel : entre artistes programmés" },
+      { cle: "demos", type: "forum", sujet: "Balance tes prods, demande des retours",
+        accesSupplement: ["artisteCommunaute"],
+        tags: ["Techno", "House", "Bass", "Live", "DJ Set", "Feedback demandé"] },
     ],
   },
   {
-    nom: "🎧 LABEL & DÉMOS",
-    acces: ["artiste", "artisteCommunaute", "staff"],
-    salons: [
-      {
-        cle: "demos", type: "forum", sujet: "Balance tes prods, demande des retours",
-        tags: ["Techno", "House", "Bass", "Live", "DJ Set", "Feedback demandé"],
-      },
-    ],
-  },
-  {
-    nom: "🔒 STAFF",
+    nom: "🛠️ ORGA",
     acces: ["staff"],
     salons: [
       { cle: "staffGeneral", type: "texte", sujet: "QG du staff" },

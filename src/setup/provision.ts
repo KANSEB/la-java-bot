@@ -164,6 +164,12 @@ export function overwritesPour(
   const porte = roleParNom(guild, ROLE_PORTE.nom);
   if (porte && salonDef.cle !== "bienvenue") ow.push({ id: porte.id, deny: [VOIR] });
 
+  // Rôles supplémentaires propres au salon (ex : demos ouvert aux Artistes Communauté)
+  for (const cle of salonDef.accesSupplement ?? []) {
+    const r = roles.get(cle);
+    if (r) ow.push({ id: r.id, allow: [VOIR, ...ECRIRE, ...VOCAL] });
+  }
+
   // Le Staff voit et écrit toujours partout ; les Référents écrivent dans les salons lecture seule publics (ACTU)
   if (staff) ow.push({ id: staff.id, allow: [VOIR, ...ECRIRE, ...VOCAL] });
   if (lectureSeule && cat.acces === "public" && referent) ow.push({ id: referent.id, allow: [VOIR, ...ECRIRE] });
