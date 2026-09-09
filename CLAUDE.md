@@ -48,6 +48,12 @@ Le palier de départ **« Festivalier » n'a pas de rôle Discord** (`sansRole: 
 - Fiches missions bénévoles/référents : un topic par pôle dans le forum `🧭・coordination-referents` (script `scripts/fiches-missions.mjs`).
 - Anniversaires : équipe seulement, saisis par bouton dans `#🙌・blabla-benevoles`, annonce à 10h dans ce même salon.
 
+## Catégorie 🏗 ORGA (créée le 09/09/2026, hors provisionnement)
+
+Espace de travail cloisonné par pôle : `benevolat`, `programmation`, `bar`, `merch`, `securite-prevention`, `communication`. Visible Staff + Seb ; chaque référent est ajouté **nominativement** dans les permissions de son salon (pas de rôle par pôle). Volontairement absente de `STRUCTURE` dans config.ts : un `/setup-serveur` ne doit pas y toucher, sous peine d'effacer les accès individuels. Ne pas confondre le pôle `benevolat` (orga) avec les salons communautaires bénévoles.
+
+Autres décisions du même jour : `guide-staff` et `alertes-moderation` supprimés (les alertes anti-raid et liens suspects partent dans `logs-bot`) ; `logs-bot` visible par Seb seul ; `🛡・maj-discord` est l'ancien alertes-moderation, insupprimable par bot car réceptacle des « mises à jour communauté » Discord, verrouillé sur Seb en attendant que le réglage soit déplacé à la main. La migration depuis le serveur Dans La Zone est en cours : sa catégorie LA JAVA passera en lecture seule.
+
 ## Conventions d'écriture (exigences de Seb)
 
 - Tous les textes utilisateur en **français, sans tirets quadratins** (ni « — » ni « – » dans les messages Discord).

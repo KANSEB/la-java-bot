@@ -193,10 +193,8 @@ export const SALONS = {
   backstage: "🎤・backstage",
   demos: "🎧・demos-et-promos",
   staffGeneral: "🔒・staff-general",
-  guideStaff: "📕・guide-staff",
   validation: "📋・validation-demandes",
   logs: "🤖・logs-bot",
-  alertes: "🚨・alertes-moderation",
   vocalBar: "Bar",
   vocalTerrasse: "Terrasse",
   vocalAfters: "Afters",
@@ -318,11 +316,9 @@ export const STRUCTURE: CategorieDef[] = [
     nom: "🔒 STAFF",
     acces: ["staff"],
     salons: [
-      { cle: "guideStaff", type: "texte", lectureSeule: true, sujet: "Mode d'emploi du bot : commandes et procédures" },
       { cle: "staffGeneral", type: "texte", sujet: "QG du staff" },
       { cle: "validation", type: "texte", sujet: "Candidatures à valider : boutons sur chaque demande" },
       { cle: "logs", type: "texte", lectureSeule: true, sujet: "Logs automatiques du bot" },
-      { cle: "alertes", type: "texte", sujet: "Alertes modération et anti-raid" },
     ],
   },
   {

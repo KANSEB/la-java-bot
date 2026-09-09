@@ -26,7 +26,7 @@ export async function surveillerArrivee(guild: Guild): Promise<void> {
   if (arrivees.length > ANTIRAID.seuilArrivees && !estEnLockdown()) {
     await activerLockdown(guild, true);
     const staff = role(guild, "staff");
-    const alertes = salonTexte(guild, "alertes");
+    const alertes = salonTexte(guild, "logs");
     if (alertes) await alertes.send(TEXTES.alerteRaid(arrivees.length, staff?.id ?? "")).catch(() => {});
   }
 }

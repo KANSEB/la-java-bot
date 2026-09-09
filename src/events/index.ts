@@ -176,7 +176,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       // Filtre de sécurité pour les non-Staff
       if (!estStaff(message.member) && (REGEX_INVITATION.test(message.content) || REGEX_SUSPECT.test(message.content))) {
         await message.delete().catch(() => {});
-        const alertes = salonTexte(message.guild, "alertes");
+        const alertes = salonTexte(message.guild, "logs");
         if (alertes) {
           await alertes.send(`${TEXTES.lienSupprime(message.author.id)}\nSalon : <#${message.channelId}>\nContenu : \`${message.content.slice(0, 500)}\``).catch(() => {});
         }
