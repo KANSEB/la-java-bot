@@ -8,7 +8,7 @@ import "dotenv/config";
 import { Client, GatewayIntentBits, Partials } from "discord.js";
 import { assertEnv } from "./services/util.js";
 import { kvGet, kvSet } from "./db/database.js"; // initialise aussi la base + migrations
-import { demarrerCrons, majCountdown } from "./services/crons.js";
+import { demarrerCrons, gererReclamationBadge, majCountdown } from "./services/crons.js";
 import { debloquerCharteAcceptee, rattraperReactionsAcces, signalerDemandeValidation } from "./services/onboarding.js";
 import { resynchroniserPaliers } from "./services/xp.js";
 import { poserBarriere, roleParNom } from "./services/util.js";
@@ -62,6 +62,8 @@ client.once("clientReady", async () => {
   demarrerCrons(client);
   // Compte à rebours mis à jour dès le démarrage (sans attendre le cron de 9h)
   await majCountdown(guild).catch((err) => console.error("countdown initial :", err));
+  // La fenêtre du badge se vérifie aussi au démarrage : le cron de 9h est loin
+  await gererReclamationBadge(guild).catch((err) => console.error("réclamation badge :", err));
 
   // Rattrapage : candidatures en attente jamais signalées au Staff (bot hors ligne, bug...)
   try {

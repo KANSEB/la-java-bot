@@ -11,7 +11,7 @@
 
 import { ChannelType, Client, Guild } from "discord.js";
 import cron from "node-cron";
-import { db, kvGet, kvSet } from "../db/database.js";
+import { db, kvDel, kvGet, kvSet } from "../db/database.js";
 import { ANNIVERSAIRES, COULEURS, DELAIS, EDITION, FUSEAU, PALIERS_XP, RECLAMATION_BADGE, ROLE_PORTE, ROLES, SALONS, TEXTES, XP } from "../config/config.js";
 import { dmSur, estStaff, joursAvant, roleParNom, salonTexte } from "./util.js";
 import { log, logErreur } from "./logs.js";
@@ -126,13 +126,24 @@ async function majPantheon(guild: Guild): Promise<void> {
  * Impossible de savoir qui était sur place : on ouvre une fenêtre déclarative
  * le lendemain du festival, et elle se referme seule un mois plus tard.
  */
-async function gererReclamationBadge(guild: Guild): Promise<void> {
+export async function gererReclamationBadge(guild: Guild): Promise<void> {
   const ecoules = -joursAvant(EDITION.dateEvenement);
   const { ouvertureJoursApresEvent: ouverture, dureeJours } = RECLAMATION_BADGE;
   const cle = `badge_reclamation:${EDITION.annee}`;
-  const messageId = kvGet(cle);
+  let messageId = kvGet(cle);
   const annonces = salonTexte(guild, "annonces");
   if (!annonces) return;
+
+  // Auto-réparation : si l'annonce mémorisée n'existe plus (supprimée, vieux
+  // test), on oublie son id, sinon la réclamation reste fermée en silence.
+  if (messageId && kvGet(`${cle}:clos`) !== "1") {
+    const existe = await annonces.messages.fetch(messageId).catch(() => null);
+    if (!existe) {
+      kvDel(cle);
+      messageId = undefined;
+      await log(guild, "🏅 Réclamation à republier", "L'annonce du badge avait disparu : elle sera repostée.", "alerte");
+    }
+  }
 
   // Fermeture : le message reste, mais il annonce que c'est terminé
   if (ecoules >= ouverture + dureeJours) {
