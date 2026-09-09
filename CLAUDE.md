@@ -22,14 +22,14 @@ Ce fichier est le contexte partagé entre toutes les sessions Claude (PC, Mac, c
 - L'accès s'ouvre quand le membre **accepte la charte dans l'écran d'entrée natif de Discord** (il cesse d'être `pending`). Fonction centrale : `ouvrirAcces()` dans `src/services/onboarding.ts`. Balayages de rattrapage au démarrage et toutes les minutes (`debloquerCharteAcceptee`).
 - L'ancienne barrière par **réaction 🎪** sur le post de bienvenue a été supprimée : elle perdait un arrivant sur trois. La réaction reste comme simple geste, sans effet sur l'accès.
 - Rôle-barrière `👋 Nouvel arrivant` : posé à l'arrivée, retiré à l'acceptation de la charte. Durée de vie normale : quelques secondes. S'il reste sur quelqu'un, c'est que la personne a fermé l'écran de charte sans accepter.
-- Le questionnaire d'entrée natif (onboarding Discord) pose `⏳ En attente de validation` + un rôle `Candidat X` quand le profil coché demande validation (Bénévole, Référent, Artiste, Artiste communauté). Le Staff valide dans `#📋・validation-demandes`. Un profil validé avant la fin de l'arrivée est mis en réserve (kv `profil_attente:`) et posé automatiquement.
+- Le questionnaire d'entrée natif (onboarding Discord) pose `⏳ En attente de validation` + un rôle `Candidat X` quand le profil coché demande validation (Bénévole, Référent, Artiste, Artiste communauté). L'orga valide dans `#📋・validation-demandes`. Un profil validé avant la fin de l'arrivée est mis en réserve (kv `profil_attente:`) et posé automatiquement.
 - Les fiches de validation closes gardent un bouton **« Modifier les rôles »** pour corriger une décision. Le menu propose « Festivalier (accès simple) » en tête pour valider sans rôle d'équipe.
 
 ## Modèle de rôles
 
 Trois familles, à ne pas mélanger :
 
-1. **Attribués par un humain** : Staff, Référent, Bénévole (sans année : l'année vient du badge), Artiste, Artiste Communauté, Ancien bénévole (posé par `/archiver-edition`).
+1. **Attribués par un humain** : Orga (renommé depuis « Staff » le 09/09, config `ROLES.staff`), Référent, Bénévole (sans année : l'année vient du badge), Artiste, Artiste Communauté, Ancien bénévole (posé par `/archiver-edition`).
 2. **Automatiques** : `Membre` (clé d'accès, posé à la charte, gardé à vie) ; paliers XP `Habitué` (500) → `Fêtard` (2000) → `Pilier de la Java` (6000) → `Légende de la Java` (20000) ; badges d'édition `Java <année>` (réclamés par réaction sur l'annonce ouverte le lendemain du festival, 1 mois, +500 XP une seule fois, kv `badge_xp:`).
 3. **Techniques éphémères** : `👋 Nouvel arrivant`, `⏳ En attente de validation`, `Candidat ×4`.
 
@@ -52,7 +52,7 @@ Le palier de départ **« Festivalier » n'a pas de rôle Discord** (`sansRole: 
 
 L'ancienne catégorie STAFF a fusionné dedans : la visibilité se règle salon par salon, pas par catégorie.
 
-- `staff-general`, `validation-demandes` : Staff. Déclarés dans `STRUCTURE` (catégorie « 🛠️ ORGA » côté config).
+- `🛠・general` (ex staff-general ; l'emoji le distingue du général communautaire) et `validation-demandes` : rôle Orga. Déclarés dans `STRUCTURE` (catégorie « 🛠️ ORGA » côté config).
 - Salons de pôle `benevolat`, `programmation`, `bar`, `merch`, `securite-prevention`, `communication` : Staff + les référents du pôle ajoutés **nominativement** (pas de rôle par pôle). **Hors `STRUCTURE`** : un `/setup-serveur` ne doit jamais les toucher, sous peine d'effacer les accès individuels. Ne pas confondre le pôle `benevolat` (orga) avec les salons communautaires bénévoles.
 - `logs-bot` : Seb uniquement (attention, un `/setup-serveur` le rouvrirait au Staff, à reverrouiller après). Reçoit aussi les alertes anti-raid et liens supprimés (`guide-staff` et `alertes-moderation` ont été supprimés).
 - `🛡・maj-discord` : ancien alertes-moderation, insupprimable par bot (réceptacle « mises à jour communauté » Discord), verrouillé sur Seb en attendant le déplacement du réglage à la main.
