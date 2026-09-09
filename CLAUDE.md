@@ -43,8 +43,9 @@ Le palier de départ **« Festivalier » n'a pas de rôle Discord** (`sansRole: 
 
 - Tout est résolu **par nom** depuis `SALONS`/`ROLES` dans `src/config/config.ts`. Renommer un salon dans Discord sans mettre à jour la config casse la résolution.
 - `🎫・billetterie` : @everyone garde VIEW+SEND au niveau Discord car **l'onboarding natif exige au moins un salon lisible et inscriptible par @everyone** (erreur 350005 sinon). L'écriture y est bloquée par un deny explicite sur Membre, et la barrière le cache aux arrivants.
-- `🗳・votes-communaute` et le vocal Afters : palier Habitué minimum (`palierMin`).
+- `🗳️・votes-communaute` (emoji avec sélecteur de variante U+FE0F, comme la catégorie 🛠️ ORGA) et le vocal Afters : palier Habitué minimum (`palierMin`).
 - `Live & Talks` (stage) : fermé, le Staff l'ouvre pour les événements.
+- La catégorie `🎪 LA JAVA` est **intemporelle** (plus d'année dans le nom, plus d'archivage annuel de la catégorie dans `/archiver-edition`) ; `🎶・partage-sons` y accueille sons, mix et découvertes, ouvert à tous les Membres.
 - Fiches missions bénévoles/référents : un topic par pôle dans le forum `🧭・coordination-referents` (script `scripts/fiches-missions.mjs`).
 - Anniversaires : équipe seulement, saisis par bouton dans `#🙌・blabla-benevoles`, annonce à 10h dans ce même salon.
 
