@@ -8,7 +8,7 @@ import type {
 
 export interface Commande {
   data: { name: string; toJSON(): RESTPostAPIChatInputApplicationCommandsJSONBody };
-  /** true = vérifier le rôle Staff avant exécution */
+  /** true = vérifier le rôl'orga avant exécution */
   staffUniquement?: boolean;
   execute: (interaction: ChatInputCommandInteraction<"cached">) => Promise<void>;
   autocomplete?: (interaction: AutocompleteInteraction<"cached">) => Promise<void>;

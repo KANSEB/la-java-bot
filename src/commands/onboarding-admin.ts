@@ -22,7 +22,7 @@ export const commandes: Commande[] = [
   {
     data: new SlashCommandBuilder()
       .setName("suivi")
-      .setDescription("Qui attend quoi : candidatures, profils en réserve, membres bloqués à la porte (Staff)")
+      .setDescription("Qui attend quoi : candidatures, profils en réserve, membres bloqués à la porte (Orga)")
       .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
     staffUniquement: true,
     execute: async (interaction) => {
@@ -89,7 +89,7 @@ export const commandes: Commande[] = [
   {
     data: new SlashCommandBuilder()
       .setName("export-onboarding")
-      .setDescription("Exporte toutes les candidatures en CSV (Staff)")
+      .setDescription("Exporte toutes les candidatures en CSV (Orga)")
       .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
     staffUniquement: true,
     execute: async (interaction) => {
@@ -113,7 +113,7 @@ export const commandes: Commande[] = [
   {
     data: new SlashCommandBuilder()
       .setName("oublier-membre")
-      .setDescription("Purge RGPD : efface TOUTES les données d'un membre (Staff)")
+      .setDescription("Purge RGPD : efface TOUTES les données d'un membre (Orga)")
       .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers)
       .addUserOption((o) => o.setName("membre").setDescription("Membre à oublier").setRequired(true)),
     staffUniquement: true,

@@ -27,7 +27,7 @@ export interface RoleConfig {
 
 export const ROLES: Record<string, RoleConfig> = {
   staff: {
-    nom: "Staff",
+    nom: "Orga",
     couleur: 0xe74c3c,
     hoist: true,
     mentionnable: true,
@@ -68,7 +68,7 @@ export const BADGES: Record<number, { couleur: number }> = {
 // « Habitué » sans téléporter au palier suivant.
 // Chaque palier donne un rôle coloré et ses avantages. Les accès aux salons
 // sont posés par le provisioning via `palierMin` ; les avantages humains
-// (giveaways, tarif préférentiel) sont tenus à la main par le Staff.
+// (giveaways, tarif préférentiel) sont tenus à la main par l'orga.
 // Le palier de départ n'a pas de rôle Discord : être Membre sans palier
 // supérieur, c'est être Festivalier. Un rôle de moins sur chaque profil.
 export const PALIERS_XP: { seuil: number; nom: string; couleur: number; avantages: string[]; sansRole?: boolean }[] = [
@@ -102,7 +102,7 @@ export const ROLE_PORTE = { nom: "👋 Nouvel arrivant", couleur: 0x4f545c };
 export const ROLE_ATTENTE = { nom: "⏳ En attente de validation" };
 
 // Marqueurs de profil : le questionnaire natif pose "En attente" + un marqueur,
-// pour que le Staff voie le profil demandé et l'approuve en un clic.
+// pour que l'orga voie le profil demandé et l'approuve en un clic.
 // Le profil "Festivalier" n'est PAS ici : il reçoit directement le rôle Membre.
 export const CANDIDATURES: { marqueur: string; profil: string; emoji: string; roleKey: keyof typeof ROLES | null }[] = [
   { marqueur: "Candidat Bénévole", profil: "Bénévole", emoji: "🙌", roleKey: "benevoleEdition" },
@@ -192,7 +192,7 @@ export const SALONS = {
   infosArtistes: "🎹・infos-artistes",
   backstage: "🎤・backstage",
   demos: "🎧・demos-et-promos",
-  staffGeneral: "🔒・staff-general",
+  staffGeneral: "🛠・general",
   validation: "📋・validation-demandes",
   logs: "🤖・logs-bot",
   vocalBar: "Bar",
@@ -311,7 +311,7 @@ export const STRUCTURE: CategorieDef[] = [
     nom: "🛠️ ORGA",
     acces: ["staff"],
     salons: [
-      { cle: "staffGeneral", type: "texte", sujet: "QG du staff" },
+      { cle: "staffGeneral", type: "texte", sujet: "Le QG : sujets transverses de l'orga" },
       { cle: "validation", type: "texte", sujet: "Candidatures à valider : boutons sur chaque demande" },
       { cle: "logs", type: "texte", lectureSeule: true, sujet: "Logs automatiques du bot" },
     ],
@@ -364,10 +364,10 @@ export const TEXTES = {
     "━━━━━ 🧭 **COMMENT MARCHE CE SERVEUR** ━━━━━",
     "",
     "🎪 **Tu es entré, le serveur est à toi.** En acceptant la charte à l'arrivée, tu as accepté les règles ci-dessous. Prends une minute pour les lire, puis viens dire bonjour dans le général.",
-    "🙌 **Bénévole ou artiste ?** Tu l'as indiqué dans le questionnaire d'arrivée : le Staff valide ta demande et tes salons dédiés s'ajoutent ensuite.",
+    "🙌 **Bénévole ou artiste ?** Tu l'as indiqué dans le questionnaire d'arrivée : l'orga valide ta demande et tes salons dédiés s'ajoutent ensuite.",
     "📣 **Les infos officielles** (line-up, billetterie…) tombent dans le salon annonces. Le reste, c'est à toi de le faire vivre dans le général !",
     "⭐ **Plus tu participes** (messages, réactions, vocaux), plus tu gagnes d'XP et montes de niveau : salons secrets, billetterie en avance, giveaways… Détails épinglés dans le général.",
-    "🎫 **Une question, un souci ?** Ouvre un ticket dans le salon billetterie : c'est privé, seul le Staff le voit.",
+    "🎫 **Une question, un souci ?** Ouvre un ticket dans le salon billetterie : c'est privé, seul l'orga le voit.",
     "",
     "━━━━━ 🌈 **LES RÈGLES DU SERVEUR** ━━━━━",
     "",
@@ -377,15 +377,15 @@ export const TEXTES = {
     "",
     "**3. Pas de spam ni de pub sauvage.** Pas de revente de billets hors canaux officiels, pas de contenu choquant ou illégal.",
     "",
-    "**4. La modération se discute en DM** avec le Staff, jamais en public dans les salons.",
+    "**4. La modération se discute en DM** avec l'orga, jamais en public dans les salons.",
     "",
-    "**5. Prends soin des autres.** Quelqu'un va mal, ici ou sur site ? On ne juge pas, on aide : préviens le Staff ou ouvre un ticket.",
+    "**5. Prends soin des autres.** Quelqu'un va mal, ici ou sur site ? On ne juge pas, on aide : préviens l'orga ou ouvre un ticket.",
     "",
     "**6. Backstage.** Ce qui se passe backstage reste backstage 😉",
     "",
-    "🆘 **Un doute, un signalement ?** Ticket dans la billetterie ou DM à un membre du Staff : c'est confidentiel.",
+    "🆘 **Un doute, un signalement ?** Ticket dans la billetterie ou DM à un membre de l'orga : c'est confidentiel.",
     "",
-    "**RGPD :** en répondant au questionnaire, tu acceptes que tes réponses soient conservées par l'équipe pour gérer la communauté. Tu peux demander leur suppression à tout moment auprès du Staff.",
+    "**RGPD :** en répondant au questionnaire, tu acceptes que tes réponses soient conservées par l'équipe pour gérer la communauté. Tu peux demander leur suppression à tout moment auprès de l'orga.",
     "",
     "👇 **Un 🎪 en dessous pour dire que tu as lu, et bonne Java !**",
   ].join("\n"),
@@ -403,22 +403,22 @@ export const TEXTES = {
 
 Premier réflexe : un tour dans le salon 👋・bienvenue pour lire les règles, puis un bonjour dans le général.
 
-Si tu as coché bénévole, référent ou artiste dans le questionnaire, le Staff confirme ton rôle très vite : pas besoin d'attendre pour venir discuter ! 🎪`,
-  soumissionRecue: "🎉 C'est envoyé ! Le Staff regarde ta demande très vite : tu recevras un message privé dès que c'est validé.",
+Si tu as coché bénévole, référent ou artiste dans le questionnaire, l'orga confirme ton rôle très vite : pas besoin d'attendre pour venir discuter ! 🎪`,
+  soumissionRecue: "🎉 C'est envoyé ! L'orga regarde ta demande très vite : tu recevras un message privé dès que c'est validé.",
   nouvelleCandidature: (userId: string, staffRoleId?: string) =>
     `${staffRoleId ? `<@&${staffRoleId}> ` : ""}📥 **Nouvelle candidature** de <@${userId}>, à valider ci-dessous :`,
-  soumissionDejaEnCours: "Tu as déjà une demande en cours d'examen : le Staff s'en occupe, encore un peu de patience ! 🙏",
-  soumissionEpuisee: "Tu as déjà utilisé ta seconde chance après un refus. Contacte directement un membre du Staff si tu penses qu'il y a une erreur.",
+  soumissionDejaEnCours: "Tu as déjà une demande en cours d'examen : l'orga s'en occupe, encore un peu de patience ! 🙏",
+  soumissionEpuisee: "Tu as déjà utilisé ta seconde chance après un refus. Contacte directement un membre de l'orga si tu penses qu'il y a une erreur.",
   dmApprouve: (roles: string) =>
     `🎉 **C'est bon, tu es de la famille !** Ta demande a été validée.\nTes rôles : ${roles}\nViens te présenter dans le salon présentations et dire bonjour dans le général. À très vite ! 🎪`,
   dmRolesModifies: (roles: string) =>
     `🎭 **Tes rôles sur le Discord de La Java ont été mis à jour.**
 Tes rôles : ${roles}
-Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
+Si ça ne correspond pas à ta situation, écris à un membre de l'orga.`,
   dmRefuse: (motif: string) =>
     `😕 Ta demande pour rejoindre La Java n'a pas été retenue.\n**Motif :** ${motif}\nTu as droit à **une** nouvelle tentative : reprends le questionnaire si tu veux réessayer.`,
   dmPlusInfos: (question: string) =>
-    `👋 Le Staff a une petite question avant de valider ta demande :\n> ${question}\nRéponds directement à un membre du Staff ou refais le questionnaire en complétant ta réponse !`,
+    `👋 L'orga a une petite question avant de valider ta demande :\n> ${question}\nRéponds directement à un membre de l'orga ou refais le questionnaire en complétant ta réponse !`,
   bienvenueGeneral: (userId: string, profil: string) =>
     `🎪 Faites du bruit pour <@${userId}> qui rejoint la communauté en tant que **${profil}** ! Bienvenue ! 🥳`,
 
@@ -452,7 +452,7 @@ Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
   anniversaireLabelJour: "Jour (1 à 31)",
   anniversaireLabelMois: "Mois (1 à 12)",
   anniversaireEnregistre: (jour: number, mois: number) =>
-    `🎂 C'est noté : le **${jour}/${String(mois).padStart(2, "0")}** ! On te souhaitera ton anniversaire dans le général le jour J.\nOn ne demande jamais ton année de naissance, et tu peux demander la suppression au Staff quand tu veux.`,
+    `🎂 C'est noté : le **${jour}/${String(mois).padStart(2, "0")}** ! On te souhaitera ton anniversaire dans le général le jour J.\nOn ne demande jamais ton année de naissance, et tu peux demander la suppression à l'orga quand tu veux.`,
   anniversaireInvalide: "⚠️ Cette date n'existe pas : vérifie le jour et le mois (chiffres uniquement, par exemple 15 et 3 pour le 15 mars).",
   anniversaireReserve: "🎂 Les anniversaires sont réservés à l'équipe (bénévoles, référents, staff), c'est notre petit rituel interne 😉",
   anniversaireTitreSalon: "🎂 Les anniversaires de l'équipe",
@@ -462,12 +462,12 @@ Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
     "Deux cases à remplir (jour et mois), et c'est tout : **on ne demande jamais ton année de naissance**.",
     "Le jour J, un message part ici pour te souhaiter la fête 🎉",
     "",
-    "Tu peux changer ta date quand tu veux en recliquant, ou demander sa suppression au Staff.",
+    "Tu peux changer ta date quand tu veux en recliquant, ou demander sa suppression à l'orga.",
   ].join("\n"),
   accesDebloque: (userId: string) =>
     `🎪 Bienvenue à La Java, <@${userId}> ! Le serveur est grand ouvert. Les règles sont dans le salon 👋・bienvenue, et le général n'attend que toi.`,
   accesRetire:
-    "Ton accès au serveur est suspendu. Écris à un membre du Staff si tu penses que c'est une erreur.",
+    "Ton accès au serveur est suspendu. Écris à un membre de l'orga si tu penses que c'est une erreur.",
 
   // Infos pratiques épinglées dans le général (grand public)
   infosPratiquesTitre: "📍 La Java 2026 : les infos pratiques",
@@ -488,7 +488,7 @@ Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
   ].join("\n"),
 
   // Sujets créés d'office dans le forum infos pratiques. Volontairement
-  // incomplets là où l'info n'est pas connue : au Staff de compléter.
+  // incomplets là où l'info n'est pas connue : à l'orga de compléter.
   infosPratiquesSujets: [
     {
       titre: "📍 Quand et où ?",
@@ -565,7 +565,7 @@ Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
     `💬 **${XP.parMessageMin} à ${XP.parMessageMax} XP** par message *(une fois par minute maximum, inutile de spammer)*`,
     `❤️ **${XP.parReaction} XP** par réaction *(une fois toutes les ${XP.cooldownReactionMs / 60000} minutes)*`,
     `🎙 **${XP.vocalPointsParTranche} XP** par tranche de ${XP.vocalTrancheMinutes} minutes en vocal`,
-    `🙌 **${XP.shiftBenevole} XP** par shift bénévole validé par le Staff`,
+    `🙌 **${XP.shiftBenevole} XP** par shift bénévole validé par l'orga`,
     "",
     "**Les paliers**",
     ...PALIERS_XP.filter((p) => p.seuil > 0).map((p) =>
@@ -575,7 +575,7 @@ Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
     "`/mon-profil` : ton XP, ton rang, ton prochain palier",
     "`/classement` : le top 20 du serveur",
     "",
-    "*Les giveaways et le tarif préférentiel sont gérés à la main par le Staff : on vient te chercher, tu n'as rien à demander.*",
+    "*Les giveaways et le tarif préférentiel sont gérés à la main par l'orga : on vient te chercher, tu n'as rien à demander.*",
   ].join("\n"),
 
   pantheonTitre: "🏛 Le panthéon de La Java",
@@ -631,28 +631,28 @@ Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
   ].join("\n"),
   guideServeurTitre: "🎪 Ce serveur, mode d'emploi",
   guideServeurCorps: [
-    "**🚪 Ton arrivée.** L'écran d'entrée te fait accepter la charte et te demande ton profil : c'est la charte qui t'ouvre le serveur. Les profils bénévole/référent/artiste sont ensuite validés par le Staff, en général très vite.",
+    "**🚪 Ton arrivée.** L'écran d'entrée te fait accepter la charte et te demande ton profil : c'est la charte qui t'ouvre le serveur. Les profils bénévole/référent/artiste sont ensuite validés par l'orga, en général très vite.",
     "",
     "**⭐ Les niveaux.** Participer (messages, réactions, vocaux) fait gagner de l'XP : Nouveau → Habitué → Fêtard → Pilier de la Java → Légende de la Java, avec de vrais avantages à chaque palier (salons secrets, billetterie en avance, giveaways…). Le détail est épinglé dans le général. Tape `/mon-profil` pour voir où tu en es, `/classement` pour le top 20.",
     "",
-    "**🎫 La billetterie.** Le lien officiel et le support sont dans le salon billetterie. Une question sur ta commande ? Le bouton *Ouvrir un ticket* crée une conversation privée avec le Staff.",
+    "**🎫 La billetterie.** Le lien officiel et le support sont dans le salon billetterie. Une question sur ta commande ? Le bouton *Ouvrir un ticket* crée une conversation privée avec l'orga.",
     "",
     "**🎂 Les anniversaires.** C'est un rituel réservé à l'équipe : si tu es bénévole, référent ou staff, un bouton dans le salon bénévoles te permet de renseigner le tien.",
     "",
     "**🙌 Bénévoles et artistes.** Une fois validé·e, tu as tes salons dédiés (planning, entraide, backstage, démos…). Tout ce qui te concerne y passe.",
     "",
-    "**🆘 Besoin d'aide ?** Ticket dans la billetterie, ou DM direct à un membre du **Staff** (en rouge dans la liste des membres). On ne mord pas.",
+    "**🆘 Besoin d'aide ?** Ticket dans la billetterie, ou DM direct à un membre du **Orga** (en rouge dans la liste des membres). On ne mord pas.",
   ].join("\n"),
 
-  // ---------- Guide interne du Staff (salon 📕・guide-staff) ----------
+  // ---------- Guide interne de l'orga (salon 📕・guide-staff) ----------
   guideStaffTitre: "📕 Mode d'emploi du bot (1/3) : le quotidien",
   guideStaffCorps: [
-    "Ce salon est visible du Staff uniquement. Tout ce qui suit est à jour du fonctionnement réel du bot.",
+    "Ce salon est visible de l'orga uniquement. Tout ce qui suit est à jour du fonctionnement réel du bot.",
     "",
     "━━━━━ 🚪 **COMMENT QUELQU'UN ENTRE** ━━━━━",
     "",
     "**1. Il arrive** et reçoit aussitôt le rôle `👋 Nouvel arrivant`. Ce rôle **cache tout le serveur sauf le salon des règles**. C'est volontaire : personne ne circule sans avoir vu les règles.",
-    "**2. Il remplit le questionnaire** d'arrivée de Discord. S'il demande un profil (bénévole, référent, artiste), une fiche tombe dans le salon des validations avec un ping `@Staff`.",
+    "**2. Il remplit le questionnaire** d'arrivée de Discord. S'il demande un profil (bénévole, référent, artiste), une fiche tombe dans le salon des validations avec un ping `@Orga`.",
     "**3. Tu valides** avec le bouton vert. Si le membre a fini son arrivée, le rôle est posé aussitôt ; sinon il est **mis en réserve** et posé dès qu'il l'aura finie. La fiche te le rappelle.",
     "**4. Il accepte la charte** dans l'écran d'entrée → `👋 Nouvel arrivant` disparaît, le rôle `Membre` arrive, son profil réservé est posé, le serveur s'ouvre. Tout est automatique.",
     "",
@@ -673,41 +673,41 @@ Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
     "`🧭・coordination-referents` (catégorie RÉFÉRENTS) : la fiche bénévole **et** la fiche référent de chaque pôle, plus les échanges de coordination. Invisible des bénévoles.",
     "`📋・fiches-missions` (catégorie BÉNÉVOLES) : un sujet par pôle, la fiche mission en tête, visible de toute l'équipe.",
     "",
-    "**Seuls le Staff et les Référents ouvrent les sujets** du second : les bénévoles ne peuvent que répondre dedans, pour éviter que chacun crée sa propre fiche. Les tags se modifient dans les paramètres du salon, sans toucher au bot.",
+    "**Seuls l'orga et les Référents ouvrent les sujets** du second : les bénévoles ne peuvent que répondre dedans, pour éviter que chacun crée sa propre fiche. Les tags se modifient dans les paramètres du salon, sans toucher au bot.",
     "",
     "━━━━━ 🎫 **LES TICKETS** ━━━━━",
     "",
-    "Un membre ouvre un ticket depuis le salon billetterie : un salon privé se crée, le Staff est prévenu. Pour le clore, tape `/fermer-ticket` **dedans** : le transcript part dans les logs avant suppression.",
+    "Un membre ouvre un ticket depuis le salon billetterie : un salon privé se crée, l'orga est prévenu. Pour le clore, tape `/fermer-ticket` **dedans** : le transcript part dans les logs avant suppression.",
   ].join("\n"),
 
   guideStaffCommandesTitre: "📕 Mode d'emploi du bot (2/3) : les commandes",
   guideStaffCommandesCorps: [
-    "Les commandes marquées **(Staff)** sont refusées aux autres membres, où qu'elles soient tapées.",
+    "Les commandes marquées **(Orga)** sont refusées aux autres membres, où qu'elles soient tapées.",
     "",
     "━━━━━ 👥 **COMMUNAUTÉ** ━━━━━",
     "",
-    "`/suivi` **(Staff)** : **qui** attend quoi, nommément. Trois files : les candidatures à valider, les profils validés dont le membre n'a pas fini son arrivée, et ceux restés à la porte. Seule la première demande une action de ta part.",
-    "`/stats` **(Staff)** : tableau de bord chiffré : arrivées, taux de validation, sources, croissance, rétention.",
+    "`/suivi` **(Orga)** : **qui** attend quoi, nommément. Trois files : les candidatures à valider, les profils validés dont le membre n'a pas fini son arrivée, et ceux restés à la porte. Seule la première demande une action de ta part.",
+    "`/stats` **(Orga)** : tableau de bord chiffré : arrivées, taux de validation, sources, croissance, rétention.",
     "`/sondage` : crée un sondage à réactions (2 à 10 options, séparées par des `;`).",
     "`/sondage-resultats` : affiche le dépouillement du dernier sondage du salon.",
     "`/classement` · `/mon-profil` : accessibles à tous, l'XP et les paliers.",
     "",
     "━━━━━ ⭐ **XP ET BADGES** ━━━━━",
     "",
-    "`/xp-add` **(Staff)** : ajoute des points, avec un motif. Sert surtout à récompenser un shift bénévole.",
-    "`/attribuer-badge` **(Staff)** : pose un badge d'édition passée (`Java 2024`…) sur quelqu'un qui y était. Les badges sont cumulables.",
+    "`/xp-add` **(Orga)** : ajoute des points, avec un motif. Sert surtout à récompenser un shift bénévole.",
+    "`/attribuer-badge` **(Orga)** : pose un badge d'édition passée (`Java 2024`…) sur quelqu'un qui y était. Les badges sont cumulables.",
     "",
     "L'XP se gagne seul : messages (+15 à 40, une fois par minute), réactions (+25, une fois par 5 min), vocal (+10 par tranche de 10 min). Le salon AFK et le casque coupé ne rapportent rien.",
     "",
     "━━━━━ 🎂 **ANNIVERSAIRES** ━━━━━",
     "",
-    "`/anniversaires-liste` **(Staff)** : les anniversaires des 7 prochains jours.",
+    "`/anniversaires-liste` **(Orga)** : les anniversaires des 7 prochains jours.",
     "Le rituel est réservé à l'équipe : le bouton d'enregistrement est dans le salon bénévoles, et l'annonce y tombe aussi. Seuls le jour et le mois sont conservés, jamais l'année.",
     "",
     "━━━━━ 🔐 **DONNÉES ET RGPD** ━━━━━",
     "",
-    "`/export-onboarding` **(Staff)** : exporte toutes les candidatures en CSV.",
-    "`/oublier-membre` **(Staff)** : **irréversible** : efface toutes les données d'un membre (candidature, XP, anniversaire). À utiliser sur demande explicite de la personne.",
+    "`/export-onboarding` **(Orga)** : exporte toutes les candidatures en CSV.",
+    "`/oublier-membre` **(Orga)** : **irréversible** : efface toutes les données d'un membre (candidature, XP, anniversaire). À utiliser sur demande explicite de la personne.",
   ].join("\n"),
 
   guideStaffAdminTitre: "📕 Mode d'emploi du bot (3/3) : administration",
@@ -721,14 +721,14 @@ Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
     "",
     "━━━━━ 🚨 **URGENCE : RAID** ━━━━━",
     "",
-    "`/lockdown on` **(Staff)** : suspend toutes les validations. Le bot le déclenche **tout seul** au-delà de 10 arrivées en 60 secondes, et prévient dans les alertes.",
+    "`/lockdown on` **(Orga)** : suspend toutes les validations. Le bot le déclenche **tout seul** au-delà de 10 arrivées en 60 secondes, et prévient dans les alertes.",
     "`/lockdown off` : retour à la normale, une fois les comptes suspects vérifiés.",
     "",
-    "Le bot supprime déjà seul les invitations Discord tierces et les liens suspects postés par les non-Staff, et trace tout dans les alertes.",
+    "Le bot supprime déjà seul les invitations Discord tierces et les liens suspects postés par les non-orga, et trace tout dans les alertes.",
     "",
     "━━━━━ 🗄 **FIN D'ÉDITION** ━━━━━",
     "",
-    "`/archiver-edition` **(Staff)** : la commande de passage d'une année à l'autre. Elle bascule tous les `Bénévole` en `Ancien bénévole`, passe la catégorie de l'édition en archives lecture seule, et prépare le badge de l'année suivante.",
+    "`/archiver-edition` **(Orga)** : la commande de passage d'une année à l'autre. Elle bascule tous les `Bénévole` en `Ancien bénévole`, passe la catégorie de l'édition en archives lecture seule, et prépare le badge de l'année suivante.",
     "",
     "⚠️ **L'ordre compte.** Lance `/archiver-edition` **d'abord**, change l'année dans la configuration du bot **ensuite**, puis relance `/setup-serveur`. Dans l'autre sens, la commande chercherait un rôle que personne ne porte encore et ne basculerait personne.",
     "",
@@ -740,14 +740,14 @@ Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
     `🎟 **Prends ta place ici, et nulle part ailleurs :**\n👉 ${EDITION.lienBilletterie}`,
     "",
     "**Une question, un souci de commande, un remboursement ?**",
-    "Ouvre un ticket avec le bouton ci-dessous : un fil privé s'ouvre avec le Staff, personne d'autre ne voit vos échanges.",
+    "Ouvre un ticket avec le bouton ci-dessous : un fil privé s'ouvre avec l'orga, personne d'autre ne voit vos échanges.",
     "",
     "⚠️ **Aucune revente hors canaux officiels** : les annonces de revente sauvage sont supprimées et leurs auteurs sanctionnés.",
   ].join("\n"),
   boutonTicket: "Ouvrir un ticket",
   ticketOuvert: (userId: string, staffRoleId: string) =>
     `✉️ Ticket ouvert par <@${userId}> : <@&${staffRoleId}> est prévenu.\nExplique-nous ta demande, on te répond au plus vite !`,
-  ticketFerme: "🔒 Ticket fermé. Le transcript a été archivé par le Staff. Merci !",
+  ticketFerme: "🔒 Ticket fermé. Le transcript a été archivé par l'orga. Merci !",
 
   // Modération / anti-raid
   lockdownOn: "🚨 **LOCKDOWN ACTIVÉ** : les validations sont suspendues et la vérification est verrouillée.",
@@ -755,7 +755,7 @@ Si ça ne correspond pas à ta situation, écris à un membre du Staff.`,
   alerteRaid: (nb: number, staffRoleId: string) =>
     `🚨 <@&${staffRoleId}> **ALERTE RAID** : ${nb} arrivées en moins de 60 secondes. Lockdown automatique activé. Vérifiez les nouveaux comptes avant de désactiver (\`/lockdown off\`).`,
   lienSupprime: (userId: string) =>
-    `⚠️ Message de <@${userId}> supprimé : lien d'invitation ou lien suspect (réservé au Staff).`,
+    `⚠️ Message de <@${userId}> supprimé : lien d'invitation ou lien suspect (réservé à l'orga).`,
   verrouilleLockdown: "🚨 Les validations sont temporairement suspendues (mesure de sécurité). Réessaie un peu plus tard !",
 } as const;
 
@@ -769,7 +769,7 @@ export const COULEURS = {
   alerte: 0xf39c12,
 };
 
-// Domaines de raccourcisseurs / grabbers considérés comme suspects pour les non-Staff
+// Domaines de raccourcisseurs / grabbers considérés comme suspects pour les non-orga
 export const DOMAINES_SUSPECTS = [
   "bit.ly", "tinyurl.com", "grabify.link", "iplogger.org", "cutt.ly", "is.gd", "shorturl.at",
 ];

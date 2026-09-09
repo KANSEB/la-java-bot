@@ -1,4 +1,4 @@
-// Commandes anniversaires : /anniversaire (membre) et /anniversaires-liste (Staff).
+// Commandes anniversaires : /anniversaire (membre) et /anniversaires-liste (Orga).
 // RGPD : jour et mois uniquement, jamais l'année de naissance.
 
 import { EmbedBuilder, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
@@ -36,7 +36,7 @@ export const commandes: Commande[] = [
   {
     data: new SlashCommandBuilder()
       .setName("anniversaires-liste")
-      .setDescription("Les anniversaires des 7 prochains jours (Staff)")
+      .setDescription("Les anniversaires des 7 prochains jours (Orga)")
       .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
     staffUniquement: true,
     execute: async (interaction) => {

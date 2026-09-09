@@ -1,4 +1,4 @@
-// Commandes XP : /xp-add (Staff), /classement, /mon-profil.
+// Commandes XP : /xp-add (Orga), /classement, /mon-profil.
 
 import { EmbedBuilder, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import { COULEURS, PALIERS_XP, XP } from "../config/config.js";
@@ -11,7 +11,7 @@ export const commandes: Commande[] = [
   {
     data: new SlashCommandBuilder()
       .setName("xp-add")
-      .setDescription("Ajoute des points XP à un membre, ex : shift bénévole validé (Staff)")
+      .setDescription("Ajoute des points XP à un membre, ex : shift bénévole validé (Orga)")
       .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers)
       .addUserOption((o) => o.setName("membre").setDescription("Membre").setRequired(true))
       .addIntegerOption((o) => o.setName("points").setDescription(`Points (shift = ${XP.shiftBenevole})`).setRequired(true).setMinValue(1).setMaxValue(1000))

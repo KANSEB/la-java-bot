@@ -181,7 +181,7 @@ export async function gererReclamationBadge(guild: Guild): Promise<void> {
 /**
  * Un membre qui n'a pas réagi 🎪 ne voit rien et n'est relancé par personne.
  * Une relance unique après 24 h, jamais deux fois : au-delà, c'est un choix.
- * Au passage, la barrière est retirée au Staff, chez qui elle ne sert à rien.
+ * Au passage, la barrière est retirée à l'orga, chez qui elle ne sert à rien.
  */
 async function rappelerPorte(guild: Guild): Promise<void> {
   const porte = roleParNom(guild, ROLE_PORTE.nom);
@@ -192,7 +192,7 @@ async function rappelerPorte(guild: Guild): Promise<void> {
     if (membre.user.bot) continue;
 
     if (estStaff(membre)) {
-      await membre.roles.remove(porte.id, "Le Staff n'est pas concerné par la barrière").catch(() => {});
+      await membre.roles.remove(porte.id, "L'orga n'est pas concerné par la barrière").catch(() => {});
       continue;
     }
     const heures = membre.joinedTimestamp ? (Date.now() - membre.joinedTimestamp) / 3_600_000 : 0;

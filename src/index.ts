@@ -65,7 +65,7 @@ client.once("clientReady", async () => {
   // La fenêtre du badge se vérifie aussi au démarrage : le cron de 9h est loin
   await gererReclamationBadge(guild).catch((err) => console.error("réclamation badge :", err));
 
-  // Rattrapage : candidatures en attente jamais signalées au Staff (bot hors ligne, bug...)
+  // Rattrapage : candidatures en attente jamais signalées à l'orga (bot hors ligne, bug...)
   try {
     await guild.members.fetch();
     const attente = roleParNom(guild, ROLE_ATTENTE.nom);

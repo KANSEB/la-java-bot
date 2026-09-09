@@ -241,7 +241,7 @@ async function signaler(membre: GuildMember): Promise<void> {
     new ButtonBuilder().setCustomId(`ob_mi:${membre.id}`).setLabel("Plus d'infos").setEmoji("❓").setStyle(ButtonStyle.Secondary)
   );
 
-  // Le ping du rôle Staff est ce qui déclenche la notification Discord : sans lui
+  // Le ping du rôl'orga est ce qui déclenche la notification Discord : sans lui
   // l'embed arrive en silence dans le salon et personne ne le voit passer.
   const staff = role(guild, "staff");
   try {
@@ -263,7 +263,7 @@ async function signaler(membre: GuildMember): Promise<void> {
 /** [Approuver « profil »] : attribution en un clic du profil demandé dans le questionnaire. */
 export async function approuverProfilDemande(interaction: ButtonInteraction<"cached">): Promise<void> {
   if (!verifStaff(interaction)) {
-    await interaction.reply({ content: "Réservé au Staff.", ephemeral: true });
+    await interaction.reply({ content: "Réservé à l'orga.", ephemeral: true });
     return;
   }
   if (kvGet("lockdown") === "1") {
@@ -371,7 +371,7 @@ function aAccepteLesRegles(membre: GuildMember): boolean {
   return membreRole !== undefined && membre.roles.cache.has(membreRole.id);
 }
 
-/** Note pour le Staff : le profil est réservé tant que les règles ne sont pas acceptées. */
+/** Note pour l'orga : le profil est réservé tant que les règles ne sont pas acceptées. */
 function accesEnAttente(membre: GuildMember): string {
   return aAccepteLesRegles(membre)
     ? ""
@@ -386,7 +386,7 @@ function verifStaff(interaction: ButtonInteraction<"cached"> | StringSelectMenuI
 /** [Approuver] → menu de sélection du/des rôles à attribuer. */
 export async function boutonApprouver(interaction: ButtonInteraction<"cached">): Promise<void> {
   if (!verifStaff(interaction)) {
-    await interaction.reply({ content: "Réservé au Staff.", ephemeral: true });
+    await interaction.reply({ content: "Réservé à l'orga.", ephemeral: true });
     return;
   }
   if (kvGet("lockdown") === "1") {
@@ -439,7 +439,7 @@ export async function selectionRoles(interaction: StringSelectMenuInteraction<"c
   const correction = dossier?.statut === "approuve" || dossier?.statut === "refuse";
 
   // Attribution des seuls rôles choisis : l'accès aux salons (rôle Membre) ne
-  // s'obtient qu'en acceptant les règles, jamais par une décision du Staff.
+  // s'obtient qu'en acceptant les règles, jamais par une décision de l'orga.
   // Festivalier n'est pas un rôle à poser : c'est l'absence de rôle d'équipe.
   const clesProfil = interaction.values.filter((c) => c !== "membre" && c !== FESTIVALIER);
   const nomsAttribues = nomsDesRoles(guild, clesProfil);
@@ -488,7 +488,7 @@ export async function selectionRoles(interaction: StringSelectMenuInteraction<"c
 /** [Refuser] → modal motif. */
 export async function boutonRefuser(interaction: ButtonInteraction<"cached">): Promise<void> {
   if (!verifStaff(interaction)) {
-    await interaction.reply({ content: "Réservé au Staff.", ephemeral: true });
+    await interaction.reply({ content: "Réservé à l'orga.", ephemeral: true });
     return;
   }
   const userId = interaction.customId.split(":")[1];
@@ -523,7 +523,7 @@ export async function modalRefus(interaction: ModalSubmitInteraction<"cached">):
 /** [Plus d'infos] → modal question. */
 export async function boutonPlusInfos(interaction: ButtonInteraction<"cached">): Promise<void> {
   if (!verifStaff(interaction)) {
-    await interaction.reply({ content: "Réservé au Staff.", ephemeral: true });
+    await interaction.reply({ content: "Réservé à l'orga.", ephemeral: true });
     return;
   }
   const userId = interaction.customId.split(":")[1];
@@ -664,7 +664,7 @@ export async function rattraperReactionsAcces(guild: import("discord.js").Guild)
 // ---------- 3c. Filet de sécurité périodique ----------
 /**
  * Balaie les porteurs du rôle d'attente et signale ceux dont la demande n'a
- * jamais atteint le Staff. Le signalement repose sur un événement temps réel :
+ * jamais atteint l'orga. Le signalement repose sur un événement temps réel :
  * s'il est manqué (coupure réseau, redémarrage pile au mauvais moment), plus
  * rien ne rattrape avant le prochain démarrage. Ce balayage borne l'attente
  * à quelques minutes au lieu de « jusqu'au prochain redémarrage ».

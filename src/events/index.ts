@@ -93,12 +93,12 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       ].join(" • ");
       await log(apres.guild, "🎭 Rôles modifiés", `<@${apres.id}> : ${details}`);
 
-      // Candidature : le questionnaire natif vient de poser le rôle d'attente → demande au Staff
+      // Candidature : le questionnaire natif vient de poser le rôle d'attente → demande à l'orga
       if (ajoutes.some((r) => r.name === ROLE_ATTENTE.nom)) {
         await signalerDemandeValidation(apres);
       }
 
-      // Rôle fonctionnel attribué (bouton du Staff ou à la main dans Discord) :
+      // Rôle fonctionnel attribué (bouton de l'orga ou à la main dans Discord) :
       // la candidature n'a plus lieu d'être, et l'accès communauté doit suivre.
       const fonctionnels = new Set(
         (["staff", "referent", "artiste", "artisteCommunaute", "benevoleEdition", "benevole"] as (keyof typeof ROLES)[])
@@ -111,7 +111,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
 
         // Rôle posé à la main avant l'acceptation des règles : son autorisation
         // ouvre sa catégorie malgré la barrière. On ne le retire pas — c'est un
-        // geste délibéré du Staff — mais sans ce signalement personne ne saurait
+        // geste délibéré de l'orga — mais sans ce signalement personne ne saurait
         // que ce membre circule sans être passé par les règles.
         const membreRole = role(apres.guild, "membre");
         const aAccepte = membreRole !== undefined && apres.roles.cache.has(membreRole.id);
@@ -173,7 +173,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
     try {
       if (!message.inGuild() || message.author.bot || !message.member) return;
 
-      // Filtre de sécurité pour les non-Staff
+      // Filtre de sécurité pour les non-orga
       if (!estStaff(message.member) && (REGEX_INVITATION.test(message.content) || REGEX_SUSPECT.test(message.content))) {
         await message.delete().catch(() => {});
         const alertes = salonTexte(message.guild, "logs");
@@ -274,7 +274,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
         const commande = commandes.get(interaction.commandName);
         if (!commande) return;
         if (commande.staffUniquement && !estStaff(interaction.member)) {
-          await interaction.reply({ content: "⛔ Cette commande est réservée au Staff.", ephemeral: true });
+          await interaction.reply({ content: "⛔ Cette commande est réservée à l'orga.", ephemeral: true });
           return;
         }
         await commande.execute(interaction);
@@ -314,7 +314,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       await logErreur(interaction.guild, `interaction ${interaction.isChatInputCommand() ? "/" + interaction.commandName : interaction.type}`, err);
       // Toujours répondre quelque chose à l'utilisateur, jamais de crash silencieux
       if (interaction.isRepliable()) {
-        const contenu = { content: "⚠️ Oups, une erreur est survenue. Le Staff a été prévenu dans les logs.", ephemeral: true as const };
+        const contenu = { content: "⚠️ Oups, une erreur est survenue. L'orga a été prévenu dans les logs.", ephemeral: true as const };
         if (interaction.deferred) await interaction.editReply(contenu).catch(() => {});
         else if (!interaction.replied) await interaction.reply(contenu).catch(() => {});
       }

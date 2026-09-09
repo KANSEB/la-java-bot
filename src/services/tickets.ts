@@ -22,7 +22,7 @@ export async function ouvrirTicket(interaction: ButtonInteraction<"cached">): Pr
   const guild = interaction.guild;
   const billetterie = salonTexte(guild, "billetterie");
   if (!billetterie) {
-    await interaction.editReply("⚠️ Salon billetterie introuvable — préviens le Staff.");
+    await interaction.editReply("⚠️ Salon billetterie introuvable — préviens l'orga.");
     return;
   }
 
@@ -59,7 +59,7 @@ export async function fermerTicket(interaction: ChatInputCommandInteraction<"cac
   const thread = canal as ThreadChannel;
   const proprietaireId = thread.name.slice(PREFIXE_TICKET.length);
   if (!estStaff(interaction.member) && interaction.user.id !== proprietaireId) {
-    await interaction.reply({ content: "Seul le Staff ou l'auteur du ticket peut le fermer.", ephemeral: true });
+    await interaction.reply({ content: "Seul l'orga ou l'auteur du ticket peut le fermer.", ephemeral: true });
     return;
   }
 

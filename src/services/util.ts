@@ -50,7 +50,7 @@ export function estStaff(membre: GuildMember): boolean {
 
 /**
  * Pose la barrière : le membre ne voit plus que le salon des règles, jusqu'à
- * la charte d'entrée. Sans effet sur qui a déjà accepté, sur le Staff et sur les
+ * la charte d'entrée. Sans effet sur qui a déjà accepté, sur l'orga et sur les
  * bots — on ne se coupe jamais l'accès à soi-même.
  */
 export async function poserBarriere(membre: GuildMember): Promise<void> {
@@ -74,7 +74,7 @@ export async function leverBarriere(membre: GuildMember): Promise<void> {
 
 /**
  * Envoie un DM sans jamais faire crasher le bot (DM fermés, blocage...).
- * Retourne false en cas d'échec pour permettre un message de repli au Staff.
+ * Retourne false en cas d'échec pour permettre un message de repli à l'orga.
  */
 export async function dmSur(user: User | GuildMember, contenu: string | MessageCreateOptions): Promise<boolean> {
   try {

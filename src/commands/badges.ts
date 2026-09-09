@@ -12,7 +12,7 @@ export const commandes: Commande[] = [
   {
     data: new SlashCommandBuilder()
       .setName("attribuer-badge")
-      .setDescription("Attribue rétroactivement un badge d'édition (Staff)")
+      .setDescription("Attribue rétroactivement un badge d'édition (Orga)")
       .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers)
       .addUserOption((o) => o.setName("membre").setDescription("Membre concerné").setRequired(true))
       .addIntegerOption((o) => o.setName("annee").setDescription("Année de l'édition (ex : 2024)").setRequired(true).setMinValue(2015).setMaxValue(2100)),
@@ -33,7 +33,7 @@ export const commandes: Commande[] = [
   {
     data: new SlashCommandBuilder()
       .setName("archiver-edition")
-      .setDescription(`Clôture l'édition ${EDITION.annee} : alumni, archives, préparation ${EDITION.annee + 1} (Staff)`)
+      .setDescription(`Clôture l'édition ${EDITION.annee} : alumni, archives, préparation ${EDITION.annee + 1} (Orga)`)
       .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
     staffUniquement: true,
     execute: async (interaction) => {

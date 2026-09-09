@@ -12,7 +12,7 @@ export const commandes: Commande[] = [
   {
     data: new SlashCommandBuilder()
       .setName("lockdown")
-      .setDescription("Active/désactive le lockdown anti-raid (Staff)")
+      .setDescription("Active/désactive le lockdown anti-raid (Orga)")
       .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers)
       .addStringOption((o) =>
         o.setName("etat").setDescription("on ou off").setRequired(true)
@@ -41,7 +41,7 @@ export const commandes: Commande[] = [
   {
     data: new SlashCommandBuilder()
       .setName("stats")
-      .setDescription("Dashboard : membres, conversion, sources, croissance, rétention (Staff)")
+      .setDescription("Dashboard : membres, conversion, sources, croissance, rétention (Orga)")
       .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
     staffUniquement: true,
     execute: async (interaction) => {

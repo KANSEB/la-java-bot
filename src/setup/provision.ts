@@ -108,7 +108,7 @@ export function overwritesPour(
   const membre = roles.get("membre");
   const ow: OverwriteResolvable[] = [];
 
-  // Salon masqué : visible Staff uniquement tant qu'il n'est pas révélé
+  // Salon masqué : visibl'orga uniquement tant qu'il n'est pas révélé
   if (salonDef.cache && !ignorerCache) {
     ow.push({ id: everyone, deny: [VOIR] });
     if (staff) ow.push({ id: staff.id, allow: [VOIR, ...ECRIRE, ...VOCAL] });
@@ -170,7 +170,7 @@ export function overwritesPour(
     if (r) ow.push({ id: r.id, allow: [VOIR, ...ECRIRE, ...VOCAL] });
   }
 
-  // Le Staff voit et écrit toujours partout ; les Référents écrivent dans les salons lecture seule publics (ACTU)
+  // L'orga voit et écrit toujours partout ; les Référents écrivent dans les salons lecture seule publics (ACTU)
   if (staff) ow.push({ id: staff.id, allow: [VOIR, ...ECRIRE, ...VOCAL] });
   if (lectureSeule && cat.acces === "public" && referent) ow.push({ id: referent.id, allow: [VOIR, ...ECRIRE] });
   return ow;
@@ -320,7 +320,7 @@ async function posterMessages(guild: Guild): Promise<void> {
 /**
  * Un message du bot existe-t-il déjà dans ce salon ? (idempotence)
  * `avecBouton = true` : on exige un message AVEC composants — un simple embed
- * (posté par un webhook ou le Staff) ne doit pas empêcher de poster le bouton.
+ * (posté par un webhook ou l'orga) ne doit pas empêcher de poster le bouton.
  */
 async function dejaPoste(channelId: string, guild: Guild, avecBouton = false): Promise<boolean> {
   const canal = guild.channels.cache.get(channelId);
