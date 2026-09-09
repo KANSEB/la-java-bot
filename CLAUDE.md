@@ -67,8 +67,9 @@ Autres décisions du même jour : `guide-staff` et `alertes-moderation` supprim�
 - L'API Discord limite les PATCH sur les messages de plus d'une heure (429 code 30046) : boucler avec attente sur `retry_after`.
 - Scripts one-shot dans `scripts/*.mjs` : REST brut avec le token du `.env`, importent la config compilée depuis `dist/config/config.js` (compiler avant).
 
-## Où en est le projet (23/08/2026)
+## Où en est le projet (09/09/2026)
 
-- Festival dans 5 jours. ~48 membres humains.
-- Bascule charte-d'entrée poussée mais **en attente d'un redémarrage Northost** ; à ce moment-là, les membres encore à la porte s'ouvrent automatiquement.
-- Après le festival : ouverture de la réclamation du badge Java 2026 (automatique, cron 9h), puis `/archiver-edition` quand l'édition est finie, puis mettre à jour `EDITION.annee` et relancer `/setup-serveur`.
+- Festival passé (28/08), ~58 membres, porte à zéro, bascule charte en production.
+- Réclamation du badge Java 2026 : jamais ouverte (id de message mort en kv), correctif d'auto-republication poussé le 09/09, s'active au redémarrage.
+- Migration depuis Dans La Zone en cours : catégorie ORGA créée ici, reste à peupler les accès par pôle, poster l'annonce là-bas, passer l'ancienne catégorie en lecture seule.
+- Ensuite : `/archiver-edition` quand Seb le décide, puis `EDITION.annee = 2027` et `/setup-serveur`.
