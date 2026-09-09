@@ -176,7 +176,8 @@ export const SALONS = {
   covoiturage: "🚗・covoiturage",
   photos: "📸・vos-photos-videos",
   niveaux: "⭐・niveaux",
-  votes: "🗳・votes-communaute",
+  partageSons: "🎶・partage-sons",
+  votes: "🗳️・votes-communaute",
   benevoles: "🙌・blabla-benevoles",
   fichesMissions: "📋・fiches-missions",
   planning: "📅・planning-shifts",
@@ -245,7 +246,7 @@ export const STRUCTURE: CategorieDef[] = [
     ],
   },
   {
-    nom: `🎪 LA JAVA ${EDITION.annee}`,
+    nom: "🎪 LA JAVA",  // intemporelle : la communauté vit toute l'année, l'édition n'est qu'un moment
     acces: "public",
     salons: [
       { cle: "general", type: "texte", visiblePublic: true, sujet: "Le bar principal de la communauté : parle de tout ici" },
@@ -257,6 +258,7 @@ export const STRUCTURE: CategorieDef[] = [
       },
       { cle: "covoiturage", type: "texte", sujet: "Propose ou cherche un covoit' pour La Java : précise ta ville de départ !" },
       { cle: "photos", type: "texte", sujet: "Vos plus beaux souvenirs en photo et vidéo, balancez tout !" },
+      { cle: "partageSons", type: "texte", sujet: "Balance les sons qui te font vibrer : découvertes, mix, playlists, souvenirs de line-up" },
       { cle: "votes", type: "texte", palierMin: "Habitué", sujet: "Les décisions qu'on prend ensemble : line-up, merch, afters..." },
     ],
   },

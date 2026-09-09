@@ -65,17 +65,9 @@ export async function archiverEdition(guild: Guild): Promise<RapportArchivage> {
     }
   }
 
-  // 2. Archivage des salons de l'édition : catégorie renommée + lecture seule
-  const categorieEdition = guild.channels.cache.find(
-    (c) => c.type === ChannelType.GuildCategory && c.name.includes(`LA JAVA ${EDITION.annee}`)
-  );
-  if (categorieEdition && categorieEdition.type === ChannelType.GuildCategory) {
-    await categorieEdition.setName(`🗄 ARCHIVES ${EDITION.annee}`).catch(() => {});
-    for (const salon of categorieEdition.children.cache.values()) {
-      await salon.permissionOverwrites.edit(guild.roles.everyone.id, { SendMessages: false, SendMessagesInThreads: false }).catch(() => {});
-      rapport.salonsArchives.push(salon.name);
-    }
-  }
+  // 2. La catégorie 🎪 LA JAVA est intemporelle : la communauté vit toute
+  //    l'année, on n'archive plus les salons entre deux éditions (le
+  //    covoiturage se verrouille déjà seul 7 jours après l'événement).
 
   // 3. Le rôle « Bénévole » reste tel quel pour l'édition suivante : seul le
   //    badge porte l'année. On prépare juste celui de l'an prochain.
