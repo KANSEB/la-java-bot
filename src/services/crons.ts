@@ -140,7 +140,7 @@ export async function gererReclamationBadge(guild: Guild): Promise<void> {
     const existe = await annonces.messages.fetch(messageId).catch(() => null);
     if (!existe) {
       kvDel(cle);
-      messageId = undefined;
+      messageId = null;
       await log(guild, "🏅 Réclamation à republier", "L'annonce du badge avait disparu : elle sera repostée.", "alerte");
     }
   }
