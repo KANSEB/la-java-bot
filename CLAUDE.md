@@ -29,7 +29,7 @@ Ce fichier est le contexte partagé entre toutes les sessions Claude (PC, Mac, c
 
 Trois familles, à ne pas mélanger :
 
-1. **Attribués par un humain** : Orga (renommé depuis « Staff » le 09/09, config `ROLES.staff`), Référent, Bénévole (sans année : l'année vient du badge), Artiste, Artiste Communauté, Ancien bénévole (posé par `/archiver-edition`).
+1. **Attribués par un humain** : Direction (10/09, gestion serveur sans Administrateur : rôles, salons, modération ; hors config, ne pas recréer via provision), Orga (renommé depuis « Staff » le 09/09, config `ROLES.staff`), Référent, Bénévole (sans année : l'année vient du badge), Artiste, Artiste Communauté, Ancien bénévole (posé par `/archiver-edition`).
 2. **Automatiques** : `Membre` (clé d'accès, posé à la charte, gardé à vie) ; paliers XP `Habitué` (500) → `Fêtard` (2000) → `Pilier de la Java` (6000) → `Légende de la Java` (20000) ; badges d'édition `Java <année>` (réclamés par réaction sur l'annonce ouverte le lendemain du festival, 1 mois, +500 XP une seule fois, kv `badge_xp:`).
 3. **Techniques éphémères** : `👋 Nouvel arrivant`, `⏳ En attente de validation`, `Candidat ×4`.
 
