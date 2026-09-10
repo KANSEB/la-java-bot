@@ -193,7 +193,7 @@ export const SALONS = {
   infosArtistes: "🎹・infos-artistes",
   backstage: "🎤・backstage",
   demos: "🎧・demos-et-promos",
-  staffGeneral: "🛠・general",
+  staffGeneral: "🎛️・general",
   validation: "📋・validation-demandes",
   logs: "🤖・logs-bot",
   vocalBar: "Bar",

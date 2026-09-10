@@ -53,7 +53,7 @@ Le palier de départ **« Festivalier » n'a pas de rôle Discord** (`sansRole: 
 
 L'ancienne catégorie STAFF a fusionné dedans : la visibilité se règle salon par salon, pas par catégorie.
 
-- `🛠・general` (ex staff-general ; l'emoji le distingue du général communautaire) et `validation-demandes` : rôle Orga. Déclarés dans `STRUCTURE` (catégorie « 🛠️ ORGA » côté config).
+- `🎛️・general` (ex staff-general ; l'emoji le distingue du général communautaire) et `validation-demandes` : rôle Orga. Déclarés dans `STRUCTURE` (catégorie « 🛠️ ORGA » côté config).
 - Salons de pôle `benevolat`, `programmation`, `bar`, `merch`, `securite-prevention`, `communication` : Staff + les référents du pôle ajoutés **nominativement** (pas de rôle par pôle). **Hors `STRUCTURE`** : un `/setup-serveur` ne doit jamais les toucher, sous peine d'effacer les accès individuels. Ne pas confondre le pôle `benevolat` (orga) avec les salons communautaires bénévoles.
 - `logs-bot` : Seb uniquement (attention, un `/setup-serveur` le rouvrirait au Staff, à reverrouiller après). Reçoit aussi les alertes anti-raid et liens supprimés (`guide-staff` et `alertes-moderation` ont été supprimés).
 - `🛡・maj-discord` : ancien alertes-moderation, insupprimable par bot (réceptacle « mises à jour communauté » Discord), verrouillé sur Seb en attendant le déplacement du réglage à la main.
