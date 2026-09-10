@@ -63,7 +63,6 @@ export const commandes: Commande[] = [
         await interaction.editReply({
           content:
             `🗄 **Édition ${EDITION.annee} archivée !**\n` +
-            `• Bénévoles basculés en alumni : ${rapport.benevolesBascules}\n` +
             `• Salons archivés : ${rapport.salonsArchives.length}\n` +
             `• Rôle préparé : ${rapport.nouveauRole}\n\n` +
             `➡️ Mets à jour \`EDITION.annee\` dans config.ts puis relance \`/setup-serveur\` pour la nouvelle édition.`,

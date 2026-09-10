@@ -40,7 +40,6 @@ export async function attribuerBadge(membre: GuildMember, annee: number): Promis
 }
 
 export interface RapportArchivage {
-  benevolesBascules: number;
   salonsArchives: string[];
   nouveauRole: string;
 }
@@ -50,20 +49,11 @@ export interface RapportArchivage {
  * salons de l'édition passés en lecture seule, préparation de l'année suivante.
  */
 export async function archiverEdition(guild: Guild): Promise<RapportArchivage> {
-  const rapport: RapportArchivage = { benevolesBascules: 0, salonsArchives: [], nouveauRole: "" };
+  const rapport: RapportArchivage = { salonsArchives: [], nouveauRole: "" };
   await guild.members.fetch().catch(() => {});
 
-  const benevoleEdition = role(guild, "benevoleEdition");
-  const benevoleAlumni = role(guild, "benevole");
-
-  // 1. Bascule des bénévoles actifs en alumni
-  if (benevoleEdition && benevoleAlumni) {
-    for (const membre of [...benevoleEdition.members.values()]) {
-      await membre.roles.add(benevoleAlumni.id, "Fin d'édition").catch(() => {});
-      await membre.roles.remove(benevoleEdition.id, "Fin d'édition").catch(() => {});
-      rapport.benevolesBascules++;
-    }
-  }
+  // 1. Le rôle Bénévole est global et permanent : plus de bascule en
+  //    « Ancien bénévole » à la fin d'une édition, l'année vit dans les badges.
 
   // 2. La catégorie 🎪 LA JAVA est intemporelle : la communauté vit toute
   //    l'année, on n'archive plus les salons entre deux éditions (le
@@ -80,7 +70,7 @@ export async function archiverEdition(guild: Guild): Promise<RapportArchivage> {
   await log(
     guild,
     "🗄 Édition archivée",
-    `Bénévoles basculés en alumni : ${rapport.benevolesBascules}\nSalons archivés : ${rapport.salonsArchives.join(", ") || "aucun"}\nBadge préparé : ${rapport.nouveauRole}\n\n⚠️ Pense à mettre à jour \`EDITION.annee\` dans config.ts puis relancer \`/setup-serveur\`.`,
+    `Salons archivés : ${rapport.salonsArchives.join(", ") || "aucun"}\nBadge préparé : ${rapport.nouveauRole}\n\n⚠️ Pense à mettre à jour \`EDITION.annee\` dans config.ts puis relancer \`/setup-serveur\`.`,
     "succes"
   );
   return rapport;

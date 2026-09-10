@@ -101,7 +101,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       // Rôle fonctionnel attribué (bouton de l'orga ou à la main dans Discord) :
       // la candidature n'a plus lieu d'être, et l'accès communauté doit suivre.
       const fonctionnels = new Set(
-        (["staff", "referent", "artiste", "artisteCommunaute", "benevoleEdition", "benevole"] as (keyof typeof ROLES)[])
+        (["staff", "referent", "artiste", "artisteCommunaute", "benevoleEdition"] as (keyof typeof ROLES)[])
           .map((cle) => ROLES[cle].nom)
       );
       // Le rôle Membre n'est PAS ajouté ici : l'accès aux salons s'obtient

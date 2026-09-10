@@ -48,7 +48,6 @@ export const ROLES: Record<string, RoleConfig> = {
   artiste: { nom: "Artiste", couleur: 0x9b59b6, hoist: true, mentionnable: true, permissions: [] },
   artisteCommunaute: { nom: "Artiste Communauté", couleur: 0xb388eb, hoist: false, mentionnable: true, permissions: [] },
   benevoleEdition: { nom: "Bénévole", couleur: 0x2ecc71, hoist: true, mentionnable: true, permissions: [] },
-  benevole: { nom: "Ancien bénévole", couleur: 0x27ae60, hoist: false, mentionnable: true, permissions: [] },
   membre: { nom: "Membre", couleur: 0x99aab5, hoist: false, mentionnable: false, permissions: [] },
 };
 
@@ -149,7 +148,7 @@ export const RECLAMATION_BADGE = {
 // à tout déplacer (par ex. vers "general" pour ouvrir à tout le monde).
 export const ANNIVERSAIRES = {
   salonAnnonce: "benevoles" as const,
-  rolesAutorises: ["benevoleEdition", "benevole", "referent", "staff"] as (keyof typeof ROLES)[],
+  rolesAutorises: ["benevoleEdition", "referent", "staff"] as (keyof typeof ROLES)[],
 };
 
 // Fuseau horaire des tâches planifiées : les serveurs d'hébergement tournent
