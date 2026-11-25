@@ -1,21 +1,19 @@
 // ============================================================
 // Tâches planifiées (node-cron), toutes à l'heure de Paris :
-// - 09h00 : compte à rebours, panthéon, fenêtre du badge, archivage covoit
+// - 09h00 : compte à rebours, archivage covoit
 // - 10h00 : annonces d'anniversaire
 // - 18h00 : relance des membres restés à la porte
 // - lundi 11h : rappel anniversaire à l'équipe
 // - chaque heure : séquence de DM aux nouveaux bénévoles
-// - chaque minute : filet de sécurité sur les candidatures
-// - toutes les 10 min : XP vocal
+// - chaque minute : filet de sécurité sur les candidatures et la charte
 // ============================================================
 
 import { ChannelType, Client, Guild } from "discord.js";
 import cron from "node-cron";
-import { db, kvDel, kvGet, kvSet } from "../db/database.js";
-import { ANNIVERSAIRES, COULEURS, DELAIS, EDITION, FUSEAU, PALIERS_XP, RECLAMATION_BADGE, ROLE_PORTE, ROLES, SALONS, TEXTES, XP } from "../config/config.js";
+import { db, kvGet, kvSet } from "../db/database.js";
+import { ANNIVERSAIRES, DELAIS, EDITION, FUSEAU, ROLE_PORTE, ROLES, SALONS, TEXTES } from "../config/config.js";
 import { dmSur, estStaff, joursAvant, roleParNom, salonTexte } from "./util.js";
 import { log, logErreur } from "./logs.js";
-import { tickVocal } from "./xp.js";
 import { debloquerCharteAcceptee, verifierCandidaturesEnAttente } from "./onboarding.js";
 
 function guildPrincipale(client: Client): Guild | undefined {
@@ -94,86 +92,6 @@ async function rappelerAnniversaires(guild: Guild): Promise<void> {
 
     kvSet(`anniv_rappel:${membre.id}`, "1");
     await dmSur(membre, TEXTES.rappelAnniversaire(salon.name));
-  }
-}
-
-// ---------- Panthéon : la liste des Légendes, tenue à jour toute seule ----------
-async function majPantheon(guild: Guild): Promise<void> {
-  const salon = salonTexte(guild, "niveaux");
-  if (!salon) return;
-  const dernier = PALIERS_XP[PALIERS_XP.length - 1];
-  const role = roleParNom(guild, dernier.nom);
-  const noms = role ? [...role.members.values()].map((m) => `<@${m.id}>`) : [];
-
-  const texte = TEXTES.pantheonCorps(noms);
-  const messageId = kvGet("pantheon");
-  if (messageId) {
-    const message = await salon.messages.fetch(messageId).catch(() => null);
-    if (message) {
-      await message.edit({ embeds: [{ title: TEXTES.pantheonTitre, description: texte, color: dernier.couleur }] }).catch(() => {});
-      return;
-    }
-  }
-  const message = await salon.send({ embeds: [{ title: TEXTES.pantheonTitre, description: texte, color: dernier.couleur }] }).catch(() => null);
-  if (message) {
-    await message.pin().catch(() => {});
-    kvSet("pantheon", message.id);
-  }
-}
-
-// ---------- Réclamation du badge d'édition ----------
-/**
- * Impossible de savoir qui était sur place : on ouvre une fenêtre déclarative
- * le lendemain du festival, et elle se referme seule un mois plus tard.
- */
-export async function gererReclamationBadge(guild: Guild): Promise<void> {
-  const ecoules = -joursAvant(EDITION.dateEvenement);
-  const { ouvertureJoursApresEvent: ouverture, dureeJours } = RECLAMATION_BADGE;
-  const cle = `badge_reclamation:${EDITION.annee}`;
-  let messageId = kvGet(cle);
-  const annonces = salonTexte(guild, "annonces");
-  if (!annonces) return;
-
-  // Auto-réparation : si l'annonce mémorisée n'existe plus (supprimée, vieux
-  // test), on oublie son id, sinon la réclamation reste fermée en silence.
-  if (messageId && kvGet(`${cle}:clos`) !== "1") {
-    const existe = await annonces.messages.fetch(messageId).catch(() => null);
-    if (!existe) {
-      kvDel(cle);
-      messageId = null;
-      await log(guild, "🏅 Réclamation à republier", "L'annonce du badge avait disparu : elle sera repostée.", "alerte");
-    }
-  }
-
-  // Fermeture : le message reste, mais il annonce que c'est terminé
-  if (ecoules >= ouverture + dureeJours) {
-    if (messageId && kvGet(`${cle}:clos`) !== "1") {
-      const message = await annonces.messages.fetch(messageId).catch(() => null);
-      await message?.edit({
-        embeds: [{ title: TEXTES.badgeReclamationTitre(EDITION.annee), description: TEXTES.badgeReclamationClos(EDITION.annee), color: COULEURS.neutre }],
-      }).catch(() => {});
-      kvSet(`${cle}:clos`, "1");
-      await log(guild, "🏅 Réclamation close", `Les badges Java ${EDITION.annee} ne sont plus réclamables.`);
-    }
-    return;
-  }
-
-  // Ouverture, une seule fois
-  if (ecoules >= ouverture && !messageId) {
-    const fin = new Date(Date.now() + (ouverture + dureeJours - ecoules) * 86_400_000)
-      .toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
-    const message = await annonces.send({
-      embeds: [{
-        title: TEXTES.badgeReclamationTitre(EDITION.annee),
-        description: TEXTES.badgeReclamationCorps(EDITION.annee, TEXTES.emojiDeblocage, XP.badgeEdition, fin),
-        color: COULEURS.primaire,
-      }],
-    }).catch(() => null);
-    if (message) {
-      await message.react(TEXTES.emojiDeblocage).catch(() => {});
-      kvSet(cle, message.id);
-      await log(guild, "🏅 Réclamation ouverte", `Les badges Java ${EDITION.annee} sont réclamables jusqu'au ${fin}.`, "succes");
-    }
   }
 }
 
@@ -256,8 +174,6 @@ export function demarrerCrons(client: Client): void {
     if (!guild) return;
     try {
       await majCountdown(guild);
-      await majPantheon(guild);
-      await gererReclamationBadge(guild);
       await archiverCovoitSiFini(guild);
     } catch (err) {
       await logErreur(guild, "cron 9h", err);
@@ -321,15 +237,6 @@ export function demarrerCrons(client: Client): void {
       if (ouverts > 0) console.log(`[acces] filet de sécurité : ${ouverts} membre(s) ouvert(s)`);
     } catch (err) {
       await logErreur(guild, "cron candidatures", err);
-    }
-  }, OPTIONS);
-
-  // Toutes les N minutes — XP vocal
-  cron.schedule(`*/${XP.vocalTrancheMinutes} * * * *`, async () => {
-    try {
-      await tickVocal(client);
-    } catch (err) {
-      await logErreur(guildPrincipale(client) ?? null, "cron XP vocal", err);
     }
   }, OPTIONS);
 

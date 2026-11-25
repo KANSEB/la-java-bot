@@ -1,7 +1,8 @@
 // ============================================================
-// Onboarding : modal questionnaire → embed de validation Staff →
-// Approuver / Refuser / Plus d'infos. RÈGLE ABSOLUE : aucun accès
-// sans validation manuelle, y compris "Curieux - Public".
+// Onboarding : le questionnaire natif de Discord pose un marqueur
+// « Candidat X » → fiche de validation dans le salon de l'orga →
+// Approuver / Autres rôles / Refuser / Plus d'infos. L'accès au serveur,
+// lui, s'ouvre à l'acceptation de la charte (ouvrirAcces).
 // ============================================================
 
 import {
@@ -21,7 +22,7 @@ import {
 } from "discord.js";
 import { db, kvDel, kvGet, kvSet, type OnboardingRow } from "../db/database.js";
 import {
-  CANDIDATURES, COULEURS, DELAIS, EDITION, QUESTIONNAIRE, ROLE_ATTENTE, ROLE_PORTE, ROLES, SALONS, SEUIL_COMPTE_RECENT_JOURS, TEXTES, PROFIL_DIRECT } from "../config/config.js";
+  CANDIDATURES, COULEURS, ROLE_PORTE, ROLES, SALONS, SEUIL_COMPTE_RECENT_JOURS, TEXTES, PROFIL_DIRECT } from "../config/config.js";
 import { ageCompteJours, dmSur, estStaff, horodatage, leverBarriere, role, roleParNom, salonTexte } from "./util.js";
 import { log, logErreur } from "./logs.js";
 
@@ -32,128 +33,6 @@ const STATUTS_AFFICHES: Record<OnboardingRow["statut"], string> = {
   refuse: "❌ Refusée",
 };
 
-// ---------- 1. Bouton "Rejoindre" → Modal ----------
-export async function ouvrirQuestionnaire(interaction: ButtonInteraction<"cached">): Promise<void> {
-  // Lockdown anti-raid : validations suspendues
-  if (kvGet("lockdown") === "1") {
-    await interaction.reply({ content: TEXTES.verrouilleLockdown, ephemeral: true });
-    return;
-  }
-
-  const existante = db.prepare("SELECT * FROM onboarding WHERE userId = ?").get(interaction.user.id) as OnboardingRow | undefined;
-  if (existante) {
-    if (existante.statut === "en_attente" || existante.statut === "infos") {
-      await interaction.reply({ content: TEXTES.soumissionDejaEnCours, ephemeral: true });
-      return;
-    }
-    // Droit à UNE seule nouvelle soumission après refus
-    if (existante.statut === "refuse" && existante.nbSoumissions >= QUESTIONNAIRE.maxSoumissions) {
-      await interaction.reply({ content: TEXTES.soumissionEpuisee, ephemeral: true });
-      return;
-    }
-  }
-
-  const modal = new ModalBuilder().setCustomId("modal_questionnaire").setTitle(QUESTIONNAIRE.titre);
-
-  const selectSource = new StringSelectMenuBuilder()
-    .setCustomId("q_source")
-    .setPlaceholder("Choisis une option")
-    .addOptions(QUESTIONNAIRE.sources.map((s) => ({ label: s.label, value: s.value, emoji: s.emoji })));
-
-  const selectProfil = new StringSelectMenuBuilder()
-    .setCustomId("q_profil")
-    .setPlaceholder("Choisis ton profil")
-    .addOptions(QUESTIONNAIRE.profils.map((p) => ({ label: p.label, value: p.value, emoji: p.emoji })));
-
-  const motivation = new TextInputBuilder()
-    .setCustomId("q_motivation")
-    .setStyle(TextInputStyle.Paragraph)
-    .setPlaceholder(TEXTES.placeholderMotivation)
-    .setMaxLength(300)
-    .setRequired(true);
-
-  const pseudo = new TextInputBuilder()
-    .setCustomId("q_pseudo")
-    .setStyle(TextInputStyle.Short)
-    .setMaxLength(60)
-    .setRequired(false);
-
-  modal.addLabelComponents(
-    new LabelBuilder().setLabel(TEXTES.labelSource).setStringSelectMenuComponent(selectSource),
-    new LabelBuilder().setLabel(TEXTES.labelMotivation).setTextInputComponent(motivation),
-    new LabelBuilder().setLabel(TEXTES.labelProfil).setStringSelectMenuComponent(selectProfil),
-    new LabelBuilder().setLabel(TEXTES.labelPseudo).setTextInputComponent(pseudo)
-  );
-
-  await interaction.showModal(modal);
-}
-
-// ---------- 2. Modal soumis → enregistrement + embed Staff ----------
-export async function soumettreQuestionnaire(interaction: ModalSubmitInteraction<"cached">): Promise<void> {
-  await interaction.deferReply({ ephemeral: true });
-
-  const source = interaction.fields.getStringSelectValues("q_source")[0] ?? "autre";
-  const motivation = interaction.fields.getTextInputValue("q_motivation");
-  const profil = interaction.fields.getStringSelectValues("q_profil")[0] ?? "curieux";
-  const pseudo = interaction.fields.getTextInputValue("q_pseudo") || null;
-
-  const existante = db.prepare("SELECT * FROM onboarding WHERE userId = ?").get(interaction.user.id) as OnboardingRow | undefined;
-  const nbSoumissions = existante ? existante.nbSoumissions + 1 : 1;
-
-  db.prepare(`
-    INSERT INTO onboarding (userId, username, dateSubmission, source, motivation, roleDemande, pseudo, statut, nbSoumissions)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 'en_attente', ?)
-    ON CONFLICT(userId) DO UPDATE SET
-      username = excluded.username, dateSubmission = excluded.dateSubmission, source = excluded.source,
-      motivation = excluded.motivation, roleDemande = excluded.roleDemande, pseudo = excluded.pseudo,
-      statut = 'en_attente', validateurId = NULL, dateValidation = NULL, motifRefus = NULL,
-      nbSoumissions = excluded.nbSoumissions
-  `).run(interaction.user.id, interaction.user.username, Date.now(), source, motivation, profil, pseudo, nbSoumissions);
-
-  await posterEmbedValidation(interaction, source, motivation, profil, pseudo, nbSoumissions);
-  await interaction.editReply({ content: TEXTES.soumissionRecue });
-  await log(interaction.guild, "📥 Nouvelle candidature", `<@${interaction.user.id}> a soumis le questionnaire (profil demandé : ${profil}).`);
-}
-
-async function posterEmbedValidation(
-  interaction: ModalSubmitInteraction<"cached">,
-  source: string, motivation: string, profil: string, pseudo: string | null, nbSoumissions: number
-): Promise<void> {
-  const canal = salonTexte(interaction.guild, "validation");
-  if (!canal) return;
-
-  const membre = interaction.member;
-  const age = ageCompteJours(interaction.user);
-  const sourceLabel = QUESTIONNAIRE.sources.find((s) => s.value === source)?.label ?? source;
-  const profilLabel = QUESTIONNAIRE.profils.find((p) => p.value === profil)?.label ?? profil;
-
-  const embed = new EmbedBuilder()
-    .setTitle("📋 Demande d'accès")
-    .setColor(COULEURS.info)
-    .setThumbnail(interaction.user.displayAvatarURL())
-    .addFields(
-      { name: "Membre", value: `<@${interaction.user.id}> (${interaction.user.username})`, inline: true },
-      { name: "Compte créé", value: `${horodatage(interaction.user.createdTimestamp)}${age < SEUIL_COMPTE_RECENT_JOURS ? "\n⚠️ **Compte de moins de 7 jours**" : ""}`, inline: true },
-      { name: "Arrivé sur le serveur", value: membre.joinedTimestamp ? horodatage(membre.joinedTimestamp) : "?", inline: true },
-      { name: TEXTES.labelSource, value: sourceLabel, inline: true },
-      { name: TEXTES.labelProfil, value: profilLabel, inline: true },
-      { name: "Soumission n°", value: String(nbSoumissions), inline: true },
-      { name: TEXTES.labelMotivation, value: motivation.slice(0, 1024) },
-      ...(pseudo ? [{ name: TEXTES.labelPseudo, value: pseudo }] : []),
-      { name: "Statut", value: STATUTS_AFFICHES.en_attente }
-    )
-    .setFooter({ text: `userId:${interaction.user.id}` })
-    .setTimestamp();
-
-  const boutons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder().setCustomId(`ob_ap:${interaction.user.id}`).setLabel("Approuver").setEmoji("✅").setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId(`ob_rf:${interaction.user.id}`).setLabel("Refuser").setEmoji("❌").setStyle(ButtonStyle.Danger),
-    new ButtonBuilder().setCustomId(`ob_mi:${interaction.user.id}`).setLabel("Plus d'infos").setEmoji("❓").setStyle(ButtonStyle.Secondary)
-  );
-
-  await canal.send({ embeds: [embed], components: [boutons] });
-}
-
 // ---------- 2b. Candidatures via l'onboarding natif Discord ----------
 /** Candidature (profil demandé) détectée via les rôles marqueurs du questionnaire natif. */
 export function candidatureDe(membre: GuildMember): (typeof CANDIDATURES)[number] | undefined {
@@ -163,9 +42,14 @@ export function candidatureDe(membre: GuildMember): (typeof CANDIDATURES)[number
   });
 }
 
-/** Retire le rôle d'attente et tous les marqueurs de candidature. */
+/** Le rôle est-il un marqueur « Candidat X » posé par le questionnaire natif ? */
+export function estMarqueurCandidature(nomRole: string): boolean {
+  return CANDIDATURES.some((c) => c.marqueur === nomRole);
+}
+
+/** Retire tous les marqueurs de candidature. */
 export async function nettoyerCandidature(membre: GuildMember): Promise<void> {
-  const aRetirer = [ROLE_ATTENTE.nom, ...CANDIDATURES.map((c) => c.marqueur)];
+  const aRetirer = CANDIDATURES.map((c) => c.marqueur);
   for (const nom of aRetirer) {
     const r = roleParNom(membre.guild, nom);
     if (r && membre.roles.cache.has(r.id)) {
@@ -181,7 +65,7 @@ const signalementsEnCours = new Set<string>();
 
 /**
  * Poste la demande de validation dans #validation-demandes dès qu'un membre
- * reçoit le rôle d'attente (questionnaire natif rempli). Dédupliqué via kv.
+ * reçoit un marqueur « Candidat X » (questionnaire natif rempli). Dédupliqué via kv.
  */
 export async function signalerDemandeValidation(membre: GuildMember): Promise<void> {
   if (signalementsEnCours.has(membre.id)) return;
@@ -399,7 +283,7 @@ export async function boutonApprouver(interaction: ButtonInteraction<"cached">):
   // mais la clé d'accès, et elle ne s'obtient qu'en acceptant les règles.
   // « Festivalier » en tête : la réponse quand la personne a coché bénévole
   // sans l'être vraiment. Elle est validée avec l'accès simple, sans rôle
-  // d'équipe, et le palier Festivalier se pose de lui-même à l'ouverture de l'accès.
+  // d'équipe : être Membre sans rôle d'équipe, c'est être Festivalier.
   const options = [
     { label: `${PROFIL_DIRECT.titre} (accès simple, sans rôle d'équipe)`, value: FESTIVALIER, emoji: PROFIL_DIRECT.emoji },
     ...(Object.keys(ROLES) as (keyof typeof ROLES)[])
@@ -663,25 +547,23 @@ export async function rattraperReactionsAcces(guild: import("discord.js").Guild)
 
 // ---------- 3c. Filet de sécurité périodique ----------
 /**
- * Balaie les porteurs du rôle d'attente et signale ceux dont la demande n'a
- * jamais atteint l'orga. Le signalement repose sur un événement temps réel :
+ * Balaie les porteurs d'un marqueur « Candidat X » et signale ceux dont la demande
+ * n'a jamais atteint l'orga. Le signalement repose sur un événement temps réel :
  * s'il est manqué (coupure réseau, redémarrage pile au mauvais moment), plus
  * rien ne rattrape avant le prochain démarrage. Ce balayage borne l'attente
  * à quelques minutes au lieu de « jusqu'au prochain redémarrage ».
  */
 export async function verifierCandidaturesEnAttente(guild: import("discord.js").Guild): Promise<number> {
-  const attente = roleParNom(guild, ROLE_ATTENTE.nom);
-  if (!attente) return 0;
-
   // Ne recharger la liste que si le cache est réellement incomplet : sans ce
   // test, un balayage à la minute rappellerait tous les membres à chaque fois.
   if (guild.members.cache.size < guild.memberCount) {
     await guild.members.fetch().catch(() => {});
   }
   let signalees = 0;
-  for (const membre of attente.members.values()) {
+  for (const membre of guild.members.cache.values()) {
     if (membre.user.bot) continue;
     if (kvGet(`attente_notifie:${membre.id}`) === "1") continue;
+    if (!candidatureDe(membre)) continue;
     await signalerDemandeValidation(membre); // dédupliqué en interne
     signalees++;
   }

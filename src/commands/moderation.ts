@@ -2,7 +2,7 @@
 
 import { EmbedBuilder, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import { db, type OnboardingRow } from "../db/database.js";
-import { COULEURS, EDITION, nomBadge, QUESTIONNAIRE, ROLES, TEXTES } from "../config/config.js";
+import { COULEURS, ROLES, TEXTES } from "../config/config.js";
 import { activerLockdown, estEnLockdown } from "../services/antiraid.js";
 import { fermerTicket } from "../services/tickets.js";
 import { roleParNom } from "../services/util.js";
@@ -41,7 +41,7 @@ export const commandes: Commande[] = [
   {
     data: new SlashCommandBuilder()
       .setName("stats")
-      .setDescription("Dashboard : membres, conversion, sources, croissance, rétention (Orga)")
+      .setDescription("Dashboard : membres, candidatures, croissance (Orga)")
       .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
     staffUniquement: true,
     execute: async (interaction) => {
@@ -57,38 +57,16 @@ export const commandes: Commande[] = [
       }
 
       // --- Conversion onboarding ---
-      const rows = db.prepare("SELECT statut, source FROM onboarding").all() as Pick<OnboardingRow, "statut" | "source">[];
+      const rows = db.prepare("SELECT statut FROM onboarding").all() as Pick<OnboardingRow, "statut">[];
       const total = rows.length;
       const approuves = rows.filter((r) => r.statut === "approuve").length;
       const refuses = rows.filter((r) => r.statut === "refuse").length;
       const enAttente = total - approuves - refuses;
       const conversion = total > 0 ? Math.round((approuves / total) * 100) : 0;
 
-      // --- Sources d'acquisition agrégées et classées ---
-      const parSource = new Map<string, number>();
-      for (const r of rows) parSource.set(r.source, (parSource.get(r.source) ?? 0) + 1);
-      const sourcesTriees = [...parSource.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .map(([source, nb]) => {
-          const label = QUESTIONNAIRE.sources.find((s) => s.value === source)?.label ?? source;
-          return `• ${label} : **${nb}** (${total > 0 ? Math.round((nb / total) * 100) : 0} %)`;
-        });
-
       // --- Croissance sur 30 jours ---
       const seuil30j = Date.now() - 30 * 86_400_000;
       const arrivees30j = guild.members.cache.filter((m) => !m.user.bot && (m.joinedTimestamp ?? 0) >= seuil30j).size;
-
-      // --- Rétention bénévoles édition N-1 → N ---
-      const badgePrecedent = roleParNom(guild, nomBadge(EDITION.annee - 1));
-      const roleActuel = roleParNom(guild, ROLES.benevoleEdition.nom);
-      const badgeActuel = roleParNom(guild, nomBadge(EDITION.annee));
-      let retention = "Pas encore de données (badge édition précédente vide)";
-      if (badgePrecedent && badgePrecedent.members.size > 0) {
-        const revenus = badgePrecedent.members.filter(
-          (m) => (roleActuel && m.roles.cache.has(roleActuel.id)) || (badgeActuel && m.roles.cache.has(badgeActuel.id))
-        ).size;
-        retention = `**${Math.round((revenus / badgePrecedent.members.size) * 100)} %** (${revenus}/${badgePrecedent.members.size} bénévoles ${EDITION.annee - 1} revenus en ${EDITION.annee})`;
-      }
 
       const embed = new EmbedBuilder()
         .setTitle(`📈 Stats — ${guild.name}`)
@@ -96,9 +74,7 @@ export const commandes: Commande[] = [
         .addFields(
           { name: `👥 Membres (${guild.memberCount} au total)`, value: lignesRoles.join("\n") || "—" },
           { name: "🎯 Onboarding", value: `Soumissions : **${total}** • Approuvées : **${approuves}** • Refusées : **${refuses}** • En attente : **${enAttente}**\nTaux de conversion : **${conversion} %**` },
-          { name: "📣 Sources d'acquisition", value: sourcesTriees.join("\n") || "Aucune donnée" },
-          { name: "📈 Croissance 30 jours", value: `**+${arrivees30j}** arrivées` },
-          { name: `🔁 Rétention bénévoles ${EDITION.annee - 1} → ${EDITION.annee}`, value: retention }
+          { name: "📈 Croissance 30 jours", value: `**+${arrivees30j}** arrivées` }
         )
         .setTimestamp();
       await interaction.editReply({ embeds: [embed] });

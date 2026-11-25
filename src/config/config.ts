@@ -1,6 +1,6 @@
 // ============================================================
 // CONFIGURATION CENTRALE : La Java (Dans La Zone, Quimper)
-// Tout se règle ici : rôles, salons, textes, XP, délais.
+// Tout se règle ici : rôles, salons, textes, délais.
 // Aucune chaîne visible par l'utilisateur ne doit être en dur ailleurs.
 // ============================================================
 
@@ -46,49 +46,9 @@ export const ROLES: Record<string, RoleConfig> = {
     permissions: [P.ManageMessages, P.ModerateMembers],
   },
   artiste: { nom: "Artiste", couleur: 0x9b59b6, hoist: true, mentionnable: true, permissions: [] },
-  artisteCommunaute: { nom: "Artiste Communauté", couleur: 0xb388eb, hoist: false, mentionnable: true, permissions: [] },
   benevoleEdition: { nom: "Bénévole", couleur: 0x2ecc71, hoist: true, mentionnable: true, permissions: [] },
   membre: { nom: "Membre", couleur: 0x99aab5, hoist: false, mentionnable: false, permissions: [] },
 };
-
-// ---------- Rôles cosmétiques ----------
-// Badges d'édition, cumulables. `nomBadge(annee)` sert aussi pour les années passées/futures.
-export const nomBadge = (annee: number): string => `Java ${annee}`;
-// Seule l'édition en cours est pré-créée : `/attribuer-badge` fabrique le rôle
-// d'une année passée au moment où on en a besoin, inutile de les empiler d'avance.
-export const BADGES: Record<number, { couleur: number }> = {
-  2026: { couleur: 0xff6b9d },
-};
-
-// Paliers XP (seuil croissant). Le rôle du palier atteint remplace le précédent.
-// Les seuils tiennent compte du rythme réel de gain : à 15-40 XP par message,
-// des paliers trop bas se franchissaient en une soirée et « Légende » se
-// décrochait en deux semaines. Un badge d'édition (500) ouvre désormais
-// « Habitué » sans téléporter au palier suivant.
-// Chaque palier donne un rôle coloré et ses avantages. Les accès aux salons
-// sont posés par le provisioning via `palierMin` ; les avantages humains
-// (giveaways, tarif préférentiel) sont tenus à la main par l'orga.
-// Le palier de départ n'a pas de rôle Discord : être Membre sans palier
-// supérieur, c'est être Festivalier. Un rôle de moins sur chaque profil.
-export const PALIERS_XP: { seuil: number; nom: string; couleur: number; avantages: string[]; sansRole?: boolean }[] = [
-  { seuil: 0, nom: "Festivalier", couleur: 0xbdc3c7, avantages: [], sansRole: true },
-  {
-    seuil: 500, nom: "Habitué", couleur: 0x74b9ff,
-    avantages: ["Droit de vote sur les décisions de la communauté", "Accès au vocal Afters"],
-  },
-  {
-    seuil: 2000, nom: "Fêtard", couleur: 0xa29bfe,
-    avantages: ["Création de fils de discussion"],
-  },
-  {
-    seuil: 6000, nom: "Pilier de la Java", couleur: 0xe67e22,
-    avantages: ["Giveaways merch", "Priorité sur les candidatures bénévoles"],
-  },
-  {
-    seuil: 20000, nom: "Légende de la Java", couleur: 0xffd32a,
-    avantages: ["Tarif préférentiel sur la billetterie", "Ton nom au panthéon"],
-  },
-];
 
 
 // Rôle-barrière posé sur chaque arrivant : il masque tout le serveur sauf le
@@ -96,50 +56,22 @@ export const PALIERS_XP: { seuil: number; nom: string; couleur: number; avantage
 // Sans permission propre : il ne fait qu'interdire.
 export const ROLE_PORTE = { nom: "👋 Nouvel arrivant", couleur: 0x4f545c };
 
-// Rôle posé par l'onboarding natif Discord sur TOUTE nouvelle candidature.
-// Le bot le surveille : dès qu'un membre le reçoit, une demande part dans #validation-demandes.
-export const ROLE_ATTENTE = { nom: "⏳ En attente de validation" };
-
-// Marqueurs de profil : le questionnaire natif pose "En attente" + un marqueur,
-// pour que l'orga voie le profil demandé et l'approuve en un clic.
-// Le profil "Festivalier" n'est PAS ici : il reçoit directement le rôle Membre.
+// Marqueurs de profil : le questionnaire natif pose un rôle « Candidat X » quand
+// le profil demande une validation. Le bot le repère et l'orga approuve en un clic.
+// Le profil "Festivalier" n'est PAS ici : il entre sans validation.
 export const CANDIDATURES: { marqueur: string; profil: string; emoji: string; roleKey: keyof typeof ROLES | null }[] = [
   { marqueur: "Candidat Bénévole", profil: "Bénévole", emoji: "🙌", roleKey: "benevoleEdition" },
   { marqueur: "Candidat Référent", profil: "Référent", emoji: "🧭", roleKey: "referent" },
-  { marqueur: "Candidat Artiste", profil: "Artiste programmé", emoji: "🎤", roleKey: "artiste" },
-  { marqueur: "Candidat Artiste Communauté", profil: "Artiste (communauté)", emoji: "🎧", roleKey: "artisteCommunaute" },
+  { marqueur: "Candidat Artiste", profil: "Artiste", emoji: "🎤", roleKey: "artiste" },
 ];
 
 // Profil grand public : accès direct sans validation
 export const PROFIL_DIRECT = { titre: "Festivalier", emoji: "🎉" };
 
-// ---------- XP ----------
-export const XP = {
-  parMessageMin: 15,
-  parMessageMax: 40,
-  cooldownMessageMs: 60_000,
-  parReaction: 10,
-  cooldownReactionMs: 300_000,
-  vocalPointsParTranche: 10,
-  vocalTrancheMinutes: 10,
-  shiftBenevole: 500,
-  badgeEdition: 500,   // avoir fait l'édition vaut autant qu'un shift
-  tailleClassement: 20,
-};
-
 // ---------- Délais (heures/jours) ----------
 export const DELAIS = {
   dmSequenceHeures: 24,
   archivageCovoitJoursApresEvent: 7,
-};
-
-// ---------- Réclamation du badge d'édition ----------
-// Impossible de savoir qui était sur place : chacun se déclare. Un badge sans
-// permission ni valeur marchande ne se triche pas, et la fenêtre se ferme
-// toute seule un mois après l'événement.
-export const RECLAMATION_BADGE = {
-  ouvertureJoursApresEvent: 1,
-  dureeJours: 30,
 };
 
 // ---------- Anniversaires ----------
@@ -167,16 +99,11 @@ export const SALONS = {
   guide: "📖・guide-discord",
   annonces: "📣・annonces",
   actuServeur: "🔔・actu-serveur",
-  presse: "📰・presse-et-retombees",
   general: "💬・general",
   presentations: "🙋・presentations",
   billetterie: "🎫・billetterie",
-  infosPratiques: "📍・infos-pratiques",
   covoiturage: "🚗・covoiturage",
   photos: "📸・vos-photos-videos",
-  niveaux: "⭐・niveaux",
-  partageSons: "🎶・partage-sons",
-  votes: "🗳️・votes-communaute",
   benevoles: "🙌・blabla-benevoles",
   fichesMissions: "📋・fiches-missions",
   planning: "📅・planning-shifts",
@@ -195,10 +122,6 @@ export const SALONS = {
   staffGeneral: "🎛️・general",
   validation: "📋・validation-demandes",
   logs: "🤖・logs-bot",
-  vocalBar: "Bar",
-  vocalTerrasse: "Terrasse",
-  vocalAfters: "Afters",
-  stageLive: "Live & Talks",
 } as const;
 
 // ---------- Structure des catégories ----------
@@ -211,7 +134,6 @@ export interface SalonDef {
   postsReserves?: boolean;  // forum : Staff/Référent ouvrent les sujets, les autres répondent dedans
   cache?: boolean;          // créé masqué, révélable via /ouvrir-salon
   visiblePublic?: boolean;
-  palierMin?: string;       // réservé à ce palier XP et aux suivants
   sujet?: string;
   tags?: string[];          // forums uniquement
   /** Rôles supplémentaires autorisés sur ce salon, en plus de l'accès de la catégorie. */
@@ -232,7 +154,6 @@ export const STRUCTURE: CategorieDef[] = [
     salons: [
       { cle: "bienvenue", type: "texte", lectureSeule: true, sujet: "Règles, présentation et RGPD : commence ici !" },
       { cle: "guide", type: "texte", lectureSeule: true, visiblePublic: true, sujet: "Nouveau sur Discord ou sur ce serveur ? Le tuto est ici" },
-      { cle: "niveaux", type: "texte", lectureSeule: true, visiblePublic: true, sujet: "Comment gagner de l'XP et ce que ça débloque" },
     ],
   },
   {
@@ -241,7 +162,6 @@ export const STRUCTURE: CategorieDef[] = [
     salons: [
       { cle: "annonces", type: "annonce", lectureSeule: true, visiblePublic: true, sujet: "Les annonces officielles de La Java : infos, line-up, billetterie" },
       { cle: "actuServeur", type: "texte", lectureSeule: true, visiblePublic: true, sujet: "Changelog du Discord : nouveautés, salons ouverts" },
-      { cle: "presse", type: "texte", lectureSeule: true, visiblePublic: true, sujet: "Articles, interviews et retombées presse" },
     ],
   },
   {
@@ -250,15 +170,8 @@ export const STRUCTURE: CategorieDef[] = [
     salons: [
       { cle: "general", type: "texte", visiblePublic: true, sujet: "Le bar principal de la communauté : parle de tout ici" },
       { cle: "billetterie", type: "texte", lectureSeule: true, visiblePublic: true, sujet: "Questions billetterie : ouvre un ticket avec le bouton" },
-      {
-        cle: "infosPratiques", type: "forum",
-        sujet: "Tout ce qu'il faut savoir pour venir : un sujet par question. Cherche avant de poster, la réponse y est peut-être déjà !",
-        tags: ["Accès & lieu", "Billetterie", "Camping & hébergement", "Horaires", "Accessibilité", "Sur place", "Répondu"],
-      },
       { cle: "covoiturage", type: "texte", sujet: "Propose ou cherche un covoit' pour La Java : précise ta ville de départ !" },
       { cle: "photos", type: "texte", sujet: "Vos plus beaux souvenirs en photo et vidéo, balancez tout !" },
-      { cle: "partageSons", type: "texte", sujet: "Balance les sons qui te font vibrer : découvertes, mix, playlists, souvenirs de line-up" },
-      { cle: "votes", type: "texte", palierMin: "Habitué", sujet: "Les décisions qu'on prend ensemble : line-up, merch, afters..." },
     ],
   },
   {
@@ -302,9 +215,8 @@ export const STRUCTURE: CategorieDef[] = [
     acces: ["artiste", "staff"],
     salons: [
       { cle: "infosArtistes", type: "texte", lectureSeule: true, sujet: "Technique, accès, timings, contacts" },
-      { cle: "backstage", type: "texte", sujet: "Le backstage virtuel : entre artistes programmés" },
+      { cle: "backstage", type: "texte", sujet: "Le backstage virtuel : entre artistes" },
       { cle: "demos", type: "forum", sujet: "Balance tes prods, demande des retours",
-        accesSupplement: ["artisteCommunaute"],
         tags: ["Techno", "House", "Bass", "Live", "DJ Set", "Feedback demandé"] },
     ],
   },
@@ -317,40 +229,7 @@ export const STRUCTURE: CategorieDef[] = [
       { cle: "logs", type: "texte", lectureSeule: true, sujet: "Logs automatiques du bot" },
     ],
   },
-  {
-    nom: "🔊 VOCAUX",
-    acces: "public",
-    salons: [
-      { cle: "vocalBar", type: "vocal" },
-      { cle: "vocalTerrasse", type: "vocal" },
-      { cle: "vocalAfters", type: "vocal", palierMin: "Habitué" },
-      { cle: "stageLive", type: "stage", cache: true },
-    ],
-  },
 ];
-
-// ---------- Questionnaire d'onboarding ----------
-export const QUESTIONNAIRE = {
-  titre: "Rejoindre La Java 🎪",
-  sources: [
-    { label: "Instagram", value: "instagram", emoji: "📷" },
-    { label: "TikTok", value: "tiktok", emoji: "🎵" },
-    { label: "Bouche à oreille", value: "bouche_a_oreille", emoji: "🗣" },
-    { label: "Site La Java", value: "site", emoji: "🌐" },
-    { label: "Sur place l'an dernier", value: "sur_place", emoji: "🎪" },
-    { label: "Un artiste", value: "artiste", emoji: "🎧" },
-    { label: "Newsletter", value: "newsletter", emoji: "📬" },
-    { label: "Autre", value: "autre", emoji: "✨" },
-  ],
-  profils: [
-    { label: "Bénévole", value: "benevole", emoji: "🙌", roleKey: "benevoleEdition" },
-    { label: "Référent", value: "referent", emoji: "🧭", roleKey: "referent" },
-    { label: "Artiste programmé", value: "artiste_programme", emoji: "🎤", roleKey: "artiste" },
-    { label: "Artiste (communauté)", value: "artiste_communaute", emoji: "🎧", roleKey: "artisteCommunaute" },
-    { label: "Curieux - Public", value: "curieux", emoji: "👀", roleKey: null },
-  ] as { label: string; value: string; emoji: string; roleKey: keyof typeof ROLES | null }[],
-  maxSoumissions: 2, // 1 soumission + 1 seule nouvelle tentative après refus
-};
 
 // ---------- Tous les textes visibles par les utilisateurs ----------
 const SAUT = String.fromCharCode(10);
@@ -367,7 +246,6 @@ export const TEXTES = {
     "🎪 **Tu es entré, le serveur est à toi.** En acceptant la charte à l'arrivée, tu as accepté les règles ci-dessous. Prends une minute pour les lire, puis viens dire bonjour dans le général.",
     "🙌 **Bénévole ou artiste ?** Tu l'as indiqué dans le questionnaire d'arrivée : l'orga valide ta demande et tes salons dédiés s'ajoutent ensuite.",
     "📣 **Les infos officielles** (line-up, billetterie…) tombent dans le salon annonces. Le reste, c'est à toi de le faire vivre dans le général !",
-    "⭐ **Plus tu participes** (messages, réactions, vocaux), plus tu gagnes d'XP et montes de niveau : salons secrets, billetterie en avance, giveaways… Détails épinglés dans le général.",
     "🎫 **Une question, un souci ?** Ouvre un ticket dans le salon billetterie : c'est privé, seul l'orga le voit.",
     "",
     "━━━━━ 🌈 **LES RÈGLES DU SERVEUR** ━━━━━",
@@ -390,13 +268,6 @@ export const TEXTES = {
     "",
     "👇 **Un 🎪 en dessous pour dire que tu as lu, et bonne Java !**",
   ].join("\n"),
-
-  // Modal
-  labelSource: "Comment as-tu connu ce Discord ?",
-  labelMotivation: "Pourquoi veux-tu nous rejoindre ?",
-  placeholderMotivation: "Dis-nous ce qui t'amène ! (300 caractères max)",
-  labelProfil: "Tu es ici en tant que :",
-  labelPseudo: "Ton prénom ou pseudo artiste (optionnel)",
 
   // DM et confirmations onboarding
   dmBienvenue: (serveur: string) =>
@@ -470,69 +341,6 @@ Si ça ne correspond pas à ta situation, écris à un membre de l'orga.`,
   accesRetire:
     "Ton accès au serveur est suspendu. Écris à un membre de l'orga si tu penses que c'est une erreur.",
 
-  // Infos pratiques épinglées dans le général (grand public)
-  infosPratiquesTitre: "📍 La Java 2026 : les infos pratiques",
-  infosPratiquesCorps: [
-    `🗓 **Quand ?** Le **${new Date(EDITION.dateEvenement + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}**`,
-    "📍 **Où ?** À Quimper. L'adresse exacte et le plan d'accès arrivent dans les annonces.",
-    `🎫 **Billetterie officielle** → ${EDITION.lienBilletterie}`,
-    "",
-    "**Sur place**",
-    "🚗 Besoin d'un covoit' ? Le salon covoiturage est fait pour ça : précise ta ville de départ.",
-    "⛺ Camping, hébergement, accès : les infos tombent dans les annonces au fur et à mesure.",
-    "♿ Un besoin d'accessibilité particulier ? Ouvre un ticket dans la billetterie, on s'organise.",
-    "",
-    "**Une question ?**",
-    "Pose-la ici, quelqu'un te répondra. Pour tout ce qui touche à ta commande ou à un sujet perso, ouvre plutôt un ticket dans le salon billetterie : c'est privé.",
-    "",
-    "*Ce message est mis à jour au fil de la préparation, garde-le sous le coude !*",
-  ].join("\n"),
-
-  // Sujets créés d'office dans le forum infos pratiques. Volontairement
-  // incomplets là où l'info n'est pas connue : à l'orga de compléter.
-  infosPratiquesSujets: [
-    {
-      titre: "📍 Quand et où ?",
-      tag: "Accès & lieu",
-      corps: [
-        `🗓 **${EDITION.nom}** aura lieu le **${new Date(EDITION.dateEvenement + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}**.`,
-        "📍 À **Quimper**.",
-        "",
-        "*L'adresse exacte, le plan d'accès et les parkings seront précisés ici dès que c'est calé : ce sujet sera mis à jour.*",
-      ].join("\n"),
-    },
-    {
-      titre: "🎫 Prendre sa place",
-      tag: "Billetterie",
-      corps: [
-        `La billetterie officielle, et la seule : ${EDITION.lienBilletterie}`,
-        "",
-        "⚠️ **Aucune revente hors canaux officiels.** Les annonces sauvages sont supprimées : c'est le meilleur moyen de se faire arnaquer.",
-        "Un souci avec ta commande ? Ouvre un ticket dans le salon billetterie, c'est privé.",
-      ].join("\n"),
-    },
-    {
-      titre: "⛺ Dormir sur place",
-      tag: "Camping & hébergement",
-      corps: [
-        "*Les infos camping et hébergement arrivent ici dès qu'elles sont figées.*",
-        "",
-        "En attendant, si tu cherches à partager une tente, un logement ou une voiture, le salon covoiturage est là pour ça 🚗",
-      ].join("\n"),
-    },
-    {
-      titre: "♿ Accessibilité",
-      tag: "Accessibilité",
-      corps: [
-        "On veut que tout le monde puisse venir dans de bonnes conditions.",
-        "",
-        "Un besoin particulier (mobilité, sensoriel, accompagnement, régime alimentaire) ? **Ouvre un ticket dans le salon billetterie** : on en discute en privé et on s'organise avec toi.",
-        "",
-        "Rien n'est trop petit pour être demandé.",
-      ].join("\n"),
-    },
-  ] as { titre: string; tag: string; corps: string }[],
-
   // Modèle épinglé dans #presentations : sans trame, personne n'ose commencer
   presentationTitre: "🙋 Présente-toi à l'équipe",
   presentationCorps: [
@@ -557,50 +365,6 @@ Si ça ne correspond pas à ta situation, écris à un membre de l'orga.`,
   rappelAnniversaire: (salon: string) =>
     `🎂 Petit rappel de La Java : on souhaite les anniversaires entre nous, et le tien nous manque !\nUn message épinglé dans **${salon}** te propose un bouton — deux cases à remplir, jour et mois, et c'est réglé. On ne demande jamais ton année 😉\n\n*Pas envie ? Ignore ce message, on ne te relancera pas.*`,
 
-  // Salon ⭐・niveaux : généré depuis PALIERS_XP et XP, donc toujours exact
-  niveauxTitre: "⭐ Les niveaux de La Java",
-  niveauxCorps: [
-    "Plus tu fais vivre le serveur, plus tu montes, et plus tu débloques. Rien à faire pour s'inscrire : ça compte tout seul.",
-    "",
-    "**Comment on gagne de l'XP**",
-    `💬 **${XP.parMessageMin} à ${XP.parMessageMax} XP** par message *(une fois par minute maximum, inutile de spammer)*`,
-    `❤️ **${XP.parReaction} XP** par réaction *(une fois toutes les ${XP.cooldownReactionMs / 60000} minutes)*`,
-    `🎙 **${XP.vocalPointsParTranche} XP** par tranche de ${XP.vocalTrancheMinutes} minutes en vocal`,
-    `🙌 **${XP.shiftBenevole} XP** par shift bénévole validé par l'orga`,
-    "",
-    "**Les paliers**",
-    ...PALIERS_XP.filter((p) => p.seuil > 0).map((p) =>
-      `**${p.seuil} XP · ${p.nom}**\n→ ${p.avantages.join(" • ")}`),
-    "",
-    "**Tes commandes**",
-    "`/mon-profil` : ton XP, ton rang, ton prochain palier",
-    "`/classement` : le top 20 du serveur",
-    "",
-    "*Les giveaways et le tarif préférentiel sont gérés à la main par l'orga : on vient te chercher, tu n'as rien à demander.*",
-  ].join("\n"),
-
-  pantheonTitre: "🏛 Le panthéon de La Java",
-  pantheonCorps: (noms: string[]) =>
-    noms.length
-      ? `Celles et ceux qui ont atteint **Légende de la Java** :\n\n${noms.map((n) => `🏛 ${n}`).join("\n")}`
-      : "Personne n'y est encore. La place est libre, et elle porte ton nom si tu la veux 👀",
-
-  // Réclamation du badge d'édition, ouverte un mois après le festival
-  badgeReclamationTitre: (annee: number) => `🏅 Tu étais à La Java ${annee} ?`,
-  badgeReclamationCorps: (annee: number, emoji: string, xp: number, fin: string) => [
-    "Le festival est passé, et on aimerait garder une trace de qui y était.",
-    "",
-    `**Réagis avec ${emoji} sous ce message** et le badge **Java ${annee}** est à toi, avec **${xp} XP** au passage.`,
-    "",
-    "On ne vérifie rien : c'est déclaratif, on te fait confiance. Le badge n'ouvre aucun salon, il dit simplement que tu en étais.",
-    "",
-    `⏳ *À réclamer jusqu'au ${fin}. Après, la page se tourne et on prépare l'édition suivante.*`,
-  ].join("\n"),
-  badgeReclamationClos: (annee: number) =>
-    `🏅 **Les badges Java ${annee} ne sont plus réclamables.** Merci à toutes et tous, rendez-vous à la prochaine 🎪`,
-  badgeObtenu: (annee: number, xp: number) =>
-    `🏅 Badge **Java ${annee}** débloqué, et **${xp} XP** ajoutés ! Merci d'avoir fait partie de l'aventure 🎪`,
-
   // Relance des membres restés à la porte : sans elle, ils y restent
   // indéfiniment, personne ne s'en aperçoit.
   rappelPorte: (serveur: string, salon: string, emoji: string) => [
@@ -620,7 +384,7 @@ Si ça ne correspond pas à ta situation, écris à un membre de l'orga.`,
     "",
     "💬 **Écrire et répondre.** Tape ton message en bas du salon. Pour répondre à quelqu'un : clic droit (ou appui long sur mobile) sur son message → **Répondre**.",
     "",
-    "😄 **Réagir.** Survole un message → l'icône émoji permet d'ajouter une réaction. C'est comme un like, et ici ça rapporte même de l'XP !",
+    "😄 **Réagir.** Survole un message → l'icône émoji permet d'ajouter une réaction. C'est comme un like.",
     "",
     "🔔 **Les notifications.** Trop de bips ? Clic droit sur le nom du serveur → **Notifications** → *Uniquement @mentions*. Tu peux aussi mettre en sourdine un salon précis.",
     "",
@@ -634,106 +398,13 @@ Si ça ne correspond pas à ta situation, écris à un membre de l'orga.`,
   guideServeurCorps: [
     "**🚪 Ton arrivée.** L'écran d'entrée te fait accepter la charte et te demande ton profil : c'est la charte qui t'ouvre le serveur. Les profils bénévole/référent/artiste sont ensuite validés par l'orga, en général très vite.",
     "",
-    "**⭐ Les niveaux.** Participer (messages, réactions, vocaux) fait gagner de l'XP : Nouveau → Habitué → Fêtard → Pilier de la Java → Légende de la Java, avec de vrais avantages à chaque palier (salons secrets, billetterie en avance, giveaways…). Le détail est épinglé dans le général. Tape `/mon-profil` pour voir où tu en es, `/classement` pour le top 20.",
-    "",
     "**🎫 La billetterie.** Le lien officiel et le support sont dans le salon billetterie. Une question sur ta commande ? Le bouton *Ouvrir un ticket* crée une conversation privée avec l'orga.",
     "",
-    "**🎂 Les anniversaires.** C'est un rituel réservé à l'équipe : si tu es bénévole, référent ou staff, un bouton dans le salon bénévoles te permet de renseigner le tien.",
+    "**🎂 Les anniversaires.** C'est un rituel réservé à l'équipe : si tu es bénévole, référent ou de l'orga, un bouton dans le salon bénévoles te permet de renseigner le tien.",
     "",
     "**🙌 Bénévoles et artistes.** Une fois validé·e, tu as tes salons dédiés (planning, entraide, backstage, démos…). Tout ce qui te concerne y passe.",
     "",
-    "**🆘 Besoin d'aide ?** Ticket dans la billetterie, ou DM direct à un membre du **Orga** (en rouge dans la liste des membres). On ne mord pas.",
-  ].join("\n"),
-
-  // ---------- Guide interne de l'orga (salon 📕・guide-staff) ----------
-  guideStaffTitre: "📕 Mode d'emploi du bot (1/3) : le quotidien",
-  guideStaffCorps: [
-    "Ce salon est visible de l'orga uniquement. Tout ce qui suit est à jour du fonctionnement réel du bot.",
-    "",
-    "━━━━━ 🚪 **COMMENT QUELQU'UN ENTRE** ━━━━━",
-    "",
-    "**1. Il arrive** et reçoit aussitôt le rôle `👋 Nouvel arrivant`. Ce rôle **cache tout le serveur sauf le salon des règles**. C'est volontaire : personne ne circule sans avoir vu les règles.",
-    "**2. Il remplit le questionnaire** d'arrivée de Discord. S'il demande un profil (bénévole, référent, artiste), une fiche tombe dans le salon des validations avec un ping `@Orga`.",
-    "**3. Tu valides** avec le bouton vert. Si le membre a fini son arrivée, le rôle est posé aussitôt ; sinon il est **mis en réserve** et posé dès qu'il l'aura finie. La fiche te le rappelle.",
-    "**4. Il accepte la charte** dans l'écran d'entrée → `👋 Nouvel arrivant` disparaît, le rôle `Membre` arrive, son profil réservé est posé, le serveur s'ouvre. Tout est automatique.",
-    "",
-    "⚠️ **Les étapes 3 et 4 sont indépendantes.** Il entre avant que tu valides : c'est le cas normal. Il discute dans le général pendant que tu prends ton temps.",
-    "",
-    "━━━━━ ✅ **LES BOUTONS DE VALIDATION** ━━━━━",
-    "",
-    "**✅ Approuver « profil »** : accorde le profil demandé, en un clic. C'est celui que tu utiliseras 9 fois sur 10.",
-    "**🎭 Autres rôles** : si le profil demandé ne correspond pas : tu choisis toi-même le ou les rôles.",
-    "**❌ Refuser** : demande un motif, envoyé au membre en message privé. Il a droit à **une** seconde tentative.",
-    "**❓ Plus d'infos** : pose une question au membre en privé sans trancher. La fiche reste ouverte.",
-    "",
-    "Une fiche traitée perd ses boutons et affiche qui a décidé. Si deux personnes cliquent en même temps, le bot ne traite la demande qu'une fois.",
-    "",
-    "━━━━━ 📋 **LES FICHES MISSIONS** ━━━━━",
-    "",
-    "Elles vivent à deux endroits, avec deux publics différents :",
-    "`🧭・coordination-referents` (catégorie RÉFÉRENTS) : la fiche bénévole **et** la fiche référent de chaque pôle, plus les échanges de coordination. Invisible des bénévoles.",
-    "`📋・fiches-missions` (catégorie BÉNÉVOLES) : un sujet par pôle, la fiche mission en tête, visible de toute l'équipe.",
-    "",
-    "**Seuls l'orga et les Référents ouvrent les sujets** du second : les bénévoles ne peuvent que répondre dedans, pour éviter que chacun crée sa propre fiche. Les tags se modifient dans les paramètres du salon, sans toucher au bot.",
-    "",
-    "━━━━━ 🎫 **LES TICKETS** ━━━━━",
-    "",
-    "Un membre ouvre un ticket depuis le salon billetterie : un salon privé se crée, l'orga est prévenu. Pour le clore, tape `/fermer-ticket` **dedans** : le transcript part dans les logs avant suppression.",
-  ].join("\n"),
-
-  guideStaffCommandesTitre: "📕 Mode d'emploi du bot (2/3) : les commandes",
-  guideStaffCommandesCorps: [
-    "Les commandes marquées **(Orga)** sont refusées aux autres membres, où qu'elles soient tapées.",
-    "",
-    "━━━━━ 👥 **COMMUNAUTÉ** ━━━━━",
-    "",
-    "`/suivi` **(Orga)** : **qui** attend quoi, nommément. Trois files : les candidatures à valider, les profils validés dont le membre n'a pas fini son arrivée, et ceux restés à la porte. Seule la première demande une action de ta part.",
-    "`/stats` **(Orga)** : tableau de bord chiffré : arrivées, taux de validation, sources, croissance, rétention.",
-    "`/sondage` : crée un sondage à réactions (2 à 10 options, séparées par des `;`).",
-    "`/sondage-resultats` : affiche le dépouillement du dernier sondage du salon.",
-    "`/classement` · `/mon-profil` : accessibles à tous, l'XP et les paliers.",
-    "",
-    "━━━━━ ⭐ **XP ET BADGES** ━━━━━",
-    "",
-    "`/xp-add` **(Orga)** : ajoute des points, avec un motif. Sert surtout à récompenser un shift bénévole.",
-    "`/attribuer-badge` **(Orga)** : pose un badge d'édition passée (`Java 2024`…) sur quelqu'un qui y était. Les badges sont cumulables.",
-    "",
-    "L'XP se gagne seul : messages (+15 à 40, une fois par minute), réactions (+25, une fois par 5 min), vocal (+10 par tranche de 10 min). Le salon AFK et le casque coupé ne rapportent rien.",
-    "",
-    "━━━━━ 🎂 **ANNIVERSAIRES** ━━━━━",
-    "",
-    "`/anniversaires-liste` **(Orga)** : les anniversaires des 7 prochains jours.",
-    "Le rituel est réservé à l'équipe : le bouton d'enregistrement est dans le salon bénévoles, et l'annonce y tombe aussi. Seuls le jour et le mois sont conservés, jamais l'année.",
-    "",
-    "━━━━━ 🔐 **DONNÉES ET RGPD** ━━━━━",
-    "",
-    "`/export-onboarding` **(Orga)** : exporte toutes les candidatures en CSV.",
-    "`/oublier-membre` **(Orga)** : **irréversible** : efface toutes les données d'un membre (candidature, XP, anniversaire). À utiliser sur demande explicite de la personne.",
-  ].join("\n"),
-
-  guideStaffAdminTitre: "📕 Mode d'emploi du bot (3/3) : administration",
-  guideStaffAdminCorps: [
-    "━━━━━ 🛠 **STRUCTURE DU SERVEUR** ━━━━━",
-    "",
-    "`/setup-serveur` : crée ou complète rôles, catégories, salons et messages d'accueil. **Sans danger, relançable autant de fois que voulu** : ce qui existe est conservé, seules les permissions sont réappliquées. À relancer après toute modification de la configuration du bot.",
-    "`/ouvrir-salon` : révèle un salon masqué (les photos par exemple) en lui appliquant les permissions normales de sa catégorie.",
-    "",
-    "⚠️ Le bot ne supprime jamais un rôle ni un salon. Retirer quelque chose de la configuration l'empêche d'être recréé, mais le nettoyage se fait à la main.",
-    "",
-    "━━━━━ 🚨 **URGENCE : RAID** ━━━━━",
-    "",
-    "`/lockdown on` **(Orga)** : suspend toutes les validations. Le bot le déclenche **tout seul** au-delà de 10 arrivées en 60 secondes, et prévient dans les alertes.",
-    "`/lockdown off` : retour à la normale, une fois les comptes suspects vérifiés.",
-    "",
-    "Le bot supprime déjà seul les invitations Discord tierces et les liens suspects postés par les non-orga, et trace tout dans les alertes.",
-    "",
-    "━━━━━ 🗄 **FIN D'ÉDITION** ━━━━━",
-    "",
-    "`/archiver-edition` **(Orga)** : la commande de passage d'une année à l'autre. Elle bascule tous les `Bénévole` en `Ancien bénévole`, passe la catégorie de l'édition en archives lecture seule, et prépare le badge de l'année suivante.",
-    "",
-    "⚠️ **L'ordre compte.** Lance `/archiver-edition` **d'abord**, change l'année dans la configuration du bot **ensuite**, puis relance `/setup-serveur`. Dans l'autre sens, la commande chercherait un rôle que personne ne porte encore et ne basculerait personne.",
-    "",
-    "Les badges d'édition ne sont jamais retirés : ils sont la mémoire de qui était là, année après année.",
+    "**🆘 Besoin d'aide ?** Ticket dans la billetterie, ou DM direct à un membre de l'**Orga** (en rouge dans la liste des membres). On ne mord pas.",
   ].join("\n"),
 
   billetterieTitre: "🎫 Billetterie La Java",

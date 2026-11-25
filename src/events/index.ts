@@ -1,25 +1,23 @@
 // ============================================================
 // Tous les événements Discord : arrivées/départs, interactions,
-// messages (XP + filtre liens), logs de modération.
+// messages (filtre liens), logs de modération.
 // ============================================================
 
 import {
   AuditLogEvent, Client, EmbedBuilder, Events, Message, MessageReaction, PartialMessage,
   PartialMessageReaction, PartialUser, User,
 } from "discord.js";
-import { COULEURS, DOMAINES_SUSPECTS, EDITION, nomBadge, PROFIL_DIRECT, ROLE_ATTENTE, ROLES, SALONS, TEXTES, XP } from "../config/config.js";
+import { DOMAINES_SUSPECTS, PROFIL_DIRECT, ROLES, SALONS, TEXTES } from "../config/config.js";
 import { db, kvGet, kvSet } from "../db/database.js";
 import { surveillerArrivee } from "../services/antiraid.js";
 import { log, logErreur } from "../services/logs.js";
 import {
-  appliquerProfilReserve, approuverProfilDemande, ouvrirAcces, boutonApprouver, boutonPlusInfos, boutonRefuser,
-  candidatureDe, modalPlusInfos, modalRefus, nettoyerCandidature, ouvrirQuestionnaire, selectionRoles,
-  signalerDemandeValidation, soumettreQuestionnaire,
+  approuverProfilDemande, ouvrirAcces, boutonApprouver, boutonPlusInfos, boutonRefuser,
+  candidatureDe, estMarqueurCandidature, modalPlusInfos, modalRefus, nettoyerCandidature, selectionRoles,
+  signalerDemandeValidation,
 } from "../services/onboarding.js";
 import { enregistrerAnniversaire, ouvrirModalAnniversaire } from "../services/anniversaire.js";
-import { attribuerBadge } from "../services/badges.js";
 import { ouvrirTicket } from "../services/tickets.js";
-import { xpMessage, xpReaction } from "../services/xp.js";
 import { dmSur, estStaff, leverBarriere, poserBarriere, role, roleParNom, salonTexte } from "../services/util.js";
 import type { Commande } from "../commands/types.js";
 
@@ -46,10 +44,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       // Le questionnaire natif est rempli PENDANT l'arrivée : les rôles peuvent déjà
       // être posés ici, sans qu'aucun guildMemberUpdate ne suive. Sans ce contrôle la
       // candidature n'était signalée qu'au redémarrage suivant, via le rattrapage.
-      const attente = roleParNom(membre.guild, ROLE_ATTENTE.nom);
-      if (attente && membre.roles.cache.has(attente.id)) {
-        await signalerDemandeValidation(membre);
-      }
+      if (candidatureDe(membre)) await signalerDemandeValidation(membre);
     } catch (err) {
       await logErreur(membre.guild, "guildMemberAdd", err);
     }
@@ -80,8 +75,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       if (!apres.pending) await ouvrirAcces(apres, "charte acceptée à l'entrée");
 
       if (avant.partial) {
-        const attente = roleParNom(apres.guild, ROLE_ATTENTE.nom);
-        if (attente && apres.roles.cache.has(attente.id)) await signalerDemandeValidation(apres);
+        if (candidatureDe(apres)) await signalerDemandeValidation(apres);
         return;
       }
       const ajoutes = apres.roles.cache.filter((r) => !avant.roles.cache.has(r.id));
@@ -93,21 +87,21 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
       ].join(" • ");
       await log(apres.guild, "🎭 Rôles modifiés", `<@${apres.id}> : ${details}`);
 
-      // Candidature : le questionnaire natif vient de poser le rôle d'attente → demande à l'orga
-      if (ajoutes.some((r) => r.name === ROLE_ATTENTE.nom)) {
+      // Candidature : le questionnaire natif vient de poser un marqueur « Candidat X » → demande à l'orga
+      if (ajoutes.some((r) => estMarqueurCandidature(r.name))) {
         await signalerDemandeValidation(apres);
       }
 
       // Rôle fonctionnel attribué (bouton de l'orga ou à la main dans Discord) :
       // la candidature n'a plus lieu d'être, et l'accès communauté doit suivre.
       const fonctionnels = new Set(
-        (["staff", "referent", "artiste", "artisteCommunaute", "benevoleEdition"] as (keyof typeof ROLES)[])
+        (["staff", "referent", "artiste", "benevoleEdition"] as (keyof typeof ROLES)[])
           .map((cle) => ROLES[cle].nom)
       );
       // Le rôle Membre n'est PAS ajouté ici : l'accès aux salons s'obtient
       // uniquement en finissant son arrivée (charte d'entrée), quel que soit le profil.
       if (ajoutes.some((r) => fonctionnels.has(r.name))) {
-        await nettoyerCandidature(apres); // retire ⏳ En attente + les marqueurs Candidat
+        await nettoyerCandidature(apres); // retire les marqueurs Candidat
 
         // Rôle posé à la main avant l'acceptation des règles : son autorisation
         // ouvre sa catégorie malgré la barrière. On ne le retire pas — c'est un
@@ -150,10 +144,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
         kvGet(`bienvenue:${apres.id}`) !== "1"
       ) {
         // Candidature encore en cours : on se tait, l'annonce viendra à la validation.
-        const attenteRole = roleParNom(apres.guild, ROLE_ATTENTE.nom);
-        const enCandidature =
-          (attenteRole !== undefined && apres.roles.cache.has(attenteRole.id)) ||
-          candidatureDe(apres) !== undefined;
+        const enCandidature = candidatureDe(apres) !== undefined;
         if (!enCandidature) {
           // Un bénévole/artiste dont le rôle a été posé à la main n'est pas un
           // festivalier : on l'annonce avec le rôle qu'il a réellement.
@@ -168,7 +159,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
     }
   });
 
-  // ---------- Messages : XP + filtre anti-invitations/liens suspects ----------
+  // ---------- Messages : filtre anti-invitations/liens suspects ----------
   client.on(Events.MessageCreate, async (message) => {
     try {
       if (!message.inGuild() || message.author.bot || !message.member) return;
@@ -180,10 +171,7 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
         if (alertes) {
           await alertes.send(`${TEXTES.lienSupprime(message.author.id)}\nSalon : <#${message.channelId}>\nContenu : \`${message.content.slice(0, 500)}\``).catch(() => {});
         }
-        return; // pas d'XP pour un message supprimé
       }
-
-      await xpMessage(message.member);
     } catch (err) {
       await logErreur(message.inGuild() ? message.guild : null, "messageCreate", err);
     }
@@ -218,28 +206,9 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
     try {
       const ctx = await contexteReaction(reaction, user);
       if (!ctx) return;
-      const { guild, membre, porteDacces } = ctx;
+      const { membre, porteDacces } = ctx;
 
       if (porteDacces) await ouvrirAcces(membre, "réaction sur le post de bienvenue");
-
-      // Réclamation du badge d'édition : la fenêtre est gérée par le cron,
-      // ici on se contente d'honorer la réaction tant qu'elle est ouverte.
-      const cleBadge = `badge_reclamation:${EDITION.annee}`;
-      if (
-        reaction.emoji.name === TEXTES.emojiDeblocage &&
-        reaction.message.id === kvGet(cleBadge) &&
-        kvGet(`${cleBadge}:clos`) !== "1"
-      ) {
-        const badge = roleParNom(guild, nomBadge(EDITION.annee));
-        // attribuerBadge recrée le rôle s'il a été supprimé entre-temps
-        if (!badge || !membre.roles.cache.has(badge.id)) {
-          await attribuerBadge(membre, EDITION.annee).catch(() => {});
-          await dmSur(membre, TEXTES.badgeObtenu(EDITION.annee, XP.badgeEdition));
-          await log(guild, "🏅 Badge réclamé", `<@${membre.id}> a réclamé le badge Java ${EDITION.annee}.`);
-        }
-      }
-
-      await xpReaction(membre);
     } catch (err) {
       await logErreur(reaction.message.guild ?? null, "messageReactionAdd", err);
     }
@@ -288,7 +257,6 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
 
       if (interaction.isButton()) {
         const id = interaction.customId;
-        if (id === "btn_rejoindre") return void (await ouvrirQuestionnaire(interaction));
         if (id === "btn_anniversaire") return void (await ouvrirModalAnniversaire(interaction));
         if (id === "btn_ticket") return void (await ouvrirTicket(interaction));
         if (id.startsWith("ob_apd:")) return void (await approuverProfilDemande(interaction));
@@ -300,7 +268,6 @@ export function enregistrerEvenements(client: Client, commandes: Map<string, Com
 
       if (interaction.isModalSubmit()) {
         const id = interaction.customId;
-        if (id === "modal_questionnaire") return void (await soumettreQuestionnaire(interaction));
         if (id === "modal_anniversaire") return void (await enregistrerAnniversaire(interaction));
         if (id.startsWith("ob_rfm:")) return void (await modalRefus(interaction));
         if (id.startsWith("ob_mim:")) return void (await modalPlusInfos(interaction));

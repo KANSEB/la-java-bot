@@ -2,7 +2,7 @@
 // À lancer après toute modification de textes : garantit qu'aucun message
 // affiché ne diverge de la config, sans jamais créer de doublon.
 import "dotenv/config";
-import { SALONS, TEXTES, COULEURS, ANNIVERSAIRES, PALIERS_XP } from "../dist/config/config.js";
+import { SALONS, TEXTES, COULEURS, ANNIVERSAIRES } from "../dist/config/config.js";
 
 const TOKEN = process.env.DISCORD_TOKEN;
 const GUILD = process.env.GUILD_ID;
@@ -34,10 +34,6 @@ const CIBLES = [
     composants: [bouton(TEXTES.boutonAnniversaire, "🎂", "btn_anniversaire")] },
   { salon: SALONS.guide, repere: "Discord pour les débutants", titre: TEXTES.guideDiscordTitre, corps: TEXTES.guideDiscordCorps, couleur: COULEURS.info },
   { salon: SALONS.guide, repere: "Ce serveur", titre: TEXTES.guideServeurTitre, corps: TEXTES.guideServeurCorps, couleur: COULEURS.primaire },
-  { salon: SALONS.guideStaff, repere: "1/3", titre: TEXTES.guideStaffTitre, corps: TEXTES.guideStaffCorps, couleur: COULEURS.erreur },
-  { salon: SALONS.guideStaff, repere: "2/3", titre: TEXTES.guideStaffCommandesTitre, corps: TEXTES.guideStaffCommandesCorps, couleur: COULEURS.erreur },
-  { salon: SALONS.guideStaff, repere: "3/3", titre: TEXTES.guideStaffAdminTitre, corps: TEXTES.guideStaffAdminCorps, couleur: COULEURS.erreur },
-  { salon: SALONS.niveaux, repere: "niveaux de La Java", titre: TEXTES.niveauxTitre, corps: TEXTES.niveauxCorps, couleur: 0xffd32a },
 ];
 
 for (const c of CIBLES) {
@@ -60,19 +56,3 @@ for (const c of CIBLES) {
   await new Promise((r) => setTimeout(r, 400));
 }
 
-// Panthéon : reconstruit depuis les porteurs du dernier palier
-const niveaux = chs.find((x) => x.name === SALONS.niveaux);
-const dernier = PALIERS_XP[PALIERS_XP.length - 1];
-if (niveaux) {
-  const roles = await api(`/guilds/${GUILD}/roles`);
-  const legende = roles.find((r) => r.name === dernier.nom);
-  const membres = await api(`/guilds/${GUILD}/members?limit=200`);
-  const noms = legende ? membres.filter((m) => m.roles.includes(legende.id)).map((m) => `<@${m.user.id}>`) : [];
-  const messages = await api(`/channels/${niveaux.id}/messages?limit=50`);
-  const cible = messages.find((m) => m.author.id === me.id && (m.embeds?.[0]?.title ?? "").includes("panthéon"));
-  const corps = { embeds: [{ title: TEXTES.pantheonTitre, description: TEXTES.pantheonCorps(noms), color: dernier.couleur }] };
-  if (cible) {
-    await api(`/channels/${niveaux.id}/messages/${cible.id}`, { method: "PATCH", body: JSON.stringify(corps) });
-    console.log(`✅ ${SALONS.niveaux} :: ${TEXTES.pantheonTitre} (${noms.length} légende(s))`);
-  }
-}

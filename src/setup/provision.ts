@@ -19,7 +19,7 @@ import {
   type OverwriteResolvable,
 } from "discord.js";
 import {
-  ANNIVERSAIRES, BADGES, COULEURS, EDITION, nomBadge, PALIERS_XP,
+  ANNIVERSAIRES, COULEURS,
   ROLE_PORTE, ROLES, SALONS, STRUCTURE, TEXTES, type CategorieDef, type SalonDef,
 } from "../config/config.js";
 import { roleParNom } from "../services/util.js";
@@ -70,19 +70,6 @@ async function creerRoles(guild: Guild, rapport: RapportSetup): Promise<Map<stri
   }
   map.set("porte", porte);
 
-  // Rôles cosmétiques : badges d'édition, paliers XP, Bénévole du Mois — aucune permission
-  const cosmetiques: { nom: string; couleur: number }[] = [
-    ...Object.entries(BADGES).map(([annee, b]) => ({ nom: nomBadge(Number(annee)), couleur: b.couleur })),
-    ...PALIERS_XP.filter((p) => !p.sansRole).map((p) => ({ nom: p.nom, couleur: p.couleur })),
-  ];
-  for (const c of cosmetiques) {
-    if (!roleParNom(guild, c.nom)) {
-      await guild.roles.create({ name: c.nom, color: c.couleur, hoist: false, mentionable: false, permissions: [], reason: "Setup La Java (cosmétique)" });
-      rapport.rolesCrees.push(c.nom);
-    } else {
-      rapport.existants++;
-    }
-  }
   return map;
 }
 
@@ -111,24 +98,6 @@ export function overwritesPour(
   // Salon masqué : visibl'orga uniquement tant qu'il n'est pas révélé
   if (salonDef.cache && !ignorerCache) {
     ow.push({ id: everyone, deny: [VOIR] });
-    if (staff) ow.push({ id: staff.id, allow: [VOIR, ...ECRIRE, ...VOCAL] });
-    return ow;
-  }
-
-  // Salon réservé à un palier XP et aux suivants. Les rôles de palier se
-  // remplacent l'un l'autre : il faut donc autoriser explicitement chacun des
-  // paliers à partir du seuil, sinon monter de niveau ferait perdre l'accès.
-  if (salonDef.palierMin) {
-    const depuis = PALIERS_XP.findIndex((p) => p.nom === salonDef.palierMin);
-    ow.push({ id: everyone, deny: [VOIR] });
-    if (depuis !== -1) {
-      for (const palier of PALIERS_XP.slice(depuis)) {
-        const r = roleParNom(guild, palier.nom);
-        if (r) ow.push({ id: r.id, allow: [VOIR, ...ECRIRE, ...VOCAL] });
-      }
-    }
-    const porteBarriere = roleParNom(guild, ROLE_PORTE.nom);
-    if (porteBarriere) ow.push({ id: porteBarriere.id, deny: [VOIR] });
     if (staff) ow.push({ id: staff.id, allow: [VOIR, ...ECRIRE, ...VOCAL] });
     return ow;
   }
@@ -278,17 +247,6 @@ async function posterMessages(guild: Guild): Promise<void> {
       .setDescription(TEXTES.presentationCorps)
       .setColor(COULEURS.info);
     const message = await presentations.send({ embeds: [embed] });
-    await message.pin().catch(() => {});
-  }
-
-  // #niveaux : le mode d'emploi de l'XP, généré depuis la config (jamais périmé)
-  const niveaux = salonTexte(guild, "niveaux");
-  if (niveaux && !(await dejaPoste(niveaux.id, guild))) {
-    const embed = new EmbedBuilder()
-      .setTitle(TEXTES.niveauxTitre)
-      .setDescription(TEXTES.niveauxCorps)
-      .setColor(0xffd32a);
-    const message = await niveaux.send({ embeds: [embed] });
     await message.pin().catch(() => {});
   }
 
